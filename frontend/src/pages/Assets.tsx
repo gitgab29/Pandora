@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
-import { Trash2, Pencil, ImageIcon, Plus, Download } from 'lucide-react';
+import { Trash2, Pencil, Copy, Plus, Download, Filter } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import StatisticCard from '../components/StatisticCard';
 import SearchBar from '../components/SearchBar';
 import Pagination from '../components/Pagination';
+import SortDropdown from '../components/SortDropdown';
 import FeatureNotAvailableModal from '../components/FeatureNotAvailableModal';
 import AddAssetModal from '../components/AddAssetModal';
 import { colors, spacing, radius } from '../theme';
@@ -62,6 +63,10 @@ const FILTER_TABS: Array<AssetStatus | 'All'> = [
   'All', 'Available', 'Deployed', 'In Repair', 'Retired', 'To Audit',
 ];
 
+const ALL_CATEGORIES = [...new Set(DUMMY_ASSETS.map(a => a.category))].sort();
+
+const SORT_OPTIONS = ['Name (A–Z)', 'Name (Z–A)', 'Date Added (Newest)', 'Date Added (Oldest)', 'Status'];
+
 const ROWS_PER_PAGE = 10;
 
 // ── Table cell styles ─────────────────────────────────────────────────────────
@@ -99,10 +104,15 @@ export default function Assets() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [featureModalOpen, setFeatureModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [activeCategories, setActiveCategories] = useState<string[]>([]);
+  const [activeSort, setActiveSort] = useState('Name (A–Z)');
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [sortOpen, setSortOpen] = useState(false);
 
   const filtered = useMemo(() => {
     let items = DUMMY_ASSETS;
     if (activeTab !== 'All') items = items.filter(a => a.status === activeTab);
+    if (activeCategories.length > 0) items = items.filter(a => activeCategories.includes(a.category));
     const q = search.toLowerCase().trim();
     if (q) {
       items = items.filter(a =>
@@ -113,8 +123,14 @@ export default function Assets() {
         (a.assigned_to ?? '').toLowerCase().includes(q),
       );
     }
-    return items;
-  }, [search, activeTab]);
+    const sorted = [...items];
+    if (activeSort === 'Name (A–Z)')           sorted.sort((a, b) => a.asset_name.localeCompare(b.asset_name));
+    else if (activeSort === 'Name (Z–A)')       sorted.sort((a, b) => b.asset_name.localeCompare(a.asset_name));
+    else if (activeSort === 'Date Added (Newest)') sorted.sort((a, b) => b.created_at.localeCompare(a.created_at));
+    else if (activeSort === 'Date Added (Oldest)') sorted.sort((a, b) => a.created_at.localeCompare(b.created_at));
+    else if (activeSort === 'Status')           sorted.sort((a, b) => a.status.localeCompare(b.status));
+    return sorted;
+  }, [search, activeTab, activeCategories, activeSort]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
   const pageItems = filtered.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE);
@@ -148,6 +164,8 @@ export default function Assets() {
   };
 
   const showFeatureModal = () => setFeatureModalOpen(true);
+
+  const closeDropdowns = () => { setFilterOpen(false); setSortOpen(false); };
 
   return (
     <div
@@ -243,9 +261,28 @@ export default function Assets() {
                 </div>
               </div>
 
-              {/* Right: search + export + new */}
+              {/* Right: search + filter + sort + export + new */}
               <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
                 <SearchBar value={search} onChange={handleSearch} placeholder="Hint: search text" />
+                <CategoryFilterDropdown
+                  open={filterOpen}
+                  onToggle={() => { setFilterOpen(o => !o); setSortOpen(false); }}
+                  categories={ALL_CATEGORIES}
+                  active={activeCategories}
+                  onToggleCategory={(cat) => {
+                    setActiveCategories(prev =>
+                      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+                    );
+                    setCurrentPage(1);
+                  }}
+                />
+                <SortDropdown
+                  open={sortOpen}
+                  onToggle={() => { setSortOpen(o => !o); setFilterOpen(false); }}
+                  options={SORT_OPTIONS}
+                  activeSort={activeSort}
+                  onSortChange={(opt) => { setActiveSort(opt); setSortOpen(false); setCurrentPage(1); }}
+                />
                 <button
                   onClick={showFeatureModal}
                   style={{
@@ -300,6 +337,7 @@ export default function Assets() {
                         style={{ cursor: 'pointer', accentColor: colors.primary }}
                       />
                     </th>
+                    <th style={{ ...TH, width: '3.25rem', padding: '0.625rem 0.5rem' }} />
                     <th style={TH}>Item Name</th>
                     <th style={TH}>Serial Number</th>
                     <th style={TH}>Category</th>
@@ -312,7 +350,7 @@ export default function Assets() {
                   {pageItems.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={7}
+                        colSpan={8}
                         style={{
                           ...TD,
                           textAlign: 'center',
@@ -328,6 +366,7 @@ export default function Assets() {
                       const statusCfg = STATUS_CONFIG[asset.status];
                       const isCheckedOut = asset.status === 'Available';
                       const isCheckedIn  = asset.status === 'Deployed';
+                      const pillVisible  = isCheckedOut || isCheckedIn;
                       return (
                         <tr
                           key={asset.id}
@@ -340,6 +379,21 @@ export default function Assets() {
                               checked={selectedIds.has(asset.id)}
                               onChange={() => toggleRow(asset.id)}
                               style={{ cursor: 'pointer', accentColor: colors.primary }}
+                            />
+                          </td>
+
+                          {/* Thumbnail */}
+                          <td style={{ ...TD, width: '3.25rem', padding: '0.5rem 0.5rem' }}>
+                            <img
+                              src={`https://picsum.photos/seed/asset-${asset.id}/32/32`}
+                              alt=""
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: radius.sm,
+                                border: '1px solid rgba(70,98,145,0.1)',
+                                display: 'block',
+                              }}
                             />
                           </td>
 
@@ -389,13 +443,13 @@ export default function Assets() {
                                 <Trash2 size={11} />
                               </button>
 
-                              {/* Image */}
+                              {/* Copy */}
                               <button
                                 onClick={showFeatureModal}
-                                title="View Image"
+                                title="Copy Item"
                                 style={iconBtnStyle(colors.primary)}
                               >
-                                <ImageIcon size={11} />
+                                <Copy size={11} />
                               </button>
 
                               {/* Edit */}
@@ -407,26 +461,30 @@ export default function Assets() {
                                 <Pencil size={11} />
                               </button>
 
-                              {/* Check Out / Check In */}
-                              {(isCheckedOut || isCheckedIn) && (
-                                <button
-                                  onClick={showFeatureModal}
-                                  style={{
-                                    padding: `0.2rem 0.625rem`,
-                                    borderRadius: radius.full,
-                                    border: 'none',
-                                    backgroundColor: isCheckedOut ? '#22c55e' : colors.orangeAccent,
-                                    color: '#ffffff',
-                                    fontFamily: "'Archivo', sans-serif",
-                                    fontSize: '0.6875rem',
-                                    fontWeight: 700,
-                                    cursor: 'pointer',
-                                    whiteSpace: 'nowrap',
-                                  }}
-                                >
-                                  {isCheckedOut ? 'Check Out' : 'Check In'}
-                                </button>
-                              )}
+                              {/* Check Out / Check In — always rendered for uniform column width */}
+                              <button
+                                onClick={pillVisible ? showFeatureModal : undefined}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  width: '5.5rem',
+                                  padding: `0.2rem 0`,
+                                  borderRadius: radius.full,
+                                  border: 'none',
+                                  backgroundColor: isCheckedOut ? '#22c55e' : colors.orangeAccent,
+                                  color: '#ffffff',
+                                  fontFamily: "'Archivo', sans-serif",
+                                  fontSize: '0.6875rem',
+                                  fontWeight: 700,
+                                  cursor: pillVisible ? 'pointer' : 'default',
+                                  whiteSpace: 'nowrap',
+                                  visibility: pillVisible ? 'visible' : 'hidden',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {isCheckedOut ? 'Check Out' : 'Check In'}
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -448,6 +506,14 @@ export default function Assets() {
       {/* Modals */}
       <FeatureNotAvailableModal isOpen={featureModalOpen} onClose={() => setFeatureModalOpen(false)} />
       <AddAssetModal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)} />
+
+      {/* Backdrop — closes open dropdowns on outside click */}
+      {(filterOpen || sortOpen) && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 99 }}
+          onClick={closeDropdowns}
+        />
+      )}
     </div>
   );
 }
@@ -469,4 +535,117 @@ function iconBtnStyle(bg: string): React.CSSProperties {
     padding: 0,
     flexShrink: 0,
   };
+}
+
+// ── CategoryFilterDropdown ────────────────────────────────────────────────────
+
+function CategoryFilterDropdown({
+  open,
+  onToggle,
+  categories,
+  active,
+  onToggleCategory,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  categories: string[];
+  active: string[];
+  onToggleCategory: (cat: string) => void;
+}) {
+  const hasActive = active.length > 0;
+  return (
+    <div style={{ position: 'relative', zIndex: 100 }}>
+      <button
+        onClick={onToggle}
+        title="Filter by category"
+        style={{
+          width: '2.125rem',
+          height: '2.125rem',
+          borderRadius: radius.md,
+          border: `1px solid ${open || hasActive ? colors.primary : 'rgba(70, 98, 145, 0.2)'}`,
+          backgroundColor: open || hasActive ? 'rgba(46,124,253,0.06)' : '#ffffff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          color: open || hasActive ? colors.primary : colors.blueGrayMd,
+          position: 'relative',
+          flexShrink: 0,
+          transition: 'all 0.15s ease',
+        }}
+      >
+        <Filter size={15} />
+        {hasActive && (
+          <span
+            style={{
+              position: 'absolute',
+              top: '0.2rem',
+              right: '0.2rem',
+              width: '0.4rem',
+              height: '0.4rem',
+              borderRadius: '50%',
+              backgroundColor: colors.primary,
+            }}
+          />
+        )}
+      </button>
+
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '2.5rem',
+            right: 0,
+            minWidth: '13rem',
+            backgroundColor: '#ffffff',
+            borderRadius: radius.lg,
+            border: '1px solid rgba(70,98,145,0.14)',
+            boxShadow: '0 0.5rem 2rem rgba(3,12,35,0.12)',
+            padding: spacing.md,
+            zIndex: 100,
+          }}
+        >
+          <p
+            style={{
+              margin: `0 0 ${spacing.sm}`,
+              fontFamily: "'Roboto', sans-serif",
+              fontSize: '0.719rem',
+              fontWeight: 700,
+              color: colors.blueGrayMd,
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase' as const,
+            }}
+          >
+            Category
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.xs }}>
+            {categories.map(cat => {
+              const isActive = active.includes(cat);
+              return (
+                <button
+                  key={cat}
+                  onClick={() => onToggleCategory(cat)}
+                  style={{
+                    padding: `0.2rem ${spacing.sm}`,
+                    borderRadius: radius.full,
+                    border: `1px solid ${isActive ? colors.primary : 'rgba(70,98,145,0.25)'}`,
+                    backgroundColor: isActive ? colors.primary : 'transparent',
+                    color: isActive ? '#ffffff' : colors.blueGrayMd,
+                    fontFamily: "'Archivo', sans-serif",
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'background-color 0.15s, color 0.15s',
+                  }}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

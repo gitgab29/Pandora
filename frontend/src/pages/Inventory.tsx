@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
-import { Trash2, Pencil, RefreshCw, Plus, Download, AlertTriangle } from 'lucide-react';
+import { Trash2, Pencil, Plus, Download, AlertTriangle, Filter } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import StatisticCard from '../components/StatisticCard';
 import SearchBar from '../components/SearchBar';
 import Pagination from '../components/Pagination';
+import SortDropdown from '../components/SortDropdown';
 import FeatureNotAvailableModal from '../components/FeatureNotAvailableModal';
 import AddInventoryModal from '../components/AddInventoryModal';
 import { colors, spacing, radius } from '../theme';
@@ -52,6 +53,16 @@ const STAT_CARDS = [
 type FilterTab = 'All' | 'Low Stock' | 'Out of Stock';
 const FILTER_TABS: FilterTab[] = ['All', 'Low Stock', 'Out of Stock'];
 
+const ALL_INV_CATEGORIES = [...new Set(DUMMY_INVENTORY.map(i => i.category ?? '').filter(Boolean))].sort();
+const ALL_DEPARTMENTS    = [...new Set(DUMMY_INVENTORY.map(i => i.department ?? '').filter(Boolean))].sort();
+const ALL_LOCATIONS      = [...new Set(DUMMY_INVENTORY.map(i => (i.location ?? '').split(',')[0].trim()).filter(Boolean))].sort();
+
+const INV_SORT_OPTIONS = [
+  'Name (A–Z)', 'Name (Z–A)',
+  'Qty (High–Low)', 'Qty (Low–High)',
+  'Date Added (Newest)', 'Date Added (Oldest)',
+];
+
 const ROWS_PER_PAGE = 10;
 
 // ── Table cell styles ─────────────────────────────────────────────────────────
@@ -89,11 +100,23 @@ export default function Inventory() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [featureModalOpen, setFeatureModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState('');
+  const [activeFilters, setActiveFilters] = useState<{ departments: string[]; locations: string[] }>({ departments: [], locations: [] });
+  const [activeSort, setActiveSort] = useState('Name (A–Z)');
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [sortOpen, setSortOpen] = useState(false);
 
   const filtered = useMemo(() => {
     let items = DUMMY_INVENTORY;
+    // Status tab
     if (activeTab === 'Low Stock')    items = items.filter(i => i.quantity_available > 0 && i.quantity_available < i.min_quantity);
     if (activeTab === 'Out of Stock') items = items.filter(i => i.quantity_available === 0);
+    // Category tab
+    if (activeCategory) items = items.filter(i => i.category === activeCategory);
+    // Dept + Location filters
+    if (activeFilters.departments.length > 0) items = items.filter(i => activeFilters.departments.includes(i.department ?? ''));
+    if (activeFilters.locations.length > 0)   items = items.filter(i => activeFilters.locations.includes((i.location ?? '').split(',')[0].trim()));
+    // Search
     const q = search.toLowerCase().trim();
     if (q) {
       items = items.filter(i =>
@@ -105,8 +128,16 @@ export default function Inventory() {
         (i.department ?? '').toLowerCase().includes(q),
       );
     }
-    return items;
-  }, [search, activeTab]);
+    // Sort
+    const sorted = [...items];
+    if (activeSort === 'Name (A–Z)')           sorted.sort((a, b) => a.item_name.localeCompare(b.item_name));
+    else if (activeSort === 'Name (Z–A)')       sorted.sort((a, b) => b.item_name.localeCompare(a.item_name));
+    else if (activeSort === 'Qty (High–Low)')   sorted.sort((a, b) => b.quantity_available - a.quantity_available);
+    else if (activeSort === 'Qty (Low–High)')   sorted.sort((a, b) => a.quantity_available - b.quantity_available);
+    else if (activeSort === 'Date Added (Newest)') sorted.sort((a, b) => b.created_at.localeCompare(a.created_at));
+    else if (activeSort === 'Date Added (Oldest)') sorted.sort((a, b) => a.created_at.localeCompare(b.created_at));
+    return sorted;
+  }, [search, activeTab, activeCategory, activeFilters, activeSort]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
   const pageItems  = filtered.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE);
@@ -140,6 +171,8 @@ export default function Inventory() {
   };
 
   const showFeatureModal = () => setFeatureModalOpen(true);
+
+  const closeDropdowns = () => { setFilterOpen(false); setSortOpen(false); };
 
   return (
     <div
@@ -189,14 +222,14 @@ export default function Inventory() {
             <div
               style={{
                 padding: `${spacing.md} ${spacing.xl}`,
-                borderBottom: '1px solid rgba(70, 98, 145, 0.1)',
+                borderBottom: '1px solid rgba(70, 98, 145, 0.08)',
                 display: 'flex',
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: spacing.md,
               }}
             >
-              {/* Left: title + filter tabs */}
+              {/* Left: title + status filter tabs */}
               <div style={{ display: 'flex', alignItems: 'center', gap: spacing.md, flex: 1, flexWrap: 'wrap' }}>
                 <span
                   style={{
@@ -239,9 +272,41 @@ export default function Inventory() {
                 </div>
               </div>
 
-              {/* Right: search + export + new */}
+              {/* Right: search + filter + sort + export + new */}
               <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
                 <SearchBar value={search} onChange={handleSearch} placeholder="Search items…" />
+                <InventoryFilterDropdown
+                  open={filterOpen}
+                  onToggle={() => { setFilterOpen(o => !o); setSortOpen(false); }}
+                  departments={ALL_DEPARTMENTS}
+                  locations={ALL_LOCATIONS}
+                  active={activeFilters}
+                  onToggleDept={(d) => {
+                    setActiveFilters(prev => ({
+                      ...prev,
+                      departments: prev.departments.includes(d)
+                        ? prev.departments.filter(x => x !== d)
+                        : [...prev.departments, d],
+                    }));
+                    setCurrentPage(1);
+                  }}
+                  onToggleLoc={(l) => {
+                    setActiveFilters(prev => ({
+                      ...prev,
+                      locations: prev.locations.includes(l)
+                        ? prev.locations.filter(x => x !== l)
+                        : [...prev.locations, l],
+                    }));
+                    setCurrentPage(1);
+                  }}
+                />
+                <SortDropdown
+                  open={sortOpen}
+                  onToggle={() => { setSortOpen(o => !o); setFilterOpen(false); }}
+                  options={INV_SORT_OPTIONS}
+                  activeSort={activeSort}
+                  onSortChange={(opt) => { setActiveSort(opt); setSortOpen(false); setCurrentPage(1); }}
+                />
                 <button
                   onClick={showFeatureModal}
                   style={{
@@ -283,6 +348,58 @@ export default function Inventory() {
               </div>
             </div>
 
+            {/* Category tabs row */}
+            <div
+              style={{
+                padding: `${spacing.sm} ${spacing.xl}`,
+                borderBottom: '1px solid rgba(70, 98, 145, 0.1)',
+                display: 'flex',
+                gap: spacing.xs,
+                flexWrap: 'wrap',
+                alignItems: 'center',
+              }}
+            >
+              <button
+                onClick={() => { setActiveCategory(''); setCurrentPage(1); }}
+                style={{
+                  padding: `0.2rem ${spacing.md}`,
+                  borderRadius: radius.full,
+                  border: activeCategory === '' ? 'none' : '1px solid rgba(70,98,145,0.25)',
+                  backgroundColor: activeCategory === '' ? colors.primary : 'transparent',
+                  color: activeCategory === '' ? '#ffffff' : colors.blueGrayMd,
+                  fontFamily: "'Archivo', sans-serif",
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  transition: 'background-color 0.15s, color 0.15s',
+                }}
+              >
+                All
+              </button>
+              {ALL_INV_CATEGORIES.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => { setActiveCategory(activeCategory === cat ? '' : cat); setCurrentPage(1); }}
+                  style={{
+                    padding: `0.2rem ${spacing.md}`,
+                    borderRadius: radius.full,
+                    border: activeCategory === cat ? 'none' : '1px solid rgba(70,98,145,0.25)',
+                    backgroundColor: activeCategory === cat ? colors.primary : 'transparent',
+                    color: activeCategory === cat ? '#ffffff' : colors.blueGrayMd,
+                    fontFamily: "'Archivo', sans-serif",
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'background-color 0.15s, color 0.15s',
+                  }}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
             {/* Table */}
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -296,6 +413,7 @@ export default function Inventory() {
                         style={{ cursor: 'pointer', accentColor: colors.primary }}
                       />
                     </th>
+                    <th style={{ ...TH, width: '3.25rem', padding: '0.625rem 0.5rem' }} />
                     <th style={TH}>Item Name</th>
                     <th style={TH}>Model Number</th>
                     <th style={TH}>Category</th>
@@ -310,7 +428,7 @@ export default function Inventory() {
                   {pageItems.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={9}
+                        colSpan={10}
                         style={{
                           ...TD,
                           textAlign: 'center',
@@ -338,6 +456,21 @@ export default function Inventory() {
                               checked={selectedIds.has(item.id)}
                               onChange={() => toggleRow(item.id)}
                               style={{ cursor: 'pointer', accentColor: colors.primary }}
+                            />
+                          </td>
+
+                          {/* Thumbnail */}
+                          <td style={{ ...TD, width: '3.25rem', padding: '0.5rem 0.5rem' }}>
+                            <img
+                              src={`https://picsum.photos/seed/inventory-${item.id}/32/32`}
+                              alt=""
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: radius.sm,
+                                border: '1px solid rgba(70,98,145,0.1)',
+                                display: 'block',
+                              }}
                             />
                           </td>
 
@@ -425,27 +558,52 @@ export default function Inventory() {
                                 <Pencil size={11} />
                               </button>
 
-                              {/* Restock */}
+                              {/* Check In */}
                               <button
                                 onClick={showFeatureModal}
                                 style={{
                                   display: 'inline-flex',
                                   alignItems: 'center',
-                                  gap: '0.2rem',
-                                  padding: `0.2rem 0.625rem`,
+                                  justifyContent: 'center',
+                                  width: '5.5rem',
+                                  padding: `0.2rem 0`,
                                   borderRadius: radius.full,
                                   border: 'none',
-                                  backgroundColor: colors.primary,
+                                  backgroundColor: '#22c55e',
                                   color: '#ffffff',
                                   fontFamily: "'Archivo', sans-serif",
                                   fontSize: '0.6875rem',
                                   fontWeight: 700,
                                   cursor: 'pointer',
                                   whiteSpace: 'nowrap',
+                                  flexShrink: 0,
                                 }}
                               >
-                                <RefreshCw size={9} />
-                                Restock
+                                Check In
+                              </button>
+
+                              {/* Check Out */}
+                              <button
+                                onClick={showFeatureModal}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  width: '5.5rem',
+                                  padding: `0.2rem 0`,
+                                  borderRadius: radius.full,
+                                  border: 'none',
+                                  backgroundColor: colors.orangeAccent,
+                                  color: '#ffffff',
+                                  fontFamily: "'Archivo', sans-serif",
+                                  fontSize: '0.6875rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  whiteSpace: 'nowrap',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                Check Out
                               </button>
                             </div>
                           </td>
@@ -468,6 +626,14 @@ export default function Inventory() {
       {/* Modals */}
       <FeatureNotAvailableModal isOpen={featureModalOpen} onClose={() => setFeatureModalOpen(false)} />
       <AddInventoryModal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)} />
+
+      {/* Backdrop — closes open dropdowns on outside click */}
+      {(filterOpen || sortOpen) && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 99 }}
+          onClick={closeDropdowns}
+        />
+      )}
     </div>
   );
 }
@@ -489,4 +655,161 @@ function iconBtnStyle(bg: string): React.CSSProperties {
     padding: 0,
     flexShrink: 0,
   };
+}
+
+// ── InventoryFilterDropdown ───────────────────────────────────────────────────
+
+function InventoryFilterDropdown({
+  open,
+  onToggle,
+  departments,
+  locations,
+  active,
+  onToggleDept,
+  onToggleLoc,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  departments: string[];
+  locations: string[];
+  active: { departments: string[]; locations: string[] };
+  onToggleDept: (d: string) => void;
+  onToggleLoc: (l: string) => void;
+}) {
+  const hasActive = active.departments.length > 0 || active.locations.length > 0;
+  return (
+    <div style={{ position: 'relative', zIndex: 100 }}>
+      <button
+        onClick={onToggle}
+        title="Filter by department or location"
+        style={{
+          width: '2.125rem',
+          height: '2.125rem',
+          borderRadius: radius.md,
+          border: `1px solid ${open || hasActive ? colors.primary : 'rgba(70, 98, 145, 0.2)'}`,
+          backgroundColor: open || hasActive ? 'rgba(46,124,253,0.06)' : '#ffffff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          color: open || hasActive ? colors.primary : colors.blueGrayMd,
+          position: 'relative',
+          flexShrink: 0,
+          transition: 'all 0.15s ease',
+        }}
+      >
+        <Filter size={15} />
+        {hasActive && (
+          <span
+            style={{
+              position: 'absolute',
+              top: '0.2rem',
+              right: '0.2rem',
+              width: '0.4rem',
+              height: '0.4rem',
+              borderRadius: '50%',
+              backgroundColor: colors.primary,
+            }}
+          />
+        )}
+      </button>
+
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '2.5rem',
+            right: 0,
+            width: '16rem',
+            backgroundColor: '#ffffff',
+            borderRadius: radius.lg,
+            border: '1px solid rgba(70,98,145,0.14)',
+            boxShadow: '0 0.5rem 2rem rgba(3,12,35,0.12)',
+            padding: spacing.md,
+            zIndex: 100,
+          }}
+        >
+          <p
+            style={{
+              margin: `0 0 ${spacing.sm}`,
+              fontFamily: "'Roboto', sans-serif",
+              fontSize: '0.719rem',
+              fontWeight: 700,
+              color: colors.blueGrayMd,
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase' as const,
+            }}
+          >
+            Department
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.xs, marginBottom: spacing.md }}>
+            {departments.map(d => {
+              const isActive = active.departments.includes(d);
+              return (
+                <button
+                  key={d}
+                  onClick={() => onToggleDept(d)}
+                  style={{
+                    padding: `0.2rem ${spacing.sm}`,
+                    borderRadius: radius.full,
+                    border: `1px solid ${isActive ? colors.primary : 'rgba(70,98,145,0.25)'}`,
+                    backgroundColor: isActive ? colors.primary : 'transparent',
+                    color: isActive ? '#ffffff' : colors.blueGrayMd,
+                    fontFamily: "'Archivo', sans-serif",
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'background-color 0.15s, color 0.15s',
+                  }}
+                >
+                  {d}
+                </button>
+              );
+            })}
+          </div>
+
+          <p
+            style={{
+              margin: `0 0 ${spacing.sm}`,
+              fontFamily: "'Roboto', sans-serif",
+              fontSize: '0.719rem',
+              fontWeight: 700,
+              color: colors.blueGrayMd,
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase' as const,
+            }}
+          >
+            Location
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.xs }}>
+            {locations.map(l => {
+              const isActive = active.locations.includes(l);
+              return (
+                <button
+                  key={l}
+                  onClick={() => onToggleLoc(l)}
+                  style={{
+                    padding: `0.2rem ${spacing.sm}`,
+                    borderRadius: radius.full,
+                    border: `1px solid ${isActive ? colors.primary : 'rgba(70,98,145,0.25)'}`,
+                    backgroundColor: isActive ? colors.primary : 'transparent',
+                    color: isActive ? '#ffffff' : colors.blueGrayMd,
+                    fontFamily: "'Archivo', sans-serif",
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'background-color 0.15s, color 0.15s',
+                  }}
+                >
+                  {l}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
