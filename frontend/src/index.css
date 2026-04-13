@@ -7,3 +7,10 @@ body {
   color: #030c23;
   font-family: 'Archivo', sans-serif;
 }
+
+/* Auth screens — blue side panel hides on small screens */
+@media (max-width: 768px) {
+  .auth-blue-panel {
+    display: none !important;
+  }
+}

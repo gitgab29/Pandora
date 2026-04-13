@@ -226,8 +226,24 @@ cd backend && source .venv/bin/activate && python manage.py runserver
 - [x] SQLite local dev DB; `DATABASE_URL` env var for PostgreSQL in prod
 - [x] `requirements.txt` generated
 - [x] Initial Django migrations applied
+- [x] `react-router-dom` installed; routing wired in `App.tsx`
+- [x] **Sign In page** (`/sign-in`) — Google-only auth, split card (form left / blue brand right), logo, underline decoration, responsive (blue panel hidden ≤768px)
+- [x] **Sign Up page** (`/sign-up`) — two-step flow: Step 1 Google OAuth → Step 2 profile form; split card (blue brand left / form right); all 7 fields required (firstName, lastName, title, location, department, badgeNumber, manager); manager field is a combobox with dummy data
+- [x] **`src/components/Button.tsx`** — `primary`, `google`, `ghost` variants; loading spinner; disabled state
+- [x] **`src/components/Input.tsx`** — label, focus/error border states
+- [x] **`src/types/auth.ts`** — `GoogleUser` and `SignUpFormData` interfaces
+- [x] Logo assets in `public/` — `primary-logo-with-text.svg`, `whtie-logo-with-text.svg` (+ only variants)
+- [x] Auth background image — `public/bg-auth.jpg` (sky/clouds photo from Figma)
+
+### Auth Flow — Implementation Notes
+- Google OAuth is **mocked** on the frontend (simulates a successful login with dummy data). Wire up by replacing the `handleGoogleSignIn` / `handleGoogleSignUp` click handlers with a redirect to `/api/auth/google/login` once the Django backend OAuth endpoint is ready.
+- After Google auth, the Sign Up flow collects the profile and should `POST /api/users/register` with the form data + the Google-issued token.
+- `manager` field stores a name string for now (dummy data). Replace `DUMMY_MANAGERS` in `SignUp.tsx` with a `GET /api/users/` call and resolve to a `manager_id` FK on submit.
 
 ### Next Up
 - [ ] Define models in `backend/api/models.py` (User, Asset, StoreroomInventory, TransactionLog)
 - [ ] Write serializers and views for each model
-- [ ] Build frontend pages and components per Figma designs
+- [ ] Implement Google OAuth on the Django backend (`/api/auth/google/`) and issue JWT on success
+- [ ] Wire frontend auth handlers to real OAuth endpoints
+- [ ] Add protected route wrapper (redirect to `/sign-in` if no valid JWT)
+- [ ] Build main app pages and components per Figma designs (dashboard, assets, inventory, people, activity)
