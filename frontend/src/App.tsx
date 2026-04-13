@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 import Home from './pages/Home';
+import Assets from './pages/Assets';
+import Inventory from './pages/Inventory';
 import ComingSoon from './pages/ComingSoon';
 
 export default function App() {
@@ -11,8 +13,8 @@ export default function App() {
         <Route path="/sign-in" element={<SignIn />} />
         <Route path="/sign-up" element={<SignUp />} />
         <Route path="/home" element={<Home />} />
-        <Route path="/assets" element={<ComingSoon title="Assets" />} />
-        <Route path="/inventory" element={<ComingSoon title="Inventory" />} />
+        <Route path="/assets" element={<Assets />} />
+        <Route path="/inventory" element={<Inventory />} />
         <Route path="/licenses" element={<ComingSoon title="Licenses" />} />
         <Route path="/activity" element={<ComingSoon title="Activity" />} />
         <Route path="/people" element={<ComingSoon title="People" />} />

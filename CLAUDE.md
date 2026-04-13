@@ -248,6 +248,12 @@ cd backend && source .venv/bin/activate && python manage.py runserver
 - [x] **`src/pages/Home.tsx`** (`/home`) — full dashboard: `bg-auth.jpg` background, collapsible Sidebar, Header, 5 StatisticCards (dummy data), ActivityLogTable (68 dummy rows)
 - [x] **`src/pages/ComingSoon.tsx`** — generic page used by all stub routes; renders Sidebar + Header + centered "Coming Soon" text on `bg-auth.jpg` background
 - [x] All sidebar routes wired in `App.tsx`: `/assets`, `/inventory`, `/licenses`, `/activity`, `/people`, `/settings`, `/archive` → `ComingSoon`; default `*` redirects to `/home`
+- [x] **`src/types/asset.ts`** — `Asset` interface (all ERD fields), `AssetStatus` union, `AssetCategory` union, `AddAssetFormData`
+- [x] **`src/types/inventory.ts`** — `StoreroomInventory` interface (all ERD fields), `AddInventoryFormData`
+- [x] **`src/components/AddAssetModal.tsx`** — scrollable modal (max-w 42rem); 25 ERD fields in 4 sections (Basic Info, Assignment, Hardware Specs, Purchase Info, Notes); 2-col grid; text + select inputs with focus highlight; resets form on close; submit is a no-op until backend is ready
+- [x] **`src/components/AddInventoryModal.tsx`** — scrollable modal (max-w 38rem); 13 ERD fields in 4 sections (Item Details, Source, Location, Notes); same field patterns as AddAssetModal
+- [x] **`src/pages/Assets.tsx`** (`/assets`) — stat cards (Available 56 +66%, Deployed 18 -66%, To Audit 4); filter tabs (All Assets / Available / Deployed / In Repair / Retired / To Audit); table with checkbox, Item Name, Serial Number, Category, Current Holder, Status dot, row actions (Trash/Image/Edit icons + Check Out / Check In pill); Export → FeatureNotAvailableModal; New + → AddAssetModal; search + pagination; 25 dummy rows
+- [x] **`src/pages/Inventory.tsx`** (`/inventory`) — stat cards derived from dummy data (Total Items, Total Units, Low Stock, Out of Stock); filter tabs (All / Low Stock / Out of Stock) with contextual active colors (blue/orange/red); table with checkbox, Item Name (AlertTriangle icon for low/out stock), Model Number, Category badge, Qty Available (color-coded), Min Qty, Location, Dept, row actions (Trash/Edit icons + Restock pill); Export → modal; New + → AddInventoryModal; search + pagination; 20 dummy rows
 
 ### Layout conventions (app shell)
 - Every authenticated page uses `bg-auth.jpg` as the full-viewport background image (full opacity, no filter)
@@ -267,13 +273,26 @@ cd backend && source .venv/bin/activate && python manage.py runserver
 - Filter and Sort dropdowns are visual-only (dummy chips/options). Wire up when backend supports query params (e.g. `?type=Asset&sort=date_desc`).
 - Notification and Quick Access dropdowns in `Header.tsx` use hardcoded dummy data. Replace with real API calls when available.
 
+### Assets — Implementation Notes
+- Stat card values (Available 56, Deployed 18, To Audit 4) are hardcoded dummies. Replace with `GET /api/assets/stats/` or derive client-side from `GET /api/assets/` response.
+- 25 dummy rows defined inline in `Assets.tsx`. Replace with `GET /api/assets/` — pass `?status=<tab>` and `?search=<q>` as query params once backend supports filtering.
+- Row actions (Trash, Image, Edit, Check Out/In) all open `FeatureNotAvailableModal`. Wire each to its real endpoint when ready (`DELETE /api/assets/:id/`, `PATCH /api/assets/:id/`, `POST /api/assets/:id/checkout/`).
+- "New +" opens `AddAssetModal`; the submit handler is a no-op — wire to `POST /api/assets/` when backend is ready.
+
+### Inventory — Implementation Notes
+- Stat card values are derived from the 20 dummy rows at module load. Replace with `GET /api/inventory/stats/` or compute from API response.
+- 20 dummy rows defined inline in `Inventory.tsx`. Replace with `GET /api/inventory/` — pass `?filter=low_stock` / `?filter=out_of_stock` for tab filtering.
+- Row actions (Trash, Edit, Restock) all open `FeatureNotAvailableModal`. Wire to `DELETE /api/inventory/:id/`, `PATCH /api/inventory/:id/`, `PATCH /api/inventory/:id/restock/`.
+- "New +" opens `AddInventoryModal`; submit is a no-op — wire to `POST /api/inventory/` when backend is ready.
+
 ### Next Up
 - [ ] Define models in `backend/api/models.py` (User, Asset, StoreroomInventory, TransactionLog)
 - [ ] Write serializers and views for each model
 - [ ] Implement Google OAuth on the Django backend (`/api/auth/google/`) and issue JWT on success
 - [ ] Wire frontend auth handlers to real OAuth endpoints
 - [ ] Add protected route wrapper (redirect to `/sign-in` if no valid JWT)
+- [ ] Replace dummy Asset data with `GET /api/assets/` and wire all row actions
+- [ ] Replace dummy Inventory data with `GET /api/inventory/` and wire all row actions
 - [ ] Replace dummy Activity Log data with `GET /api/transactions/`
 - [ ] Replace dummy Header notifications with real endpoint
-- [ ] Wire Filter/Sort dropdowns to backend query params
-- [ ] Build out Assets, Inventory, Licenses, People, Activity, Settings, Archive pages per Figma designs
+- [ ] Build out Licenses, People, Activity, Settings, Archive pages per Figma designs
