@@ -234,11 +234,35 @@ cd backend && source .venv/bin/activate && python manage.py runserver
 - [x] **`src/types/auth.ts`** — `GoogleUser` and `SignUpFormData` interfaces
 - [x] Logo assets in `public/` — `primary-logo-with-text.svg`, `whtie-logo-with-text.svg` (+ only variants)
 - [x] Auth background image — `public/bg-auth.jpg` (sky/clouds photo from Figma)
+- [x] `lucide-react` installed — use for all icons throughout the app
+- [x] **`src/types/activity.ts`** — `TransactionLog` interface
+- [x] **`src/components/Sidebar.tsx`** — collapsible sidebar (220px ↔ 64px); `colors.primary` background (semi-transparent, `bg-auth.jpg` shows through); collapsed state shows only toggle chevron (no logo); orange badge dot on Archive; active item `rgba(255,255,255,0.2)` highlight
+- [x] **`src/components/Header.tsx`** — page title left; right: Quick Access dropdown (LayoutGrid icon), Notification dropdown (Bell icon with unread badge), avatar initials; both dropdowns have dummy data and close on backdrop click
+- [x] **`src/components/StatisticCard.tsx`** — title, large value, optional trend (TrendingUp/Down, green/red percentage)
+- [x] **`src/components/SearchBar.tsx`** — search icon, clear button, highlights border when active
+- [x] **`src/components/Pagination.tsx`** — Previous / page numbers with ellipsis / Next; active page in `primary` blue
+- [x] **`src/components/FeatureNotAvailableModal.tsx`** — modal matching Figma design (blue `!` circle, Cancel + Confirm pill buttons, backdrop close)
+- [x] **`src/pages/Home.tsx`** (`/home`) — full dashboard: `bg-auth.jpg` background, collapsible Sidebar, Header, 5 StatisticCards (dummy data), Activity Log table (68 dummy rows, 10/page), live search filtering, Filter dropdown (Type + Event chips), Sort dropdown (4 options with checkmark), functional Pagination
+- [x] **`src/pages/ComingSoon.tsx`** — generic page used by all stub routes; renders Sidebar + Header + centered "Coming Soon" text on `bg-auth.jpg` background
+- [x] All sidebar routes wired in `App.tsx`: `/assets`, `/inventory`, `/licenses`, `/activity`, `/people`, `/settings`, `/archive` → `ComingSoon`; default `*` redirects to `/home`
+
+### Layout conventions (app shell)
+- Every authenticated page uses `bg-auth.jpg` as the full-viewport background image (full opacity, no filter)
+- Sidebar: `rgba(46, 124, 253, 0.88)` — semi-transparent primary blue, `backdropFilter: blur(4px)`
+- Main content column: `rgba(244, 246, 249, 0.92)` — semi-transparent light gray
+- Header: `rgba(255, 255, 255, 0.95)` — near-solid white, `backdropFilter: blur(8px)`
+- Sidebar collapsed width: `64px` (icon/toggle only); expanded: `220px`
 
 ### Auth Flow — Implementation Notes
 - Google OAuth is **mocked** on the frontend (simulates a successful login with dummy data). Wire up by replacing the `handleGoogleSignIn` / `handleGoogleSignUp` click handlers with a redirect to `/api/auth/google/login` once the Django backend OAuth endpoint is ready.
 - After Google auth, the Sign Up flow collects the profile and should `POST /api/users/register` with the form data + the Google-issued token.
 - `manager` field stores a name string for now (dummy data). Replace `DUMMY_MANAGERS` in `SignUp.tsx` with a `GET /api/users/` call and resolve to a `manager_id` FK on submit.
+
+### Activity Log — Implementation Notes
+- 68 dummy rows generated at runtime in `Home.tsx` (`generateLogs()`). Replace with `GET /api/transactions/` when the backend endpoint is ready.
+- Search filters client-side across user, type, event, item, to/from, and notes fields.
+- Filter and Sort dropdowns are visual-only (dummy chips/options). Wire up when backend supports query params (e.g. `?type=Asset&sort=date_desc`).
+- Notification and Quick Access dropdowns in `Header.tsx` use hardcoded dummy data. Replace with real API calls when available.
 
 ### Next Up
 - [ ] Define models in `backend/api/models.py` (User, Asset, StoreroomInventory, TransactionLog)
@@ -246,4 +270,7 @@ cd backend && source .venv/bin/activate && python manage.py runserver
 - [ ] Implement Google OAuth on the Django backend (`/api/auth/google/`) and issue JWT on success
 - [ ] Wire frontend auth handlers to real OAuth endpoints
 - [ ] Add protected route wrapper (redirect to `/sign-in` if no valid JWT)
-- [ ] Build main app pages and components per Figma designs (dashboard, assets, inventory, people, activity)
+- [ ] Replace dummy Activity Log data with `GET /api/transactions/`
+- [ ] Replace dummy Header notifications with real endpoint
+- [ ] Wire Filter/Sort dropdowns to backend query params
+- [ ] Build out Assets, Inventory, Licenses, People, Activity, Settings, Archive pages per Figma designs
