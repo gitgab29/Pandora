@@ -1,0 +1,152 @@
+
+<style>
+#erd svg { width: 100%; }
+</style>
+<div id="erd" style="padding: 1rem 0;"></div>
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  fontFamily: '"Anthropic Sans", sans-serif',
+  themeVariables: {
+    darkMode: dark,
+    fontSize: '13px',
+    fontFamily: '"Anthropic Sans", sans-serif',
+    lineColor: dark ? '#9c9a92' : '#73726c',
+    textColor: dark ? '#c2c0b6' : '#3d3d3a',
+    primaryColor: dark ? '#3C3489' : '#EEEDFE',
+    primaryTextColor: dark ? '#CECBF6' : '#3C3489',
+    primaryBorderColor: dark ? '#7F77DD' : '#534AB7',
+    attributeBackgroundColorEven: dark ? '#2C2C2A' : '#F1EFE8',
+    attributeBackgroundColorOdd: dark ? '#444441' : '#FFFFFF',
+  },
+});
+
+const diagram = `erDiagram
+  USER {
+    UUID id PK
+    VARCHAR(255) first_name
+    VARCHAR(255) last_name
+    VARCHAR(255) email
+    VARCHAR(100) title
+    VARCHAR(255) location
+    VARCHAR(100) department
+    UUID manager_id FK "Self-ref to USER"
+    TEXT notes
+    VARCHAR(50) badge_number
+    VARCHAR(20) role "ADMIN | STAFF"
+    BOOLEAN is_active
+    TIMESTAMP created_at
+    TIMESTAMP updated_at
+  }
+
+  ASSET {
+    UUID id PK
+    VARCHAR(255) asset_name
+    VARCHAR(255) image_url
+    VARCHAR(100) asset_tag "Unique visible ID"
+    VARCHAR(50) category
+    VARCHAR(50) status "AVAILABLE | CHECKED_OUT | MAINTENANCE | RETIRED"
+    VARCHAR(255) serial_number
+    DATE warranty_expiry
+    DATE end_of_life
+    VARCHAR(100) order_number
+    DATE purchase_date
+    DECIMAL purchase_cost
+    DECIMAL depreciation_value
+    VARCHAR(100) manufacturer
+    VARCHAR(100) supplier
+    VARCHAR(255) location
+    VARCHAR(100) department
+    UUID assigned_to FK
+    TEXT notes
+    VARCHAR(20) group "PRODUCT | PARTS"
+    VARCHAR(20) imei_number
+    VARCHAR(20) ssd_encryption_status "ENCRYPTED | UNENCRYPTED | N/A"
+    VARCHAR(100) connectivity
+    VARCHAR(100) cpu
+    VARCHAR(100) gpu
+    VARCHAR(100) operating_system
+    VARCHAR(50) ram
+    VARCHAR(10) screen_size
+    VARCHAR(50) storage_size
+    JSONB metadata
+    TIMESTAMP created_at
+    TIMESTAMP updated_at
+  }
+
+  STOREROOM_INVENTORY {
+    UUID id PK
+    VARCHAR(255) item_name
+    VARCHAR(255) image_url
+    INTEGER quantity_available
+    VARCHAR(100) model_number
+    DATE purchase_date
+    DECIMAL unit_cost
+    DECIMAL total_cost
+    VARCHAR(100) order_number
+    INTEGER min_quantity "Low stock threshold"
+    VARCHAR(50) category
+    VARCHAR(100) manufacturer
+    VARCHAR(100) supplier
+    VARCHAR(255) location
+    VARCHAR(100) department
+    TEXT notes
+    TIMESTAMP created_at
+    TIMESTAMP updated_at
+  }
+
+  TRANSACTION_LOG {
+    UUID id PK
+    TIMESTAMP transaction_date
+    UUID performed_by FK "User who acted"
+    VARCHAR(30) transaction_type "CHECK_OUT | CHECK_IN | TRANSFER | ADJUSTMENT"
+    TEXT event_description
+    UUID asset_id FK "Nullable if storeroom"
+    UUID storeroom_item_id FK "Nullable if asset"
+    UUID to_user_id FK "Assigned to"
+    UUID from_user_id FK "Returned from"
+    INTEGER quantity
+    TEXT notes
+    TIMESTAMP created_at
+  }
+
+  USER ||--o{ USER : "manages"
+  USER ||--o{ ASSET : "assigned to"
+  USER ||--o{ TRANSACTION_LOG : "performed by"
+  USER ||--o{ TRANSACTION_LOG : "to user"
+  USER ||--o{ TRANSACTION_LOG : "from user"
+  ASSET ||--o{ TRANSACTION_LOG : "logged in"
+  STOREROOM_INVENTORY ||--o{ TRANSACTION_LOG : "logged in"
+`;
+
+const { svg } = await mermaid.render('erd-svg', diagram);
+document.getElementById('erd').innerHTML = svg;
+
+document.querySelectorAll('#erd svg .node').forEach(node => {
+  const firstPath = node.querySelector('path[d]');
+  if (!firstPath) return;
+  const d = firstPath.getAttribute('d');
+  const nums = d.match(/-?[\d.]+/g)?.map(Number);
+  if (!nums || nums.length < 8) return;
+  const xs = [nums[0], nums[2], nums[4], nums[6]];
+  const ys = [nums[1], nums[3], nums[5], nums[7]];
+  const x = Math.min(...xs), y = Math.min(...ys);
+  const w = Math.max(...xs) - x, h = Math.max(...ys) - y;
+  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  rect.setAttribute('x', x); rect.setAttribute('y', y);
+  rect.setAttribute('width', w); rect.setAttribute('height', h);
+  rect.setAttribute('rx', '8');
+  for (const a of ['fill', 'stroke', 'stroke-width', 'class', 'style']) {
+    if (firstPath.hasAttribute(a)) rect.setAttribute(a, firstPath.getAttribute(a));
+  }
+  firstPath.replaceWith(rect);
+});
+
+document.querySelectorAll('#erd svg .row-rect-odd path, #erd svg .row-rect-even path').forEach(p => {
+  p.setAttribute('stroke', 'none');
+});
+</script>
