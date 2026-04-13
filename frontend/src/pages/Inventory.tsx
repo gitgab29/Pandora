@@ -1,5 +1,9 @@
 import { useState, useMemo } from 'react';
-import { Trash2, Pencil, Plus, Download, AlertTriangle, Filter } from 'lucide-react';
+import {
+  Trash2, Pencil, Plus, Download, AlertTriangle, Filter,
+  Cable, Plug, Keyboard, Mouse, Headphones, Zap, HardDrive,
+  MemoryStick, Monitor, Package,
+} from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import StatisticCard from '../components/StatisticCard';
@@ -64,6 +68,45 @@ const INV_SORT_OPTIONS = [
 ];
 
 const ROWS_PER_PAGE = 10;
+
+// ── Category thumbnail ────────────────────────────────────────────────────────
+
+type CategoryKey = 'Cable' | 'Adapter' | 'Keyboard' | 'Mouse' | 'Headset' | 'Power Supply' | 'Storage' | 'RAM' | 'Monitor' | 'Other';
+
+const CATEGORY_META: Record<CategoryKey, { Icon: React.ElementType; bg: string; iconColor: string }> = {
+  'Cable':         { Icon: Cable,       bg: 'rgba(46,124,253,0.10)',  iconColor: colors.primary },
+  'Adapter':       { Icon: Plug,        bg: 'rgba(45,252,249,0.12)',  iconColor: '#0eb5b3' },
+  'Keyboard':      { Icon: Keyboard,    bg: 'rgba(46,124,253,0.10)',  iconColor: colors.primary },
+  'Mouse':         { Icon: Mouse,       bg: 'rgba(66,80,102,0.10)',   iconColor: colors.blueGrayDark },
+  'Headset':       { Icon: Headphones,  bg: 'rgba(252,156,45,0.12)',  iconColor: colors.orangeAccent },
+  'Power Supply':  { Icon: Zap,         bg: 'rgba(252,156,45,0.12)',  iconColor: colors.orangeAccent },
+  'Storage':       { Icon: HardDrive,   bg: 'rgba(46,124,253,0.10)',  iconColor: colors.primary },
+  'RAM':           { Icon: MemoryStick, bg: 'rgba(34,197,94,0.10)',   iconColor: '#22c55e' },
+  'Monitor':       { Icon: Monitor,     bg: 'rgba(70,98,145,0.10)',   iconColor: colors.blueGrayMd },
+  'Other':         { Icon: Package,     bg: 'rgba(66,80,102,0.10)',   iconColor: colors.blueGrayDark },
+};
+
+function CategoryThumbnail({ category }: { category: string | null | undefined }) {
+  const meta = CATEGORY_META[(category ?? 'Other') as CategoryKey] ?? CATEGORY_META['Other'];
+  const { Icon, bg, iconColor } = meta;
+  return (
+    <div
+      style={{
+        width: 32,
+        height: 32,
+        borderRadius: radius.sm,
+        backgroundColor: bg,
+        border: '1px solid rgba(70,98,145,0.1)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}
+    >
+      <Icon size={15} color={iconColor} strokeWidth={1.75} />
+    </div>
+  );
+}
 
 // ── Table cell styles ─────────────────────────────────────────────────────────
 
@@ -461,17 +504,7 @@ export default function Inventory() {
 
                           {/* Thumbnail */}
                           <td style={{ ...TD, width: '3.25rem', padding: '0.5rem 0.5rem' }}>
-                            <img
-                              src={`https://picsum.photos/seed/inventory-${item.id}/32/32`}
-                              alt=""
-                              style={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: radius.sm,
-                                border: '1px solid rgba(70,98,145,0.1)',
-                                display: 'block',
-                              }}
-                            />
+                            <CategoryThumbnail category={item.category} />
                           </td>
 
                           {/* Item Name */}
