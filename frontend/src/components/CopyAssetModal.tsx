@@ -1,0 +1,391 @@
+import { useState, useEffect } from 'react';
+import { X } from 'lucide-react';
+import { colors, spacing, radius } from '../theme';
+import type { Asset, AddAssetFormData, AssetStatus } from '../types/asset';
+
+interface CopyAssetModalProps {
+  isOpen: boolean;
+  asset: Asset | null;
+  onClose: () => void;
+  /** Called with form data — caller handles ID assignment */
+  onSave: (data: Omit<Asset, 'id' | 'created_at' | 'updated_at'>) => void;
+}
+
+const ASSET_STATUSES: AssetStatus[] = ['Available', 'Deployed', 'In Repair', 'Retired', 'To Audit'];
+const ASSET_CATEGORIES = ['Laptop', 'Phone', 'Tablet', 'PC', 'Monitor', 'Accessory', 'Other'];
+const SSD_OPTIONS = ['Enabled', 'Disabled', 'N/A'];
+
+// ── Shared field styles ───────────────────────────────────────────────────────
+
+const labelStyle: React.CSSProperties = {
+  fontFamily: "'Archivo', sans-serif",
+  fontSize: '0.6875rem',
+  fontWeight: 600,
+  color: colors.blueGrayMd,
+  letterSpacing: '0.04em',
+  textTransform: 'uppercase',
+  marginBottom: '0.2rem',
+  display: 'block',
+};
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '0.4375rem 0.625rem',
+  borderRadius: radius.md,
+  border: '1.5px solid #d1d5db',
+  fontFamily: "'Archivo', sans-serif",
+  fontSize: '0.8125rem',
+  color: colors.textPrimary,
+  backgroundColor: '#ffffff',
+  outline: 'none',
+  boxSizing: 'border-box',
+  transition: 'border-color 0.15s ease',
+};
+
+const sectionHeadStyle: React.CSSProperties = {
+  fontFamily: "'Roboto', sans-serif",
+  fontSize: '0.75rem',
+  fontWeight: 700,
+  color: colors.blueGrayDark,
+  letterSpacing: '0.05em',
+  textTransform: 'uppercase',
+  padding: `${spacing.md} 0 ${spacing.xs}`,
+  borderTop: '1px solid rgba(70,98,145,0.1)',
+  marginTop: spacing.md,
+};
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <label style={labelStyle}>{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function TextInput({
+  label, value, onChange, placeholder, type = 'text', error = false,
+}: {
+  label: string; value: string; onChange: (v: string) => void;
+  placeholder?: string; type?: string; error?: boolean;
+}) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <Field label={label}>
+      <input
+        type={type}
+        value={value}
+        placeholder={placeholder ?? label}
+        onChange={e => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={{
+          ...inputStyle,
+          borderColor: error ? '#ef4444' : focused ? colors.primary : '#d1d5db',
+        }}
+      />
+      {error && (
+        <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.6875rem', color: '#ef4444', marginTop: '0.15rem' }}>
+          This field is required
+        </span>
+      )}
+    </Field>
+  );
+}
+
+function SelectInput({
+  label, value, options, onChange, placeholder,
+}: {
+  label: string; value: string; options: string[]; onChange: (v: string) => void; placeholder?: string;
+}) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <Field label={label}>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={{
+          ...inputStyle,
+          borderColor: focused ? colors.primary : '#d1d5db',
+          appearance: 'none',
+          cursor: 'pointer',
+          backgroundColor: value ? '#ffffff' : '#fafafa',
+          color: value ? colors.textPrimary : '#9ca3af',
+        }}
+      >
+        <option value="">{placeholder ?? `Select ${label}`}</option>
+        {options.map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+    </Field>
+  );
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function assetToForm(a: Asset): AddAssetFormData {
+  return {
+    asset_name: a.asset_name,
+    asset_tag: '',          // must be unique — user fills in
+    category: a.category,
+    status: 'Available',    // copies start as Available
+    serial_number: '',      // must be unique — user fills in
+    warranty_expiry: a.warranty_expiry ?? '',
+    end_of_life: a.end_of_life ?? '',
+    order_number: a.order_number ?? '',
+    purchase_date: a.purchase_date ?? '',
+    purchase_cost: a.purchase_cost?.toString() ?? '',
+    depreciation_value: a.depreciation_value?.toString() ?? '',
+    manufacturer: a.manufacturer ?? '',
+    supplier: a.supplier ?? '',
+    location: a.location ?? '',
+    department: a.department ?? '',
+    assigned_to: '',
+    notes: a.notes ?? '',
+    group: a.group ?? '',
+    imei_number: '',
+    ssd_encryption_status: a.ssd_encryption_status ?? '',
+    connectivity: a.connectivity ?? '',
+    cpu: a.cpu ?? '',
+    gpu: a.gpu ?? '',
+    operating_system: a.operating_system ?? '',
+    ram: a.ram ?? '',
+    screen_size: a.screen_size ?? '',
+    storage_size: a.storage_size ?? '',
+  };
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
+export default function CopyAssetModal({ isOpen, asset, onClose, onSave }: CopyAssetModalProps) {
+  const [form, setForm] = useState<AddAssetFormData | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (asset) {
+      setForm(assetToForm(asset));
+      setSubmitted(false);
+    }
+  }, [asset]);
+
+  if (!isOpen || !asset || !form) return null;
+
+  const set = (key: keyof AddAssetFormData) => (v: string) =>
+    setForm(prev => prev ? { ...prev, [key]: v } : prev);
+
+  const handleSubmit = () => {
+    setSubmitted(true);
+    if (!form.asset_name.trim() || !form.serial_number.trim() || !form.asset_tag.trim()) return;
+
+    onSave({
+      asset_name: form.asset_name.trim(),
+      asset_tag: form.asset_tag.trim(),
+      category: form.category || asset.category,
+      status: (form.status as AssetStatus) || 'Available',
+      serial_number: form.serial_number.trim(),
+      warranty_expiry: form.warranty_expiry || undefined,
+      end_of_life: form.end_of_life || undefined,
+      order_number: form.order_number || undefined,
+      purchase_date: form.purchase_date || undefined,
+      purchase_cost: form.purchase_cost ? parseFloat(form.purchase_cost) : undefined,
+      depreciation_value: form.depreciation_value ? parseFloat(form.depreciation_value) : undefined,
+      manufacturer: form.manufacturer || undefined,
+      supplier: form.supplier || undefined,
+      location: form.location || undefined,
+      department: form.department || undefined,
+      assigned_to: form.assigned_to || undefined,
+      notes: form.notes || undefined,
+      group: form.group || undefined,
+      imei_number: form.imei_number || undefined,
+      ssd_encryption_status: (form.ssd_encryption_status as Asset['ssd_encryption_status']) || undefined,
+      connectivity: form.connectivity || undefined,
+      cpu: form.cpu || undefined,
+      gpu: form.gpu || undefined,
+      operating_system: form.operating_system || undefined,
+      ram: form.ram || undefined,
+      screen_size: form.screen_size || undefined,
+      storage_size: form.storage_size || undefined,
+    });
+    onClose();
+  };
+
+  const handleClose = () => {
+    setSubmitted(false);
+    onClose();
+  };
+
+  return (
+    <div
+      onClick={handleClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(3,12,35,0.45)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: spacing.xl,
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          backgroundColor: '#ffffff',
+          borderRadius: radius.xl,
+          width: '100%',
+          maxWidth: '42rem',
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 1.5rem 4rem rgba(3,12,35,0.18)',
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: `${spacing.xl} ${spacing.xl} ${spacing.md}`,
+            borderBottom: '1px solid rgba(70,98,145,0.1)',
+            flexShrink: 0,
+          }}
+        >
+          <div>
+            <h2 style={{ fontFamily: "'Roboto', sans-serif", fontSize: '1.0625rem', fontWeight: 700, color: colors.textPrimary, margin: 0 }}>
+              Copy Asset — {asset.asset_name}
+            </h2>
+            <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', color: colors.blueGrayMd, margin: `${spacing.xs} 0 0` }}>
+              Fields pre-filled from original. <span style={{ color: '#ef4444', fontWeight: 600 }}>Asset Tag and Serial Number must be unique.</span>
+            </p>
+          </div>
+          <button
+            onClick={handleClose}
+            style={{
+              width: '1.75rem', height: '1.75rem', borderRadius: radius.full,
+              backgroundColor: '#374151', border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#ffffff', padding: 0, flexShrink: 0,
+            }}
+          >
+            <X size={14} />
+          </button>
+        </div>
+
+        {/* Scrollable body */}
+        <div style={{ overflowY: 'auto', padding: `${spacing.sm} ${spacing.xl} ${spacing.xl}`, flex: 1 }}>
+
+          {/* ── Basic Information ── */}
+          <p style={sectionHeadStyle}>Basic Information</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <TextInput label="Asset Name *" value={form.asset_name} onChange={set('asset_name')} placeholder="e.g. MacBook Pro 14" error={submitted && !form.asset_name.trim()} />
+            </div>
+            <TextInput label="Asset Tag *" value={form.asset_tag} onChange={set('asset_tag')} placeholder="e.g. ES-0099 (must be unique)" error={submitted && !form.asset_tag.trim()} />
+            <TextInput label="Serial Number *" value={form.serial_number} onChange={set('serial_number')} placeholder="Enter new serial number" error={submitted && !form.serial_number.trim()} />
+            <SelectInput label="Category *" value={form.category} options={ASSET_CATEGORIES} onChange={set('category')} />
+            <SelectInput label="Status *" value={form.status} options={ASSET_STATUSES} onChange={set('status')} />
+          </div>
+
+          {/* ── Assignment ── */}
+          <p style={sectionHeadStyle}>Assignment</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
+            <TextInput label="Assigned To" value={form.assigned_to} onChange={set('assigned_to')} placeholder="e.g. Jane Smith" />
+            <TextInput label="Group" value={form.group} onChange={set('group')} placeholder="e.g. Engineering" />
+            <TextInput label="Department" value={form.department} onChange={set('department')} placeholder="e.g. IT" />
+            <TextInput label="Location" value={form.location} onChange={set('location')} placeholder="e.g. HQ - Floor 2" />
+          </div>
+
+          {/* ── Hardware Specifications ── */}
+          <p style={sectionHeadStyle}>Hardware Specifications</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
+            <TextInput label="CPU" value={form.cpu} onChange={set('cpu')} placeholder="e.g. Apple M3 Pro" />
+            <TextInput label="GPU" value={form.gpu} onChange={set('gpu')} placeholder="e.g. Apple M3 Pro 18-core" />
+            <TextInput label="RAM" value={form.ram} onChange={set('ram')} placeholder="e.g. 16 GB" />
+            <TextInput label="Storage Size" value={form.storage_size} onChange={set('storage_size')} placeholder="e.g. 512 GB SSD" />
+            <TextInput label="Screen Size" value={form.screen_size} onChange={set('screen_size')} placeholder="e.g. 14 inch" />
+            <TextInput label="Operating System" value={form.operating_system} onChange={set('operating_system')} placeholder="e.g. macOS 14" />
+            <TextInput label="Connectivity" value={form.connectivity} onChange={set('connectivity')} placeholder="e.g. Wi-Fi 6E, Bluetooth 5.3" />
+            <TextInput label="IMEI Number" value={form.imei_number} onChange={set('imei_number')} placeholder="For phones/tablets" />
+            <SelectInput label="SSD Encryption" value={form.ssd_encryption_status} options={SSD_OPTIONS} onChange={set('ssd_encryption_status')} placeholder="Select status" />
+          </div>
+
+          {/* ── Purchase Information ── */}
+          <p style={sectionHeadStyle}>Purchase Information</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
+            <TextInput label="Manufacturer" value={form.manufacturer} onChange={set('manufacturer')} placeholder="e.g. Apple" />
+            <TextInput label="Supplier" value={form.supplier} onChange={set('supplier')} placeholder="e.g. CDW" />
+            <TextInput label="Purchase Date" value={form.purchase_date} onChange={set('purchase_date')} type="date" />
+            <TextInput label="Purchase Cost ($)" value={form.purchase_cost} onChange={set('purchase_cost')} placeholder="e.g. 1299.00" type="number" />
+            <TextInput label="Depreciation Value ($)" value={form.depreciation_value} onChange={set('depreciation_value')} placeholder="e.g. 900.00" type="number" />
+            <TextInput label="Order Number" value={form.order_number} onChange={set('order_number')} placeholder="e.g. PO-2024-00123" />
+            <TextInput label="Warranty Expiry" value={form.warranty_expiry} onChange={set('warranty_expiry')} type="date" />
+            <TextInput label="End of Life" value={form.end_of_life} onChange={set('end_of_life')} type="date" />
+          </div>
+
+          {/* ── Notes ── */}
+          <p style={sectionHeadStyle}>Notes</p>
+          <div style={{ marginTop: spacing.sm }}>
+            <label style={labelStyle}>Notes</label>
+            <textarea
+              value={form.notes}
+              placeholder="Any additional notes…"
+              onChange={e => set('notes')(e.target.value)}
+              rows={3}
+              style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.5 }}
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: spacing.md,
+            padding: `${spacing.md} ${spacing.xl}`,
+            borderTop: '1px solid rgba(70,98,145,0.1)',
+            flexShrink: 0,
+          }}
+        >
+          <button
+            onClick={handleClose}
+            style={{
+              padding: `${spacing.sm} ${spacing.xl}`,
+              borderRadius: radius.full,
+              border: '1.5px solid #d1d5db',
+              backgroundColor: '#ffffff',
+              fontFamily: "'Archivo', sans-serif",
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              color: colors.textPrimary,
+              cursor: 'pointer',
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            style={{
+              padding: `${spacing.sm} ${spacing.xl}`,
+              borderRadius: radius.full,
+              border: 'none',
+              backgroundColor: colors.primary,
+              fontFamily: "'Archivo', sans-serif",
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              color: '#ffffff',
+              cursor: 'pointer',
+            }}
+          >
+            Create Copy
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

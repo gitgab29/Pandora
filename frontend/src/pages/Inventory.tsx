@@ -12,12 +12,16 @@ import Pagination from '../components/Pagination';
 import SortDropdown from '../components/SortDropdown';
 import FeatureNotAvailableModal from '../components/FeatureNotAvailableModal';
 import AddInventoryModal from '../components/AddInventoryModal';
+import DeleteConfirmModal from '../components/DeleteConfirmModal';
+import EditInventoryModal from '../components/EditInventoryModal';
+import InventoryCheckInModal from '../components/InventoryCheckInModal';
+import InventoryCheckOutModal from '../components/InventoryCheckOutModal';
 import { colors, spacing, radius } from '../theme';
 import type { StoreroomInventory } from '../types/inventory';
 
-// ── Dummy data ─────────────────────────────────────────────────────────────────
+// ── Initial dummy data ─────────────────────────────────────────────────────────
 
-const DUMMY_INVENTORY: StoreroomInventory[] = [
+const INITIAL_INVENTORY: StoreroomInventory[] = [
   { id:  1, item_name: 'USB-C Cable 2m',       category: 'Cable',        quantity_available: 24, min_quantity: 10, model_number: 'ANK-USB2M',   manufacturer: 'Anker',    supplier: 'Amazon Business', location: 'Storeroom A, Shelf 1', department: 'IT',       unit_cost: 12.99,  total_cost: 311.76, purchase_date: '2024-01-10', created_at: '2024-01-10', updated_at: '2024-01-10' },
   { id:  2, item_name: 'HDMI Cable 1.5m',      category: 'Cable',        quantity_available: 3,  min_quantity: 8,  model_number: 'HDMI-1M5-BK', manufacturer: 'Belkin',   supplier: 'CDW',             location: 'Storeroom A, Shelf 1', department: 'IT',       unit_cost: 9.99,   total_cost: 29.97,  purchase_date: '2024-01-12', created_at: '2024-01-12', updated_at: '2024-01-12' },
   { id:  3, item_name: 'USB-C to HDMI Adapter',category: 'Adapter',      quantity_available: 0,  min_quantity: 5,  model_number: 'UCA-HDMI-4K', manufacturer: 'Anker',    supplier: 'Amazon Business', location: 'Storeroom A, Shelf 2', department: 'IT',       unit_cost: 18.99,  total_cost: 0,      purchase_date: '2024-01-15', created_at: '2024-01-15', updated_at: '2024-01-15' },
@@ -40,26 +44,8 @@ const DUMMY_INVENTORY: StoreroomInventory[] = [
   { id: 20, item_name: 'Display Port Cable',   category: 'Cable',        quantity_available: 1,  min_quantity: 5,  model_number: 'DP-1M4-BLK',  manufacturer: 'Cable Matters', supplier: 'Amazon Business', location: 'Storeroom A, Shelf 1', department: 'IT', unit_cost: 11.99, total_cost: 11.99, purchase_date: '2024-04-05', created_at: '2024-04-05', updated_at: '2024-04-05' },
 ];
 
-// ── Derived stat values ────────────────────────────────────────────────────────
-
-const TOTAL_ITEMS = DUMMY_INVENTORY.length;
-const LOW_STOCK   = DUMMY_INVENTORY.filter(i => i.quantity_available > 0 && i.quantity_available < i.min_quantity).length;
-const OUT_OF_STOCK = DUMMY_INVENTORY.filter(i => i.quantity_available === 0).length;
-const TOTAL_UNITS  = DUMMY_INVENTORY.reduce((s, i) => s + i.quantity_available, 0);
-
-const STAT_CARDS = [
-  { title: 'Total Items',   value: TOTAL_ITEMS,  trend: { value: 12, direction: 'up'   as const } },
-  { title: 'Total Units',   value: TOTAL_UNITS,  trend: { value: 8,  direction: 'up'   as const } },
-  { title: 'Low Stock',     value: LOW_STOCK,    trend: { value: 25, direction: 'down' as const } },
-  { title: 'Out of Stock',  value: OUT_OF_STOCK },
-];
-
 type FilterTab = 'All' | 'Low Stock' | 'Out of Stock';
 const FILTER_TABS: FilterTab[] = ['All', 'Low Stock', 'Out of Stock'];
-
-const ALL_INV_CATEGORIES = [...new Set(DUMMY_INVENTORY.map(i => i.category ?? '').filter(Boolean))].sort();
-const ALL_DEPARTMENTS    = [...new Set(DUMMY_INVENTORY.map(i => i.department ?? '').filter(Boolean))].sort();
-const ALL_LOCATIONS      = [...new Set(DUMMY_INVENTORY.map(i => (i.location ?? '').split(',')[0].trim()).filter(Boolean))].sort();
 
 const INV_SORT_OPTIONS = [
   'Name (A–Z)', 'Name (Z–A)',
@@ -136,6 +122,7 @@ const TD: React.CSSProperties = {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function Inventory() {
+  const [inventory, setInventory] = useState<StoreroomInventory[]>(INITIAL_INVENTORY);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<FilterTab>('All');
@@ -149,8 +136,41 @@ export default function Inventory() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
 
+  // ── Modal targets ────────────────────────────────────────────────────────
+  const [deleteTarget,   setDeleteTarget]   = useState<StoreroomInventory | null>(null);
+  const [editTarget,     setEditTarget]     = useState<StoreroomInventory | null>(null);
+  const [checkInTarget,  setCheckInTarget]  = useState<StoreroomInventory | null>(null);
+  const [checkOutTarget, setCheckOutTarget] = useState<StoreroomInventory | null>(null);
+
+  // ── Derived data ─────────────────────────────────────────────────────────
+  const allInvCategories = useMemo(
+    () => [...new Set(inventory.map(i => i.category ?? '').filter(Boolean))].sort(),
+    [inventory],
+  );
+  const allDepartments = useMemo(
+    () => [...new Set(inventory.map(i => i.department ?? '').filter(Boolean))].sort(),
+    [inventory],
+  );
+  const allLocations = useMemo(
+    () => [...new Set(inventory.map(i => (i.location ?? '').split(',')[0].trim()).filter(Boolean))].sort(),
+    [inventory],
+  );
+
+  const statCards = useMemo(() => {
+    const totalItems   = inventory.length;
+    const lowStock     = inventory.filter(i => i.quantity_available > 0 && i.quantity_available < i.min_quantity).length;
+    const outOfStock   = inventory.filter(i => i.quantity_available === 0).length;
+    const totalUnits   = inventory.reduce((s, i) => s + i.quantity_available, 0);
+    return [
+      { title: 'Total Items',  value: totalItems,  trend: { value: 12, direction: 'up'   as const } },
+      { title: 'Total Units',  value: totalUnits,  trend: { value: 8,  direction: 'up'   as const } },
+      { title: 'Low Stock',    value: lowStock,    trend: { value: 25, direction: 'down' as const } },
+      { title: 'Out of Stock', value: outOfStock },
+    ];
+  }, [inventory]);
+
   const filtered = useMemo(() => {
-    let items = DUMMY_INVENTORY;
+    let items = inventory;
     // Status tab
     if (activeTab === 'Low Stock')    items = items.filter(i => i.quantity_available > 0 && i.quantity_available < i.min_quantity);
     if (activeTab === 'Out of Stock') items = items.filter(i => i.quantity_available === 0);
@@ -180,7 +200,7 @@ export default function Inventory() {
     else if (activeSort === 'Date Added (Newest)') sorted.sort((a, b) => b.created_at.localeCompare(a.created_at));
     else if (activeSort === 'Date Added (Oldest)') sorted.sort((a, b) => a.created_at.localeCompare(b.created_at));
     return sorted;
-  }, [search, activeTab, activeCategory, activeFilters, activeSort]);
+  }, [inventory, search, activeTab, activeCategory, activeFilters, activeSort]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
   const pageItems  = filtered.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE);
@@ -213,9 +233,40 @@ export default function Inventory() {
     });
   };
 
-  const showFeatureModal = () => setFeatureModalOpen(true);
-
   const closeDropdowns = () => { setFilterOpen(false); setSortOpen(false); };
+
+  // ── Action handlers ────────────────────────────────────────────────────────
+
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    // TODO: DELETE /api/inventory/:id/ + POST /api/transactions/ when backend is ready
+    setInventory(prev => prev.filter(i => i.id !== deleteTarget.id));
+    setSelectedIds(prev => { const n = new Set(prev); n.delete(deleteTarget.id); return n; });
+    setDeleteTarget(null);
+  };
+
+  const handleSaveEdit = (updated: StoreroomInventory) => {
+    // TODO: PATCH /api/inventory/:id/ + POST /api/transactions/ when backend is ready
+    setInventory(prev => prev.map(i => i.id === updated.id ? updated : i));
+  };
+
+  const handleCheckIn = (itemId: number, quantity: number, _notes: string) => {
+    // TODO: POST /api/inventory/:id/checkin/ + POST /api/transactions/ when backend is ready
+    setInventory(prev => prev.map(i =>
+      i.id === itemId
+        ? { ...i, quantity_available: i.quantity_available + quantity, updated_at: new Date().toISOString().split('T')[0] }
+        : i,
+    ));
+  };
+
+  const handleCheckOut = (itemId: number, quantity: number, _assignedTo: string, _notes: string) => {
+    // TODO: POST /api/inventory/:id/checkout/ + POST /api/transactions/ when backend is ready
+    setInventory(prev => prev.map(i =>
+      i.id === itemId
+        ? { ...i, quantity_available: Math.max(0, i.quantity_available - quantity), updated_at: new Date().toISOString().split('T')[0] }
+        : i,
+    ));
+  };
 
   return (
     <div
@@ -246,7 +297,7 @@ export default function Inventory() {
 
           {/* ── Stat cards ── */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.lg, marginBottom: spacing.xl2 }}>
-            {STAT_CARDS.map(card => (
+            {statCards.map(card => (
               <StatisticCard key={card.title} title={card.title} value={card.value} trend={card.trend} />
             ))}
           </div>
@@ -321,8 +372,8 @@ export default function Inventory() {
                 <InventoryFilterDropdown
                   open={filterOpen}
                   onToggle={() => { setFilterOpen(o => !o); setSortOpen(false); }}
-                  departments={ALL_DEPARTMENTS}
-                  locations={ALL_LOCATIONS}
+                  departments={allDepartments}
+                  locations={allLocations}
                   active={activeFilters}
                   onToggleDept={(d) => {
                     setActiveFilters(prev => ({
@@ -351,7 +402,7 @@ export default function Inventory() {
                   onSortChange={(opt) => { setActiveSort(opt); setSortOpen(false); setCurrentPage(1); }}
                 />
                 <button
-                  onClick={showFeatureModal}
+                  onClick={() => setFeatureModalOpen(true)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: spacing.xs,
                     padding: `0.375rem ${spacing.md}`,
@@ -420,7 +471,7 @@ export default function Inventory() {
               >
                 All
               </button>
-              {ALL_INV_CATEGORIES.map(cat => (
+              {allInvCategories.map(cat => (
                 <button
                   key={cat}
                   onClick={() => { setActiveCategory(activeCategory === cat ? '' : cat); setCurrentPage(1); }}
@@ -575,7 +626,7 @@ export default function Inventory() {
                             <div style={{ display: 'inline-flex', alignItems: 'center', gap: spacing.xs }}>
                               {/* Delete */}
                               <button
-                                onClick={showFeatureModal}
+                                onClick={() => setDeleteTarget(item)}
                                 title="Delete"
                                 style={iconBtnStyle('#ef4444')}
                               >
@@ -584,7 +635,7 @@ export default function Inventory() {
 
                               {/* Edit */}
                               <button
-                                onClick={showFeatureModal}
+                                onClick={() => setEditTarget(item)}
                                 title="Edit"
                                 style={iconBtnStyle(colors.blueGrayMd)}
                               >
@@ -593,7 +644,7 @@ export default function Inventory() {
 
                               {/* Check In */}
                               <button
-                                onClick={showFeatureModal}
+                                onClick={() => setCheckInTarget(item)}
                                 style={{
                                   display: 'inline-flex',
                                   alignItems: 'center',
@@ -617,7 +668,7 @@ export default function Inventory() {
 
                               {/* Check Out */}
                               <button
-                                onClick={showFeatureModal}
+                                onClick={() => setCheckOutTarget(item)}
                                 style={{
                                   display: 'inline-flex',
                                   alignItems: 'center',
@@ -656,9 +707,38 @@ export default function Inventory() {
         </main>
       </div>
 
-      {/* Modals */}
+      {/* ── Modals ── */}
       <FeatureNotAvailableModal isOpen={featureModalOpen} onClose={() => setFeatureModalOpen(false)} />
       <AddInventoryModal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)} />
+
+      <DeleteConfirmModal
+        isOpen={deleteTarget !== null}
+        itemName={deleteTarget?.item_name ?? ''}
+        itemType="Inventory Item"
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+      />
+
+      <EditInventoryModal
+        isOpen={editTarget !== null}
+        item={editTarget}
+        onClose={() => setEditTarget(null)}
+        onSave={handleSaveEdit}
+      />
+
+      <InventoryCheckInModal
+        isOpen={checkInTarget !== null}
+        item={checkInTarget}
+        onClose={() => setCheckInTarget(null)}
+        onConfirm={handleCheckIn}
+      />
+
+      <InventoryCheckOutModal
+        isOpen={checkOutTarget !== null}
+        item={checkOutTarget}
+        onClose={() => setCheckOutTarget(null)}
+        onConfirm={handleCheckOut}
+      />
 
       {/* Backdrop — closes open dropdowns on outside click */}
       {(filterOpen || sortOpen) && (

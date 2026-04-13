@@ -252,8 +252,16 @@ cd backend && source .venv/bin/activate && python manage.py runserver
 - [x] **`src/types/inventory.ts`** — `StoreroomInventory` interface (all ERD fields), `AddInventoryFormData`
 - [x] **`src/components/AddAssetModal.tsx`** — scrollable modal (max-w 42rem); 25 ERD fields in 4 sections (Basic Info, Assignment, Hardware Specs, Purchase Info, Notes); 2-col grid; text + select inputs with focus highlight; resets form on close; submit is a no-op until backend is ready
 - [x] **`src/components/AddInventoryModal.tsx`** — scrollable modal (max-w 38rem); 13 ERD fields in 4 sections (Item Details, Source, Location, Notes); same field patterns as AddAssetModal
-- [x] **`src/pages/Assets.tsx`** (`/assets`) — stat cards (Available 56 +66%, Deployed 18 -66%, To Audit 4); filter tabs (All Assets / Available / Deployed / In Repair / Retired / To Audit); table with checkbox, 32×32 thumbnail, Item Name, Serial Number, Category, Current Holder, Status dot, row actions (Trash / Copy / Edit icons + Check Out/Check In pill at `5.5rem`, `visibility:hidden` for non-applicable rows); inline `CategoryFilterDropdown` (chip panel, blue dot indicator when active); functional `SortDropdown` (Name A–Z/Z–A, Date Added Newest/Oldest, Status); backdrop closes dropdowns on outside click; Export → FeatureNotAvailableModal; New + → AddAssetModal; search + pagination; 25 dummy rows
-- [x] **`src/pages/Inventory.tsx`** (`/inventory`) — stat cards derived from dummy data (Total Items, Total Units, Low Stock, Out of Stock); status filter tabs (All / Low Stock / Out of Stock) with contextual active colors (blue/orange/red); category tabs row (derived from data, stacks with status tab); table with checkbox, 32×32 `CategoryThumbnail` (lucide-react icon + tinted bg per category — Cable/Adapter/Keyboard/Mouse/Headset/Power Supply/Storage/RAM/Monitor/Other), Item Name (AlertTriangle icon for low/out stock), Model Number, Category badge, Qty Available (color-coded), Min Qty, Location, Dept, row actions (Trash / Edit icons + Check In green `#22c55e` + Check Out orange `colors.orangeAccent` pills both at `5.5rem`); inline `InventoryFilterDropdown` (Department + Location chip groups, blue dot indicator when active); functional `SortDropdown` (Name A–Z/Z–A, Qty High–Low/Low–High, Date Added Newest/Oldest); useMemo stacks: statusTab → categoryTab → activeFilters → search → sort; backdrop closes dropdowns; Export → modal; New + → AddInventoryModal; search + pagination; 20 dummy rows
+- [x] **`src/pages/Assets.tsx`** (`/assets`) — stat cards (Available 56 +66%, Deployed 18 -66%, To Audit 4); filter tabs (All Assets / Available / Deployed / In Repair / Retired / To Audit); table with checkbox, 32×32 thumbnail, Item Name, Serial Number, Category, Current Holder, Status dot, row actions (Trash / Copy / Edit icons + Check Out/Check In pill at `5.5rem`, `visibility:hidden` for non-applicable rows); inline `CategoryFilterDropdown` (chip panel, blue dot indicator when active); functional `SortDropdown` (Name A–Z/Z–A, Date Added Newest/Oldest, Status); backdrop closes dropdowns on outside click; Export → FeatureNotAvailableModal; New + → AddAssetModal; search + pagination; 25 dummy rows stored in `useState` — all row actions update state immediately
+- [x] **`src/pages/Inventory.tsx`** (`/inventory`) — stat cards derived live from `useState` inventory via `useMemo` (Total Items, Total Units, Low Stock, Out of Stock); status filter tabs (All / Low Stock / Out of Stock) with contextual active colors (blue/orange/red); category tabs row (derived from data, stacks with status tab); table with checkbox, 32×32 `CategoryThumbnail` (lucide-react icon + tinted bg per category — Cable/Adapter/Keyboard/Mouse/Headset/Power Supply/Storage/RAM/Monitor/Other), Item Name (AlertTriangle icon for low/out stock), Model Number, Category badge, Qty Available (color-coded), Min Qty, Location, Dept, row actions (Trash / Edit icons + Check In green `#22c55e` + Check Out orange `colors.orangeAccent` pills both at `5.5rem`); inline `InventoryFilterDropdown` (Department + Location chip groups, blue dot indicator when active); functional `SortDropdown` (Name A–Z/Z–A, Qty High–Low/Low–High, Date Added Newest/Oldest); useMemo stacks: statusTab → categoryTab → activeFilters → search → sort; backdrop closes dropdowns; Export → modal; New + → AddInventoryModal; search + pagination; 20 dummy rows stored in `useState` — all row actions update state immediately
+- [x] **`src/components/DeleteConfirmModal.tsx`** — reusable delete confirmation; red Trash2 circle; user must type item name exactly to enable Delete button (red border on mismatch); accepts `itemName`, `itemType`, `onConfirm`
+- [x] **`src/components/EditAssetModal.tsx`** — scrollable form modal (max-w 42rem); same 5 sections as `AddAssetModal`; pre-populated via `useEffect` on `asset` prop; `onSave(updated: Asset)` callback
+- [x] **`src/components/CopyAssetModal.tsx`** — same form as `EditAssetModal`; `asset_tag` and `serial_number` cleared and required (red border + error message on submit if empty); `onSave` returns `Omit<Asset, 'id' | 'created_at' | 'updated_at'>`; page assigns new ID
+- [x] **`src/components/AssetCheckOutModal.tsx`** — green coloured header bar (LogOut icon); user picker from `DUMMY_USERS` (required, validated on submit); notes textarea; `onConfirm(assetId, assignedTo, notes)` → page sets status `Deployed`
+- [x] **`src/components/AssetCheckInModal.tsx`** — orange coloured header bar (LogIn icon); shows current holder in info banner; notes textarea; `onConfirm(assetId, notes)` → page sets status `Available`, clears `assigned_to`
+- [x] **`src/components/EditInventoryModal.tsx`** — scrollable form modal (max-w 38rem); same 4 sections as `AddInventoryModal`; pre-populated via `useEffect`; `onSave(updated: StoreroomInventory)` callback
+- [x] **`src/components/InventoryCheckInModal.tsx`** — green coloured header (PackagePlus icon); live "Current / After Check-In / Min Qty" counter row; quantity input (min 1, required); notes; `onConfirm(itemId, qty, notes)` → page adds to `quantity_available`
+- [x] **`src/components/InventoryCheckOutModal.tsx`** — orange coloured header (PackageMinus icon); live "Current / After Check-Out / Min Qty" counter row (color-coded: green/orange/red); user picker (required); quantity input (1–available, required); notes; disabled + out-of-stock banner when `quantity_available === 0`; `onConfirm(itemId, qty, assignedTo, notes)` → page deducts from `quantity_available`
 
 ### Layout conventions (app shell)
 - Every authenticated page uses `bg-auth.jpg` as the full-viewport background image (full opacity, no filter)
@@ -275,17 +283,19 @@ cd backend && source .venv/bin/activate && python manage.py runserver
 
 ### Assets — Implementation Notes
 - Stat card values (Available 56, Deployed 18, To Audit 4) are hardcoded dummies. Replace with `GET /api/assets/stats/` or derive client-side from `GET /api/assets/` response.
-- 25 dummy rows defined inline in `Assets.tsx`. Replace with `GET /api/assets/` — pass `?status=<tab>`, `?category=<cat>`, `?sort=<opt>`, and `?search=<q>` as query params once backend supports filtering.
+- 25 dummy rows live in `useState` (`INITIAL_ASSETS`). Replace initial state with `GET /api/assets/` — pass `?status=<tab>`, `?category=<cat>`, `?sort=<opt>`, and `?search=<q>` as query params once backend supports filtering.
 - Category filter and sort are applied client-side via `useMemo`. Move to server-side query params when backend is ready.
-- Row actions (Trash, Copy, Edit, Check Out/In) all open `FeatureNotAvailableModal`. Wire each to its real endpoint when ready (`DELETE /api/assets/:id/`, `POST /api/assets/:id/duplicate/`, `PATCH /api/assets/:id/`, `POST /api/assets/:id/checkout/`).
+- Row actions update local state immediately. Wire each to its real endpoint when ready: `DELETE /api/assets/:id/`, `POST /api/assets/:id/duplicate/`, `PATCH /api/assets/:id/`, `POST /api/assets/:id/checkout/`, `POST /api/assets/:id/checkin/` — each handler has a `// TODO: POST /api/transactions/` comment.
 - "New +" opens `AddAssetModal`; the submit handler is a no-op — wire to `POST /api/assets/` when backend is ready.
+- `DUMMY_USERS` list in `AssetCheckOutModal.tsx` — replace with `GET /api/users/` when backend is ready.
 
 ### Inventory — Implementation Notes
-- Stat card values are derived from the 20 dummy rows at module load. Replace with `GET /api/inventory/stats/` or compute from API response.
-- 20 dummy rows defined inline in `Inventory.tsx`. Replace with `GET /api/inventory/` — pass `?status=low_stock|out_of_stock`, `?category=<cat>`, `?department=<dept>`, `?location=<loc>`, `?sort=<opt>`, `?search=<q>` as query params once backend supports filtering.
+- Stat cards derived live from `useState` inventory via `useMemo`. Replace initial state with `GET /api/inventory/` response.
+- 20 dummy rows live in `useState` (`INITIAL_INVENTORY`). Replace with `GET /api/inventory/` — pass `?status=low_stock|out_of_stock`, `?category=<cat>`, `?department=<dept>`, `?location=<loc>`, `?sort=<opt>`, `?search=<q>` as query params once backend supports filtering.
 - Category tabs, dept/location filter, and sort are applied client-side via `useMemo`. Move to server-side query params when backend is ready.
-- Row actions (Trash, Edit, Check In, Check Out) all open `FeatureNotAvailableModal`. Wire to `DELETE /api/inventory/:id/`, `PATCH /api/inventory/:id/`, `POST /api/inventory/:id/checkin/`, `POST /api/inventory/:id/checkout/`.
+- Row actions update local state immediately. Wire to: `DELETE /api/inventory/:id/`, `PATCH /api/inventory/:id/`, `POST /api/inventory/:id/checkin/`, `POST /api/inventory/:id/checkout/` — each handler has a `// TODO: POST /api/transactions/` comment.
 - "New +" opens `AddInventoryModal`; submit is a no-op — wire to `POST /api/inventory/` when backend is ready.
+- `DUMMY_USERS` list in `InventoryCheckOutModal.tsx` — replace with `GET /api/users/` when backend is ready.
 
 ### Next Up
 - [ ] Define models in `backend/api/models.py` (User, Asset, StoreroomInventory, TransactionLog)
@@ -293,8 +303,9 @@ cd backend && source .venv/bin/activate && python manage.py runserver
 - [ ] Implement Google OAuth on the Django backend (`/api/auth/google/`) and issue JWT on success
 - [ ] Wire frontend auth handlers to real OAuth endpoints
 - [ ] Add protected route wrapper (redirect to `/sign-in` if no valid JWT)
-- [ ] Replace dummy Asset data with `GET /api/assets/` and wire all row actions
-- [ ] Replace dummy Inventory data with `GET /api/inventory/` and wire all row actions
+- [ ] Replace dummy Asset data with `GET /api/assets/` and wire all row action API calls
+- [ ] Replace dummy Inventory data with `GET /api/inventory/` and wire all row action API calls
+- [ ] Replace `DUMMY_USERS` in checkout modals with `GET /api/users/`
 - [ ] Replace dummy Activity Log data with `GET /api/transactions/`
 - [ ] Replace dummy Header notifications with real endpoint
 - [ ] Build out Licenses, People, Activity, Settings, Archive pages per Figma designs

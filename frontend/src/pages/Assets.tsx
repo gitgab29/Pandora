@@ -8,12 +8,17 @@ import Pagination from '../components/Pagination';
 import SortDropdown from '../components/SortDropdown';
 import FeatureNotAvailableModal from '../components/FeatureNotAvailableModal';
 import AddAssetModal from '../components/AddAssetModal';
+import DeleteConfirmModal from '../components/DeleteConfirmModal';
+import EditAssetModal from '../components/EditAssetModal';
+import CopyAssetModal from '../components/CopyAssetModal';
+import AssetCheckOutModal from '../components/AssetCheckOutModal';
+import AssetCheckInModal from '../components/AssetCheckInModal';
 import { colors, spacing, radius } from '../theme';
 import type { Asset, AssetStatus } from '../types/asset';
 
-// ── Dummy data ─────────────────────────────────────────────────────────────────
+// ── Initial dummy data ─────────────────────────────────────────────────────────
 
-const DUMMY_ASSETS: Asset[] = [
+const INITIAL_ASSETS: Asset[] = [
   { id:  1, asset_name: 'Asus Laptop',      asset_tag: 'ES-001', category: 'Laptop', status: 'Available', serial_number: 'q13411234ldsf',    assigned_to: undefined,           created_at: '2024-01-10', updated_at: '2024-01-10' },
   { id:  2, asset_name: 'MacBook Pro',       asset_tag: 'ES-002', category: 'Laptop', status: 'Deployed',  serial_number: '412345dsfq',        assigned_to: 'Lebron Jeymz',      created_at: '2024-01-12', updated_at: '2024-03-15' },
   { id:  3, asset_name: 'iPhone 15 Pro',     asset_tag: 'ES-003', category: 'Phone',  status: 'Available', serial_number: '14231asdfgasd',    assigned_to: undefined,           created_at: '2024-01-15', updated_at: '2024-01-15' },
@@ -63,8 +68,6 @@ const FILTER_TABS: Array<AssetStatus | 'All'> = [
   'All', 'Available', 'Deployed', 'In Repair', 'Retired', 'To Audit',
 ];
 
-const ALL_CATEGORIES = [...new Set(DUMMY_ASSETS.map(a => a.category))].sort();
-
 const SORT_OPTIONS = ['Name (A–Z)', 'Name (Z–A)', 'Date Added (Newest)', 'Date Added (Oldest)', 'Status'];
 
 const ROWS_PER_PAGE = 10;
@@ -97,6 +100,7 @@ const TD: React.CSSProperties = {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function Assets() {
+  const [assets, setAssets] = useState<Asset[]>(INITIAL_ASSETS);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<AssetStatus | 'All'>('All');
@@ -109,8 +113,21 @@ export default function Assets() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
 
+  // ── Modal targets ──────────────────────────────────────────────────────────
+  const [deleteTarget,   setDeleteTarget]   = useState<Asset | null>(null);
+  const [editTarget,     setEditTarget]     = useState<Asset | null>(null);
+  const [copyTarget,     setCopyTarget]     = useState<Asset | null>(null);
+  const [checkOutTarget, setCheckOutTarget] = useState<Asset | null>(null);
+  const [checkInTarget,  setCheckInTarget]  = useState<Asset | null>(null);
+
+  // ── Derived data ───────────────────────────────────────────────────────────
+  const allCategories = useMemo(
+    () => [...new Set(assets.map(a => a.category))].sort(),
+    [assets],
+  );
+
   const filtered = useMemo(() => {
-    let items = DUMMY_ASSETS;
+    let items = assets;
     if (activeTab !== 'All') items = items.filter(a => a.status === activeTab);
     if (activeCategories.length > 0) items = items.filter(a => activeCategories.includes(a.category));
     const q = search.toLowerCase().trim();
@@ -124,16 +141,18 @@ export default function Assets() {
       );
     }
     const sorted = [...items];
-    if (activeSort === 'Name (A–Z)')           sorted.sort((a, b) => a.asset_name.localeCompare(b.asset_name));
-    else if (activeSort === 'Name (Z–A)')       sorted.sort((a, b) => b.asset_name.localeCompare(a.asset_name));
+    if (activeSort === 'Name (A–Z)')              sorted.sort((a, b) => a.asset_name.localeCompare(b.asset_name));
+    else if (activeSort === 'Name (Z–A)')          sorted.sort((a, b) => b.asset_name.localeCompare(a.asset_name));
     else if (activeSort === 'Date Added (Newest)') sorted.sort((a, b) => b.created_at.localeCompare(a.created_at));
     else if (activeSort === 'Date Added (Oldest)') sorted.sort((a, b) => a.created_at.localeCompare(b.created_at));
-    else if (activeSort === 'Status')           sorted.sort((a, b) => a.status.localeCompare(b.status));
+    else if (activeSort === 'Status')              sorted.sort((a, b) => a.status.localeCompare(b.status));
     return sorted;
-  }, [search, activeTab, activeCategories, activeSort]);
+  }, [assets, search, activeTab, activeCategories, activeSort]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
-  const pageItems = filtered.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE);
+  const pageItems  = filtered.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE);
+
+  // ── Event handlers ─────────────────────────────────────────────────────────
 
   const handleTabChange = (tab: AssetStatus | 'All') => {
     setActiveTab(tab);
@@ -163,9 +182,43 @@ export default function Assets() {
     });
   };
 
-  const showFeatureModal = () => setFeatureModalOpen(true);
-
   const closeDropdowns = () => { setFilterOpen(false); setSortOpen(false); };
+
+  // ── Action handlers ────────────────────────────────────────────────────────
+
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    // TODO: DELETE /api/assets/:id/ + POST /api/transactions/ when backend is ready
+    setAssets(prev => prev.filter(a => a.id !== deleteTarget.id));
+    setSelectedIds(prev => { const n = new Set(prev); n.delete(deleteTarget.id); return n; });
+    setDeleteTarget(null);
+  };
+
+  const handleSaveEdit = (updated: Asset) => {
+    // TODO: PATCH /api/assets/:id/ + POST /api/transactions/ when backend is ready
+    setAssets(prev => prev.map(a => a.id === updated.id ? updated : a));
+  };
+
+  const handleSaveCopy = (data: Omit<Asset, 'id' | 'created_at' | 'updated_at'>) => {
+    // TODO: POST /api/assets/ + POST /api/transactions/ when backend is ready
+    const newId = Math.max(0, ...assets.map(a => a.id)) + 1;
+    const today = new Date().toISOString().split('T')[0];
+    setAssets(prev => [...prev, { ...data, id: newId, created_at: today, updated_at: today }]);
+  };
+
+  const handleCheckOut = (assetId: number, assignedTo: string, _notes: string) => {
+    // TODO: POST /api/assets/:id/checkout/ + POST /api/transactions/ when backend is ready
+    setAssets(prev => prev.map(a =>
+      a.id === assetId ? { ...a, status: 'Deployed', assigned_to: assignedTo, updated_at: new Date().toISOString().split('T')[0] } : a,
+    ));
+  };
+
+  const handleCheckIn = (assetId: number, _notes: string) => {
+    // TODO: POST /api/assets/:id/checkin/ + POST /api/transactions/ when backend is ready
+    setAssets(prev => prev.map(a =>
+      a.id === assetId ? { ...a, status: 'Available', assigned_to: undefined, updated_at: new Date().toISOString().split('T')[0] } : a,
+    ));
+  };
 
   return (
     <div
@@ -267,7 +320,7 @@ export default function Assets() {
                 <CategoryFilterDropdown
                   open={filterOpen}
                   onToggle={() => { setFilterOpen(o => !o); setSortOpen(false); }}
-                  categories={ALL_CATEGORIES}
+                  categories={allCategories}
                   active={activeCategories}
                   onToggleCategory={(cat) => {
                     setActiveCategories(prev =>
@@ -284,7 +337,7 @@ export default function Assets() {
                   onSortChange={(opt) => { setActiveSort(opt); setSortOpen(false); setCurrentPage(1); }}
                 />
                 <button
-                  onClick={showFeatureModal}
+                  onClick={() => setFeatureModalOpen(true)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: spacing.xs,
                     padding: `0.375rem ${spacing.md}`,
@@ -364,9 +417,9 @@ export default function Assets() {
                   ) : (
                     pageItems.map((asset, idx) => {
                       const statusCfg = STATUS_CONFIG[asset.status];
-                      const isCheckedOut = asset.status === 'Available';
-                      const isCheckedIn  = asset.status === 'Deployed';
-                      const pillVisible  = isCheckedOut || isCheckedIn;
+                      const isAvailable = asset.status === 'Available';
+                      const isDeployed  = asset.status === 'Deployed';
+                      const pillVisible = isAvailable || isDeployed;
                       return (
                         <tr
                           key={asset.id}
@@ -436,7 +489,7 @@ export default function Assets() {
                             <div style={{ display: 'inline-flex', alignItems: 'center', gap: spacing.xs }}>
                               {/* Delete */}
                               <button
-                                onClick={showFeatureModal}
+                                onClick={() => setDeleteTarget(asset)}
                                 title="Delete"
                                 style={iconBtnStyle('#ef4444')}
                               >
@@ -445,7 +498,7 @@ export default function Assets() {
 
                               {/* Copy */}
                               <button
-                                onClick={showFeatureModal}
+                                onClick={() => setCopyTarget(asset)}
                                 title="Copy Item"
                                 style={iconBtnStyle(colors.primary)}
                               >
@@ -454,16 +507,20 @@ export default function Assets() {
 
                               {/* Edit */}
                               <button
-                                onClick={showFeatureModal}
+                                onClick={() => setEditTarget(asset)}
                                 title="Edit"
                                 style={iconBtnStyle(colors.blueGrayMd)}
                               >
                                 <Pencil size={11} />
                               </button>
 
-                              {/* Check Out / Check In — always rendered for uniform column width */}
+                              {/* Check Out / Check In */}
                               <button
-                                onClick={pillVisible ? showFeatureModal : undefined}
+                                onClick={
+                                  isAvailable ? () => setCheckOutTarget(asset)
+                                  : isDeployed  ? () => setCheckInTarget(asset)
+                                  : undefined
+                                }
                                 style={{
                                   display: 'inline-flex',
                                   alignItems: 'center',
@@ -472,7 +529,7 @@ export default function Assets() {
                                   padding: `0.2rem 0`,
                                   borderRadius: radius.full,
                                   border: 'none',
-                                  backgroundColor: isCheckedOut ? '#22c55e' : colors.orangeAccent,
+                                  backgroundColor: isAvailable ? '#22c55e' : colors.orangeAccent,
                                   color: '#ffffff',
                                   fontFamily: "'Archivo', sans-serif",
                                   fontSize: '0.6875rem',
@@ -483,7 +540,7 @@ export default function Assets() {
                                   flexShrink: 0,
                                 }}
                               >
-                                {isCheckedOut ? 'Check Out' : 'Check In'}
+                                {isAvailable ? 'Check Out' : 'Check In'}
                               </button>
                             </div>
                           </td>
@@ -503,9 +560,45 @@ export default function Assets() {
         </main>
       </div>
 
-      {/* Modals */}
+      {/* ── Modals ── */}
       <FeatureNotAvailableModal isOpen={featureModalOpen} onClose={() => setFeatureModalOpen(false)} />
       <AddAssetModal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)} />
+
+      <DeleteConfirmModal
+        isOpen={deleteTarget !== null}
+        itemName={deleteTarget?.asset_name ?? ''}
+        itemType="Asset"
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+      />
+
+      <EditAssetModal
+        isOpen={editTarget !== null}
+        asset={editTarget}
+        onClose={() => setEditTarget(null)}
+        onSave={handleSaveEdit}
+      />
+
+      <CopyAssetModal
+        isOpen={copyTarget !== null}
+        asset={copyTarget}
+        onClose={() => setCopyTarget(null)}
+        onSave={handleSaveCopy}
+      />
+
+      <AssetCheckOutModal
+        isOpen={checkOutTarget !== null}
+        asset={checkOutTarget}
+        onClose={() => setCheckOutTarget(null)}
+        onConfirm={handleCheckOut}
+      />
+
+      <AssetCheckInModal
+        isOpen={checkInTarget !== null}
+        asset={checkInTarget}
+        onClose={() => setCheckInTarget(null)}
+        onConfirm={handleCheckIn}
+      />
 
       {/* Backdrop — closes open dropdowns on outside click */}
       {(filterOpen || sortOpen) && (
