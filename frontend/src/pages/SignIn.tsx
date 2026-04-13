@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { colors } from '../theme';
+import { colors, spacing, radius } from '../theme';
 import Button from '../components/Button';
 
 export default function SignIn() {
@@ -22,17 +22,17 @@ export default function SignIn() {
         backgroundColor: colors.grayDarkest,
       }}
     >
-      {/* Card — 65% width, 80% height */}
+      {/* Card */}
       <div
         style={{
           display: 'flex',
           width: '65%',
           height: '80vh',
-          minWidth: '600px',
-          minHeight: '480px',
-          borderRadius: '24px',
+          minWidth: '37.5rem',
+          minHeight: '30rem',
+          borderRadius: radius.xl2,
           overflow: 'hidden',
-          boxShadow: '0 40px 100px rgba(3,12,35,0.45)',
+          boxShadow: '0 2.5rem 6.25rem rgba(3,12,35,0.45)',
         }}
       >
         {/* LEFT — white form panel */}
@@ -42,14 +42,14 @@ export default function SignIn() {
             backgroundColor: '#ffffff',
             display: 'flex',
             flexDirection: 'column',
-            padding: '48px 56px',
+            padding: `${spacing.xl4} 3.125rem`,
             boxSizing: 'border-box',
           }}
         >
           <img
             src="/primary-logo-with-text.svg"
             alt="Pandora by Embedded Silicon"
-            style={{ height: '26px', width: 'auto', alignSelf: 'flex-start' }}
+            style={{ height: '1.625rem', width: 'auto', alignSelf: 'flex-start' }}
           />
 
           <div
@@ -62,15 +62,15 @@ export default function SignIn() {
               textAlign: 'center',
             }}
           >
-            <div style={{ width: '100%', maxWidth: '360px' }}>
+            <div style={{ width: '100%', maxWidth: '22.5rem' }}>
               <h2
                 style={{
                   fontFamily: "'Roboto', sans-serif",
                   fontWeight: 700,
-                  fontSize: '36px',
-                  lineHeight: '44px',
+                  fontSize: '2.25rem',
+                  lineHeight: 1.222,
                   color: colors.textPrimary,
-                  margin: '0 0 12px 0',
+                  margin: `0 0 ${spacing.md} 0`,
                 }}
               >
                 Sign in to Pandora
@@ -78,21 +78,21 @@ export default function SignIn() {
 
               <div
                 style={{
-                  width: '48px',
+                  width: '3rem',
                   height: '3px',
                   backgroundColor: colors.primary,
-                  borderRadius: '2px',
-                  margin: '0 auto 20px',
+                  borderRadius: radius.sm,
+                  margin: `0 auto ${spacing.xl}`,
                 }}
               />
 
               <p
                 style={{
                   fontFamily: "'Archivo', sans-serif",
-                  fontSize: '15px',
-                  lineHeight: '24px',
+                  fontSize: '0.9375rem',
+                  lineHeight: 1.6,
                   color: colors.blueGrayMd,
-                  margin: '0 0 36px 0',
+                  margin: `0 0 ${spacing.xl3} 0`,
                 }}
               >
                 Use your Embedded Silicon Google account to continue.
@@ -106,9 +106,9 @@ export default function SignIn() {
               <p
                 style={{
                   fontFamily: "'Archivo', sans-serif",
-                  fontSize: '14px',
+                  fontSize: '0.875rem',
                   color: colors.blueGrayMd,
-                  margin: '28px 0 0 0',
+                  margin: `${spacing.xl} 0 0 0`,
                 }}
               >
                 New to Pandora?{' '}
@@ -125,7 +125,7 @@ export default function SignIn() {
           <p
             style={{
               fontFamily: "'Archivo', sans-serif",
-              fontSize: '12px',
+              fontSize: '0.75rem',
               color: '#9ca3af',
               margin: 0,
               textAlign: 'center',
@@ -146,19 +146,19 @@ export default function SignIn() {
             alignItems: 'center',
             justifyContent: 'center',
             textAlign: 'center',
-            padding: '48px 52px',
+            padding: `${spacing.xl4} 2.9rem`,
             boxSizing: 'border-box',
           }}
         >
-          <div style={{ width: '100%', maxWidth: '300px' }}>
+          <div style={{ width: '100%', maxWidth: '18.75rem' }}>
             <h1
               style={{
                 fontFamily: "'Roboto', sans-serif",
                 fontWeight: 700,
-                fontSize: '40px',
-                lineHeight: '50px',
+                fontSize: '2.5rem',
+                lineHeight: 1.25,
                 color: '#ffffff',
-                margin: '0 0 12px 0',
+                margin: `0 0 ${spacing.md} 0`,
               }}
             >
               Welcome!
@@ -166,19 +166,19 @@ export default function SignIn() {
 
             <div
               style={{
-                width: '48px',
+                width: '3rem',
                 height: '3px',
                 backgroundColor: 'rgba(255,255,255,0.5)',
-                borderRadius: '2px',
-                margin: '0 auto 20px',
+                borderRadius: radius.sm,
+                margin: `0 auto ${spacing.xl}`,
               }}
             />
 
             <p
               style={{
                 fontFamily: "'Archivo', sans-serif",
-                fontSize: '15px',
-                lineHeight: '26px',
+                fontSize: '0.9375rem',
+                lineHeight: 1.625,
                 color: 'rgba(255,255,255,0.75)',
                 margin: 0,
               }}

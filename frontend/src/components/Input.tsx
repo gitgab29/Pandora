@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { colors } from '../theme';
+import { colors, spacing, radius, typography } from '../theme';
 
 interface InputProps {
   label: string;
@@ -27,13 +27,13 @@ export default function Input({
     : '#d1d5db';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
       <label
         style={{
           fontFamily: "'Archivo', sans-serif",
           fontWeight: 700,
-          fontSize: '13px',
-          lineHeight: '20px',
+          fontSize: '0.8125rem',
+          lineHeight: 1.538,
           color: colors.textPrimary,
         }}
       >
@@ -49,13 +49,11 @@ export default function Input({
         onBlur={() => setFocused(false)}
         style={{
           width: '100%',
-          padding: '12px 14px',
-          borderRadius: '8px',
+          padding: `${spacing.md} 0.875rem`,
+          borderRadius: radius.md,
           border: `1.5px solid ${borderColor}`,
-          fontFamily: "'Archivo', sans-serif",
-          fontWeight: 400,
-          fontSize: '15px',
-          lineHeight: '26px',
+          ...typography.body,
+          fontSize: '0.9375rem',
           color: colors.textPrimary,
           backgroundColor: '#ffffff',
           outline: 'none',
@@ -68,8 +66,8 @@ export default function Input({
         <span
           style={{
             fontFamily: "'Archivo', sans-serif",
-            fontSize: '12px',
-            lineHeight: '18px',
+            fontSize: '0.75rem',
+            lineHeight: 1.5,
             color: '#ef4444',
           }}
         >

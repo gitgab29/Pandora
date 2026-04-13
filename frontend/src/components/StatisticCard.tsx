@@ -1,5 +1,5 @@
 import { ArrowUpRight, TrendingUp, TrendingDown } from 'lucide-react';
-import { colors } from '../theme';
+import { colors, spacing, radius } from '../theme';
 
 interface Trend {
   value: number;
@@ -21,13 +21,13 @@ export default function StatisticCard({ title, value, trend, onClick }: Statisti
       onClick={onClick}
       style={{
         backgroundColor: '#ffffff',
-        borderRadius: '12px',
-        padding: '20px 22px 18px',
+        borderRadius: radius.lg,
+        padding: `${spacing.xl} ${spacing.xl} 1.125rem`,
         border: '1px solid rgba(70, 98, 145, 0.1)',
         boxShadow: '0 1px 4px rgba(3, 12, 35, 0.06)',
         cursor: onClick ? 'pointer' : 'default',
-        flex: '1 1 200px',
-        minWidth: '160px',
+        flex: '1 1 12.5rem',
+        minWidth: '10rem',
       }}
     >
       {/* Title row */}
@@ -35,7 +35,7 @@ export default function StatisticCard({ title, value, trend, onClick }: Statisti
         <span
           style={{
             fontFamily: "'Archivo', sans-serif",
-            fontSize: '12px',
+            fontSize: '0.75rem',
             fontWeight: 500,
             color: colors.blueGrayMd,
             letterSpacing: '0.03em',
@@ -51,11 +51,11 @@ export default function StatisticCard({ title, value, trend, onClick }: Statisti
       <div
         style={{
           fontFamily: "'Roboto', sans-serif",
-          fontSize: '42px',
+          fontSize: '2.625rem',
           fontWeight: 700,
           color: colors.textPrimary,
           lineHeight: 1.1,
-          marginTop: '6px',
+          marginTop: spacing.xs,
         }}
       >
         {value}
@@ -67,8 +67,8 @@ export default function StatisticCard({ title, value, trend, onClick }: Statisti
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '4px',
-            marginTop: '8px',
+            gap: spacing.xs,
+            marginTop: spacing.sm,
           }}
         >
           {trend.direction === 'up' ? (
@@ -79,7 +79,7 @@ export default function StatisticCard({ title, value, trend, onClick }: Statisti
           <span
             style={{
               fontFamily: "'Archivo', sans-serif",
-              fontSize: '12px',
+              fontSize: '0.75rem',
               fontWeight: 600,
               color: trendColor,
             }}

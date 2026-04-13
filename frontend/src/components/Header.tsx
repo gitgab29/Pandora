@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Bell, LayoutGrid, Package, ClipboardList, FileKey, Users, LayoutDashboard } from 'lucide-react';
-import { colors } from '../theme';
+import { colors, sizing, spacing, radius, typography } from '../theme';
 
 interface HeaderProps {
   title: string;
@@ -9,38 +9,18 @@ interface HeaderProps {
 // ── Dummy data ────────────────────────────────────────────────────────────────
 
 const NOTIFICATIONS = [
-  {
-    id: 1,
-    text: 'LeJon James checked out a MacBook Pro',
-    time: '2 min ago',
-    unread: true,
-  },
-  {
-    id: 2,
-    text: 'Maria Chen returned a USB-C Dock',
-    time: '15 min ago',
-    unread: true,
-  },
-  {
-    id: 3,
-    text: 'Tyler Brooks submitted an asset request',
-    time: '1 hr ago',
-    unread: true,
-  },
-  {
-    id: 4,
-    text: 'Priya Nair completed a device audit',
-    time: '3 hrs ago',
-    unread: false,
-  },
+  { id: 1, text: 'LeJon James checked out a MacBook Pro',       time: '2 min ago',  unread: true  },
+  { id: 2, text: 'Maria Chen returned a USB-C Dock',            time: '15 min ago', unread: true  },
+  { id: 3, text: 'Tyler Brooks submitted an asset request',      time: '1 hr ago',   unread: true  },
+  { id: 4, text: 'Priya Nair completed a device audit',          time: '3 hrs ago',  unread: false },
 ];
 
 const QUICK_LINKS = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/home' },
-  { icon: Package, label: 'Assets', path: '/assets' },
-  { icon: ClipboardList, label: 'Inventory', path: '/inventory' },
-  { icon: FileKey, label: 'Licenses', path: '/licenses' },
-  { icon: Users, label: 'People', path: '/people' },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/home'      },
+  { icon: Package,         label: 'Assets',    path: '/assets'    },
+  { icon: ClipboardList,   label: 'Inventory', path: '/inventory' },
+  { icon: FileKey,         label: 'Licenses',  path: '/licenses'  },
+  { icon: Users,           label: 'People',    path: '/people'    },
 ];
 
 const UNREAD_COUNT = NOTIFICATIONS.filter(n => n.unread).length;
@@ -49,37 +29,27 @@ const UNREAD_COUNT = NOTIFICATIONS.filter(n => n.unread).length;
 
 export default function Header({ title }: HeaderProps) {
   const [notifOpen, setNotifOpen] = useState(false);
-  const [gridOpen, setGridOpen] = useState(false);
+  const [gridOpen,  setGridOpen]  = useState(false);
 
-  const closeAll = () => {
-    setNotifOpen(false);
-    setGridOpen(false);
-  };
+  const closeAll = () => { setNotifOpen(false); setGridOpen(false); };
 
   return (
     <>
-      {/* Backdrop — closes any open dropdown on outside click */}
+      {/* Backdrop */}
       {(notifOpen || gridOpen) && (
-        <div
-          onClick={closeAll}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 149,
-          }}
-        />
+        <div onClick={closeAll} style={{ position: 'fixed', inset: 0, zIndex: 149 }} />
       )}
 
       <header
         style={{
-          height: '60px',
+          height: sizing.headerHeight,
           backgroundColor: 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(8px)',
           borderBottom: '1px solid rgba(70, 98, 145, 0.12)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 24px',
+          padding: `0 ${spacing.xl2}`,
           flexShrink: 0,
           position: 'relative',
           zIndex: 10,
@@ -87,9 +57,7 @@ export default function Header({ title }: HeaderProps) {
       >
         <h1
           style={{
-            fontFamily: "'Roboto', sans-serif",
-            fontSize: '20px',
-            fontWeight: 700,
+            ...typography.subheadingBold,
             color: colors.textPrimary,
             margin: 0,
           }}
@@ -97,19 +65,16 @@ export default function Header({ title }: HeaderProps) {
           {title}
         </h1>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
 
           {/* ── Grid / Quick Access ── */}
           <div style={{ position: 'relative', zIndex: 150 }}>
-            <IconBtn
-              active={gridOpen}
-              onClick={() => { setGridOpen(v => !v); setNotifOpen(false); }}
-            >
+            <IconBtn active={gridOpen} onClick={() => { setGridOpen(v => !v); setNotifOpen(false); }}>
               <LayoutGrid size={17} />
             </IconBtn>
 
             {gridOpen && (
-              <div style={dropdownBase(180)}>
+              <div style={dropdownBase('11.25rem')}>
                 <p style={dropdownTitle}>Quick Access</p>
                 {QUICK_LINKS.map(({ icon: Icon, label, path }) => (
                   <a
@@ -118,13 +83,13 @@ export default function Header({ title }: HeaderProps) {
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '10px',
-                      padding: '8px 10px',
-                      borderRadius: '6px',
+                      gap: spacing.md,
+                      padding: `${spacing.sm} ${spacing.md}`,
+                      borderRadius: radius.sm,
                       textDecoration: 'none',
                       color: colors.textPrimary,
                       fontFamily: "'Archivo', sans-serif",
-                      fontSize: '13px',
+                      fontSize: '0.8125rem',
                       transition: 'background-color 0.12s ease',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f5f7fb')}
@@ -141,24 +106,21 @@ export default function Header({ title }: HeaderProps) {
           {/* ── Bell / Notifications ── */}
           <div style={{ position: 'relative', zIndex: 150 }}>
             <div style={{ position: 'relative', display: 'inline-flex' }}>
-              <IconBtn
-                active={notifOpen}
-                onClick={() => { setNotifOpen(v => !v); setGridOpen(false); }}
-              >
+              <IconBtn active={notifOpen} onClick={() => { setNotifOpen(v => !v); setGridOpen(false); }}>
                 <Bell size={17} />
               </IconBtn>
               {UNREAD_COUNT > 0 && (
                 <span
                   style={{
                     position: 'absolute',
-                    top: '4px',
-                    right: '4px',
-                    width: '16px',
-                    height: '16px',
-                    borderRadius: '50%',
+                    top: '0.25rem',
+                    right: '0.25rem',
+                    width: '1rem',
+                    height: '1rem',
+                    borderRadius: radius.full,
                     backgroundColor: '#ef4444',
                     color: '#ffffff',
-                    fontSize: '10px',
+                    fontSize: '0.625rem',
                     fontWeight: 700,
                     fontFamily: "'Archivo', sans-serif",
                     display: 'flex',
@@ -174,19 +136,19 @@ export default function Header({ title }: HeaderProps) {
             </div>
 
             {notifOpen && (
-              <div style={{ ...dropdownBase(300), right: 0 }}>
+              <div style={{ ...dropdownBase('18.75rem'), right: 0 }}>
                 <div
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginBottom: '8px',
+                    marginBottom: spacing.sm,
                   }}
                 >
                   <p style={{ ...dropdownTitle, margin: 0 }}>Notifications</p>
                   <span
                     style={{
-                      fontSize: '11px',
+                      fontSize: '0.6875rem',
                       fontFamily: "'Archivo', sans-serif",
                       color: colors.blueGrayMd,
                     }}
@@ -195,13 +157,13 @@ export default function Header({ title }: HeaderProps) {
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
                   {NOTIFICATIONS.map(n => (
                     <div
                       key={n.id}
                       style={{
-                        padding: '9px 10px',
-                        borderRadius: '6px',
+                        padding: `0.5625rem ${spacing.md}`,
+                        borderRadius: radius.sm,
                         backgroundColor: n.unread ? 'rgba(46,124,253,0.05)' : 'transparent',
                         cursor: 'pointer',
                         transition: 'background-color 0.12s ease',
@@ -217,15 +179,15 @@ export default function Header({ title }: HeaderProps) {
                           : 'transparent')
                       }
                     >
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: spacing.sm }}>
                         {n.unread && (
                           <div
                             style={{
-                              width: '6px',
-                              height: '6px',
-                              borderRadius: '50%',
+                              width: '0.375rem',
+                              height: '0.375rem',
+                              borderRadius: radius.full,
                               backgroundColor: colors.primary,
-                              marginTop: '5px',
+                              marginTop: '0.3125rem',
                               flexShrink: 0,
                             }}
                           />
@@ -233,9 +195,9 @@ export default function Header({ title }: HeaderProps) {
                         <div style={{ flex: 1 }}>
                           <p
                             style={{
-                              margin: '0 0 2px',
+                              margin: `0 0 0.125rem`,
                               fontFamily: "'Archivo', sans-serif",
-                              fontSize: '12.5px',
+                              fontSize: '0.781rem',
                               color: colors.textPrimary,
                               fontWeight: n.unread ? 500 : 400,
                               lineHeight: 1.4,
@@ -247,7 +209,7 @@ export default function Header({ title }: HeaderProps) {
                             style={{
                               margin: 0,
                               fontFamily: "'Archivo', sans-serif",
-                              fontSize: '11px',
+                              fontSize: '0.6875rem',
                               color: colors.blueGrayMd,
                             }}
                           >
@@ -262,8 +224,8 @@ export default function Header({ title }: HeaderProps) {
                 <div
                   style={{
                     borderTop: '1px solid rgba(70,98,145,0.1)',
-                    marginTop: '8px',
-                    paddingTop: '8px',
+                    marginTop: spacing.sm,
+                    paddingTop: spacing.sm,
                     textAlign: 'center',
                   }}
                 >
@@ -271,7 +233,7 @@ export default function Header({ title }: HeaderProps) {
                     href="/activity"
                     style={{
                       fontFamily: "'Archivo', sans-serif",
-                      fontSize: '12.5px',
+                      fontSize: '0.781rem',
                       color: colors.primary,
                       fontWeight: 600,
                       textDecoration: 'none',
@@ -287,19 +249,19 @@ export default function Header({ title }: HeaderProps) {
           {/* ── Avatar ── */}
           <div
             style={{
-              width: '34px',
-              height: '34px',
-              borderRadius: '50%',
+              width: '2.125rem',
+              height: '2.125rem',
+              borderRadius: radius.full,
               backgroundColor: colors.primary,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#ffffff',
               fontFamily: "'Archivo', sans-serif",
-              fontSize: '12px',
+              fontSize: '0.75rem',
               fontWeight: 700,
               cursor: 'pointer',
-              marginLeft: '4px',
+              marginLeft: spacing.xs,
               flexShrink: 0,
               border: '2px solid rgba(46,124,253,0.3)',
             }}
@@ -327,9 +289,9 @@ function IconBtn({
     <button
       onClick={onClick}
       style={{
-        width: '34px',
-        height: '34px',
-        borderRadius: '8px',
+        width: '2.125rem',
+        height: '2.125rem',
+        borderRadius: radius.md,
         border: 'none',
         backgroundColor: active ? '#f0f4ff' : 'transparent',
         display: 'flex',
@@ -351,25 +313,25 @@ function IconBtn({
   );
 }
 
-function dropdownBase(width: number): React.CSSProperties {
+function dropdownBase(width: string): React.CSSProperties {
   return {
     position: 'absolute',
-    top: '42px',
+    top: '2.625rem',
     right: 0,
-    width: `${width}px`,
+    width,
     backgroundColor: '#ffffff',
-    borderRadius: '10px',
+    borderRadius: radius.lg,
     border: '1px solid rgba(70,98,145,0.12)',
-    boxShadow: '0 8px 32px rgba(3,12,35,0.12)',
-    padding: '12px',
+    boxShadow: '0 0.5rem 2rem rgba(3,12,35,0.12)',
+    padding: spacing.md,
     zIndex: 150,
   };
 }
 
 const dropdownTitle: React.CSSProperties = {
   fontFamily: "'Roboto', sans-serif",
-  fontSize: '13px',
+  fontSize: '0.8125rem',
   fontWeight: 700,
   color: colors.textPrimary,
-  margin: '0 0 8px',
+  margin: `0 0 ${spacing.sm}`,
 };

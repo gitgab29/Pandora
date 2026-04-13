@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { colors } from '../theme';
+import { colors, spacing, radius } from '../theme';
 
 interface FeatureNotAvailableModalProps {
   isOpen: boolean;
@@ -26,12 +26,12 @@ export default function FeatureNotAvailableModal({ isOpen, onClose }: FeatureNot
         onClick={e => e.stopPropagation()}
         style={{
           backgroundColor: '#ffffff',
-          borderRadius: '16px',
-          padding: '36px 28px 28px',
-          width: '320px',
+          borderRadius: radius.xl,
+          padding: `${spacing.xl3} ${spacing.xl} ${spacing.xl}`,
+          width: '20rem',
           position: 'relative',
           textAlign: 'center',
-          boxShadow: '0 24px 64px rgba(3, 12, 35, 0.18)',
+          boxShadow: '0 1.5rem 4rem rgba(3, 12, 35, 0.18)',
         }}
       >
         {/* Close button */}
@@ -39,11 +39,11 @@ export default function FeatureNotAvailableModal({ isOpen, onClose }: FeatureNot
           onClick={onClose}
           style={{
             position: 'absolute',
-            top: '12px',
-            right: '12px',
-            width: '28px',
-            height: '28px',
-            borderRadius: '50%',
+            top: spacing.md,
+            right: spacing.md,
+            width: '1.75rem',
+            height: '1.75rem',
+            borderRadius: radius.full,
             backgroundColor: '#374151',
             border: 'none',
             cursor: 'pointer',
@@ -60,20 +60,20 @@ export default function FeatureNotAvailableModal({ isOpen, onClose }: FeatureNot
         {/* Blue circle with ! */}
         <div
           style={{
-            width: '60px',
-            height: '60px',
-            borderRadius: '50%',
+            width: '3.75rem',
+            height: '3.75rem',
+            borderRadius: radius.full,
             backgroundColor: colors.primary,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto 20px',
+            margin: `0 auto ${spacing.xl}`,
           }}
         >
           <span
             style={{
               color: '#ffffff',
-              fontSize: '28px',
+              fontSize: '1.75rem',
               fontWeight: 700,
               lineHeight: 1,
               fontFamily: "'Roboto', sans-serif",
@@ -87,27 +87,27 @@ export default function FeatureNotAvailableModal({ isOpen, onClose }: FeatureNot
         <h3
           style={{
             fontFamily: "'Roboto', sans-serif",
-            fontSize: '17px',
+            fontSize: '1.0625rem',
             fontWeight: 700,
             color: colors.textPrimary,
-            margin: '0 0 24px',
+            margin: `0 0 ${spacing.xl}`,
           }}
         >
           Feature Not Available
         </h3>
 
         {/* Action buttons */}
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: spacing.md }}>
           <button
             onClick={onClose}
             style={{
               flex: 1,
-              padding: '10px 16px',
-              borderRadius: '50px',
+              padding: `${spacing.sm} ${spacing.lg}`,
+              borderRadius: radius.full,
               border: '1.5px solid #d1d5db',
               backgroundColor: '#ffffff',
               fontFamily: "'Archivo', sans-serif",
-              fontSize: '14px',
+              fontSize: '0.875rem',
               fontWeight: 600,
               color: colors.textPrimary,
               cursor: 'pointer',
@@ -119,12 +119,12 @@ export default function FeatureNotAvailableModal({ isOpen, onClose }: FeatureNot
             onClick={onClose}
             style={{
               flex: 1,
-              padding: '10px 16px',
-              borderRadius: '50px',
+              padding: `${spacing.sm} ${spacing.lg}`,
+              borderRadius: radius.full,
               border: 'none',
               backgroundColor: colors.primary,
               fontFamily: "'Archivo', sans-serif",
-              fontSize: '14px',
+              fontSize: '0.875rem',
               fontWeight: 600,
               color: '#ffffff',
               cursor: 'pointer',

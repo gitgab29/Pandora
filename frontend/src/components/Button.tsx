@@ -1,4 +1,4 @@
-import { colors } from '../theme';
+import { colors, radius, typography } from '../theme';
 
 type Variant = 'primary' | 'google' | 'ghost';
 
@@ -22,14 +22,13 @@ export default function Button({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '10px',
+    gap: '0.625rem',
     width: '100%',
-    padding: '14px 20px',
-    borderRadius: '10px',
-    fontSize: '15px',
-    fontFamily: "'Archivo', sans-serif",
+    padding: '0.875rem 1.25rem',
+    borderRadius: radius.lg,
+    ...typography.body,
+    fontSize: '0.9375rem',
     fontWeight: 600,
-    lineHeight: '26px',
     border: 'none',
     cursor: isDisabled ? 'not-allowed' : 'pointer',
     transition: 'background-color 0.15s ease, opacity 0.15s ease',
@@ -61,14 +60,14 @@ export default function Button({
       onMouseEnter={e => {
         if (isDisabled) return;
         if (variant === 'primary') e.currentTarget.style.backgroundColor = colors.primaryDark;
-        if (variant === 'google') e.currentTarget.style.backgroundColor = '#f8f9fa';
-        if (variant === 'ghost') e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
+        if (variant === 'google')  e.currentTarget.style.backgroundColor = '#f8f9fa';
+        if (variant === 'ghost')   e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
       }}
       onMouseLeave={e => {
         if (isDisabled) return;
         if (variant === 'primary') e.currentTarget.style.backgroundColor = colors.primary;
-        if (variant === 'google') e.currentTarget.style.backgroundColor = '#ffffff';
-        if (variant === 'ghost') e.currentTarget.style.backgroundColor = 'transparent';
+        if (variant === 'google')  e.currentTarget.style.backgroundColor = '#ffffff';
+        if (variant === 'ghost')   e.currentTarget.style.backgroundColor = 'transparent';
       }}
       {...props}
     >

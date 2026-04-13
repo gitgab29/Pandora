@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { colors } from '../theme';
+import { colors, spacing, radius } from '../theme';
 
 interface PaginationProps {
   currentPage: number;
@@ -8,18 +8,9 @@ interface PaginationProps {
 }
 
 function getPageNumbers(current: number, total: number): (number | '...')[] {
-  if (total <= 7) {
-    return Array.from({ length: total }, (_, i) => i + 1);
-  }
-
-  if (current <= 4) {
-    return [1, 2, 3, 4, 5, '...', total];
-  }
-
-  if (current >= total - 3) {
-    return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
-  }
-
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  if (current <= 4) return [1, 2, 3, 4, 5, '...', total];
+  if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
   return [1, '...', current - 1, current, current + 1, '...', total];
 }
 
@@ -32,12 +23,12 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    height: '32px',
-    borderRadius: '6px',
+    height: '2rem',
+    borderRadius: radius.sm,
     border: '1px solid rgba(70, 98, 145, 0.2)',
     backgroundColor: '#ffffff',
     fontFamily: "'Archivo', sans-serif",
-    fontSize: '13px',
+    fontSize: '0.8125rem',
     color: colors.textPrimary,
     cursor: 'pointer',
   };
@@ -48,8 +39,8 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '4px',
-        padding: '16px 0 4px',
+        gap: spacing.xs,
+        padding: `${spacing.lg} 0 0.25rem`,
       }}
     >
       {/* Previous */}
@@ -58,8 +49,8 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
         disabled={currentPage === 1}
         style={{
           ...btnBase,
-          padding: '0 12px',
-          gap: '4px',
+          padding: `0 ${spacing.md}`,
+          gap: spacing.xs,
           opacity: currentPage === 1 ? 0.45 : 1,
           cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
         }}
@@ -74,10 +65,10 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
           <span
             key={`ellipsis-${i}`}
             style={{
-              width: '32px',
+              width: '2rem',
               textAlign: 'center',
               fontFamily: "'Archivo', sans-serif",
-              fontSize: '13px',
+              fontSize: '0.8125rem',
               color: colors.blueGrayMd,
             }}
           >
@@ -89,7 +80,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
             onClick={() => onPageChange(page as number)}
             style={{
               ...btnBase,
-              width: '32px',
+              width: '2rem',
               backgroundColor: currentPage === page ? colors.primary : '#ffffff',
               color: currentPage === page ? '#ffffff' : colors.textPrimary,
               fontWeight: currentPage === page ? 600 : 400,
@@ -107,8 +98,8 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
         disabled={currentPage === totalPages}
         style={{
           ...btnBase,
-          padding: '0 12px',
-          gap: '4px',
+          padding: `0 ${spacing.md}`,
+          gap: spacing.xs,
           opacity: currentPage === totalPages ? 0.45 : 1,
           cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
         }}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import { colors } from '../theme';
+import { colors, spacing } from '../theme';
 
 interface ComingSoonProps {
   title: string;
@@ -41,13 +41,13 @@ export default function ComingSoon({ title }: ComingSoonProps) {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '12px',
+            gap: spacing.md,
           }}
         >
           <p
             style={{
               fontFamily: "'Roboto', sans-serif",
-              fontSize: '22px',
+              fontSize: '1.375rem',
               fontWeight: 700,
               color: colors.textPrimary,
               margin: 0,
@@ -58,7 +58,7 @@ export default function ComingSoon({ title }: ComingSoonProps) {
           <p
             style={{
               fontFamily: "'Archivo', sans-serif",
-              fontSize: '14px',
+              fontSize: '0.875rem',
               color: colors.blueGrayMd,
               margin: 0,
             }}

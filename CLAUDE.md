@@ -214,7 +214,7 @@ cd backend && source .venv/bin/activate && python manage.py runserver
 - [x] Vite + React + TypeScript frontend scaffolded
 - [x] Tailwind CSS installed (`@tailwindcss/vite` plugin) and configured in `vite.config.ts`
 - [x] Axios installed; `src/api.ts` centralized HTTP client with JWT interceptors (auto-attach + auto-refresh on 401)
-- [x] `src/theme.ts` — all color and typography design tokens
+- [x] `src/theme.ts` — design tokens: `colors`, `typography` (rem), `spacing`, `radius`, `sizing`
 - [x] `src/index.css` — Google Fonts (Roboto + Archivo) + Tailwind base
 - [x] Frontend folder structure created: `components/`, `pages/`, `context/`, `hooks/`, `types/`, `utils/`
 - [x] Vite dev proxy: `/api` → `http://localhost:8000`
@@ -242,7 +242,10 @@ cd backend && source .venv/bin/activate && python manage.py runserver
 - [x] **`src/components/SearchBar.tsx`** — search icon, clear button, highlights border when active
 - [x] **`src/components/Pagination.tsx`** — Previous / page numbers with ellipsis / Next; active page in `primary` blue
 - [x] **`src/components/FeatureNotAvailableModal.tsx`** — modal matching Figma design (blue `!` circle, Cancel + Confirm pill buttons, backdrop close)
-- [x] **`src/pages/Home.tsx`** (`/home`) — full dashboard: `bg-auth.jpg` background, collapsible Sidebar, Header, 5 StatisticCards (dummy data), Activity Log table (68 dummy rows, 10/page), live search filtering, Filter dropdown (Type + Event chips), Sort dropdown (4 options with checkmark), functional Pagination
+- [x] **`src/components/ActivityLogTable.tsx`** — self-contained table component; manages search, filter, sort, and pagination state internally; receives `logs: TransactionLog[]`
+- [x] **`src/components/FilterDropdown.tsx`** — reusable filter dropdown; accepts `groups: { label, options }[]`; renders trigger button + chip panel
+- [x] **`src/components/SortDropdown.tsx`** — reusable sort dropdown; accepts `options`, `activeSort`, `onSortChange`; renders trigger button + option list
+- [x] **`src/pages/Home.tsx`** (`/home`) — full dashboard: `bg-auth.jpg` background, collapsible Sidebar, Header, 5 StatisticCards (dummy data), ActivityLogTable (68 dummy rows)
 - [x] **`src/pages/ComingSoon.tsx`** — generic page used by all stub routes; renders Sidebar + Header + centered "Coming Soon" text on `bg-auth.jpg` background
 - [x] All sidebar routes wired in `App.tsx`: `/assets`, `/inventory`, `/licenses`, `/activity`, `/people`, `/settings`, `/archive` → `ComingSoon`; default `*` redirects to `/home`
 

@@ -11,7 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import { colors } from '../theme';
+import { colors, sizing, spacing, radius } from '../theme';
 
 type NavItem = {
   icon: React.ElementType;
@@ -21,14 +21,14 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { icon: Home, label: 'Home', path: '/home' },
-  { icon: Package, label: 'Assets', path: '/assets' },
+  { icon: Home,          label: 'Home',      path: '/home' },
+  { icon: Package,       label: 'Assets',    path: '/assets' },
   { icon: ClipboardList, label: 'Inventory', path: '/inventory' },
-  { icon: FileKey, label: 'Licenses', path: '/licenses' },
-  { icon: Activity, label: 'Activity', path: '/activity' },
-  { icon: Users, label: 'People', path: '/people' },
-  { icon: Settings, label: 'Settings', path: '/settings' },
-  { icon: Archive, label: 'Archive', path: '/archive', badge: true },
+  { icon: FileKey,       label: 'Licenses',  path: '/licenses' },
+  { icon: Activity,      label: 'Activity',  path: '/activity' },
+  { icon: Users,         label: 'People',    path: '/people' },
+  { icon: Settings,      label: 'Settings',  path: '/settings' },
+  { icon: Archive,       label: 'Archive',   path: '/archive', badge: true },
 ];
 
 // Semi-transparent primary so bg-auth.jpg shows through
@@ -45,7 +45,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
       style={{
-        width: collapsed ? '64px' : '220px',
+        width: collapsed ? sizing.sidebarCollapsed : sizing.sidebarExpanded,
         transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
         backgroundColor: SIDEBAR_BG,
         backdropFilter: 'blur(4px)',
@@ -62,17 +62,16 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* ── Logo / toggle row ── */}
       <div
         style={{
-          height: '60px',
+          height: sizing.headerHeight,
           display: 'flex',
           alignItems: 'center',
           justifyContent: collapsed ? 'center' : 'space-between',
-          padding: collapsed ? '0' : '0 14px 0 18px',
+          padding: collapsed ? '0' : `0 ${spacing.md} 0 ${spacing.lg}`,
           borderBottom: '1px solid rgba(255,255,255,0.1)',
           flexShrink: 0,
         }}
       >
         {collapsed ? (
-          /* Collapsed: only the toggle button, centered */
           <button
             onClick={onToggle}
             title="Expand sidebar"
@@ -83,12 +82,11 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <ChevronRight size={15} />
           </button>
         ) : (
-          /* Expanded: logo + collapse button */
           <>
             <img
               src="/whtie-logo-with-text.svg"
               alt="Pandora"
-              style={{ height: '21px', width: 'auto', flexShrink: 0 }}
+              style={{ height: '1.3125rem', width: 'auto', flexShrink: 0 }}
             />
             <button
               onClick={onToggle}
@@ -107,7 +105,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <nav
         style={{
           flex: 1,
-          padding: '10px 8px',
+          padding: `${spacing.sm} ${spacing.sm}`,
           overflowY: 'auto',
           overflowX: 'hidden',
         }}
@@ -123,11 +121,11 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: collapsed ? 'center' : 'flex-start',
-                  gap: '10px',
-                  padding: collapsed ? '10px 0' : '9px 12px',
-                  borderRadius: '8px',
+                  gap: spacing.sm,
+                  padding: collapsed ? `${spacing.md} 0` : `0.5625rem ${spacing.md}`,
+                  borderRadius: radius.md,
                   backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : 'transparent',
-                  marginBottom: '2px',
+                  marginBottom: '0.125rem',
                   cursor: 'pointer',
                   transition: 'background-color 0.15s ease',
                 }}
@@ -150,11 +148,11 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     <div
                       style={{
                         position: 'absolute',
-                        top: '-2px',
-                        right: '-3px',
-                        width: '7px',
-                        height: '7px',
-                        borderRadius: '50%',
+                        top: '-0.125rem',
+                        right: '-0.1875rem',
+                        width: '0.4375rem',
+                        height: '0.4375rem',
+                        borderRadius: radius.full,
                         backgroundColor: colors.orangeAccent,
                       }}
                     />
@@ -166,7 +164,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   <span
                     style={{
                       fontFamily: "'Archivo', sans-serif",
-                      fontSize: '13.5px',
+                      fontSize: '0.844rem',
                       fontWeight: isActive ? 600 : 400,
                       color: '#ffffff',
                       opacity: isActive ? 1 : 0.75,
@@ -186,9 +184,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 }
 
 const toggleBtnStyle: React.CSSProperties = {
-  width: '28px',
-  height: '28px',
-  borderRadius: '6px',
+  width: '1.75rem',
+  height: '1.75rem',
+  borderRadius: radius.sm,
   border: 'none',
   backgroundColor: 'rgba(255,255,255,0.12)',
   color: '#ffffff',

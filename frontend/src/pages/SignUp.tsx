@@ -1,22 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-// useNavigate kept for post-submit redirect
-import { colors } from '../theme';
+import { colors, spacing, radius } from '../theme';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import type { GoogleUser, SignUpFormData } from '../types/auth';
 
 const DUMMY_MANAGERS = [
-  'Alice Thompson',
-  'Bob Martinez',
-  'Carol Williams',
-  'David Chen',
-  'Emma Rodriguez',
-  'Frank Johnson',
-  'Grace Kim',
-  'Henry Brown',
-  'Isabella Davis',
-  'James Wilson',
+  'Alice Thompson', 'Bob Martinez',   'Carol Williams', 'David Chen',
+  'Emma Rodriguez', 'Frank Johnson',  'Grace Kim',      'Henry Brown',
+  'Isabella Davis', 'James Wilson',
 ];
 
 type Step = 'google' | 'profile';
@@ -26,20 +18,14 @@ export default function SignUp() {
   const [step, setStep] = useState<Step>('google');
   const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
   const [form, setForm] = useState<SignUpFormData>({
-    firstName: '',
-    lastName: '',
-    title: '',
-    location: '',
-    department: '',
-    badgeNumber: '',
-    manager: '',
+    firstName: '', lastName: '', title: '', location: '',
+    department: '', badgeNumber: '', manager: '',
   });
   const [errors, setErrors] = useState<Partial<SignUpFormData>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleGoogleSignUp = () => {
     // TODO: Replace with actual Google OAuth redirect
-    // window.location.href = '/api/auth/google/login?mode=signup';
     const mock: GoogleUser = {
       email: 'jane.doe@embeddedsil.com',
       firstName: 'Jane',
@@ -58,13 +44,13 @@ export default function SignUp() {
 
   const validate = (): boolean => {
     const next: Partial<SignUpFormData> = {};
-    if (!form.firstName.trim()) next.firstName = 'Required';
-    if (!form.lastName.trim()) next.lastName = 'Required';
-    if (!form.title.trim()) next.title = 'Required';
-    if (!form.location.trim()) next.location = 'Required';
-    if (!form.department.trim()) next.department = 'Required';
+    if (!form.firstName.trim())   next.firstName   = 'Required';
+    if (!form.lastName.trim())    next.lastName    = 'Required';
+    if (!form.title.trim())       next.title       = 'Required';
+    if (!form.location.trim())    next.location    = 'Required';
+    if (!form.department.trim())  next.department  = 'Required';
     if (!form.badgeNumber.trim()) next.badgeNumber = 'Required';
-    if (!form.manager.trim()) next.manager = 'Required';
+    if (!form.manager.trim())     next.manager     = 'Required';
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -96,20 +82,20 @@ export default function SignUp() {
         backgroundColor: colors.grayDarkest,
       }}
     >
-      {/* Card — 65% width, 80% height */}
+      {/* Card */}
       <div
         style={{
           display: 'flex',
           width: '65%',
           height: '80vh',
-          minWidth: '600px',
-          minHeight: '480px',
-          borderRadius: '24px',
+          minWidth: '37.5rem',
+          minHeight: '30rem',
+          borderRadius: radius.xl2,
           overflow: 'hidden',
-          boxShadow: '0 40px 100px rgba(3,12,35,0.45)',
+          boxShadow: '0 2.5rem 6.25rem rgba(3,12,35,0.45)',
         }}
       >
-        {/* LEFT — blue brand panel (hidden on mobile) */}
+        {/* LEFT — blue brand panel */}
         <div
           className="auth-blue-panel"
           style={{
@@ -117,18 +103,16 @@ export default function SignUp() {
             backgroundColor: colors.primary,
             display: 'flex',
             flexDirection: 'column',
-            padding: '48px 56px',
+            padding: `${spacing.xl4} 3.125rem`,
             boxSizing: 'border-box',
           }}
         >
-          {/* Logo — white on blue */}
           <img
             src="/whtie-logo-with-text.svg"
             alt="Pandora by Embedded Silicon"
-            style={{ height: '26px', width: 'auto', alignSelf: 'flex-start' }}
+            style={{ height: '1.625rem', width: 'auto', alignSelf: 'flex-start' }}
           />
 
-          {/* Centered brand content */}
           <div
             style={{
               flex: 1,
@@ -139,35 +123,35 @@ export default function SignUp() {
               textAlign: 'center',
             }}
           >
-            <div style={{ width: '100%', maxWidth: '280px' }}>
+            <div style={{ width: '100%', maxWidth: '17.5rem' }}>
               {step === 'google' ? (
                 <>
                   <h1
                     style={{
                       fontFamily: "'Roboto', sans-serif",
                       fontWeight: 700,
-                      fontSize: '40px',
-                      lineHeight: '50px',
+                      fontSize: '2.5rem',
+                      lineHeight: 1.25,
                       color: '#ffffff',
-                      margin: '0 0 12px 0',
+                      margin: `0 0 ${spacing.md} 0`,
                     }}
                   >
                     Log In
                   </h1>
                   <div
                     style={{
-                      width: '48px',
+                      width: '3rem',
                       height: '3px',
                       backgroundColor: 'rgba(255,255,255,0.6)',
-                      borderRadius: '2px',
-                      margin: '0 auto 20px',
+                      borderRadius: radius.sm,
+                      margin: `0 auto ${spacing.xl}`,
                     }}
                   />
                   <p
                     style={{
                       fontFamily: "'Archivo', sans-serif",
-                      fontSize: '15px',
-                      lineHeight: '26px',
+                      fontSize: '0.9375rem',
+                      lineHeight: 1.625,
                       color: 'rgba(255,255,255,0.75)',
                       margin: 0,
                     }}
@@ -181,60 +165,59 @@ export default function SignUp() {
                     style={{
                       fontFamily: "'Roboto', sans-serif",
                       fontWeight: 700,
-                      fontSize: '36px',
-                      lineHeight: '46px',
+                      fontSize: '2.25rem',
+                      lineHeight: 1.278,
                       color: '#ffffff',
-                      margin: '0 0 12px 0',
+                      margin: `0 0 ${spacing.md} 0`,
                     }}
                   >
                     Almost there!
                   </h1>
                   <div
                     style={{
-                      width: '48px',
+                      width: '3rem',
                       height: '3px',
                       backgroundColor: 'rgba(255,255,255,0.6)',
-                      borderRadius: '2px',
-                      margin: '0 auto 20px',
+                      borderRadius: radius.sm,
+                      margin: `0 auto ${spacing.xl}`,
                     }}
                   />
                   <p
                     style={{
                       fontFamily: "'Archivo', sans-serif",
-                      fontSize: '15px',
-                      lineHeight: '26px',
+                      fontSize: '0.9375rem',
+                      lineHeight: 1.625,
                       color: 'rgba(255,255,255,0.75)',
-                      margin: '0 0 32px 0',
+                      margin: `0 0 ${spacing.xl3} 0`,
                     }}
                   >
                     Fill in your details so your team can find you.
                   </p>
 
-                  {/* Google user chip */}
                   {googleUser && (
                     <div
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '12px',
+                        gap: spacing.md,
                         backgroundColor: 'rgba(255,255,255,0.12)',
-                        borderRadius: '12px',
-                        padding: '12px 16px',
+                        borderRadius: radius.lg,
+                        padding: `${spacing.md} ${spacing.lg}`,
                         textAlign: 'left',
                       }}
                     >
                       <div
                         style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '50%',
+                          width: '2.25rem',
+                          height: '2.25rem',
+                          borderRadius: radius.full,
                           backgroundColor: 'rgba(255,255,255,0.25)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           fontFamily: "'Archivo', sans-serif",
                           fontWeight: 700,
-                          fontSize: '13px',
+                          fontSize: '0.8125rem',
                           color: '#ffffff',
                           flexShrink: 0,
                         }}
@@ -242,10 +225,31 @@ export default function SignUp() {
                         {googleUser.firstName[0]}{googleUser.lastName[0]}
                       </div>
                       <div style={{ minWidth: 0 }}>
-                        <p style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: '13px', color: '#ffffff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <p
+                          style={{
+                            fontFamily: "'Archivo', sans-serif",
+                            fontWeight: 700,
+                            fontSize: '0.8125rem',
+                            color: '#ffffff',
+                            margin: 0,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
                           {googleUser.firstName} {googleUser.lastName}
                         </p>
-                        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.6)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <p
+                          style={{
+                            fontFamily: "'Archivo', sans-serif",
+                            fontSize: '0.6875rem',
+                            color: 'rgba(255,255,255,0.6)',
+                            margin: 0,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
                           {googleUser.email}
                         </p>
                       </div>
@@ -256,7 +260,14 @@ export default function SignUp() {
             </div>
           </div>
 
-          <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+          <p
+            style={{
+              fontFamily: "'Archivo', sans-serif",
+              fontSize: '0.75rem',
+              color: 'rgba(255,255,255,0.4)',
+              margin: 0,
+            }}
+          >
             © {new Date().getFullYear()} Embedded Silicon
           </p>
         </div>
@@ -291,7 +302,13 @@ export default function SignUp() {
 
 // ─── Step 1: Google ───────────────────────────────────────────────────────────
 
-function GoogleStep({ onGoogleSignUp, navigate }: { onGoogleSignUp: () => void; navigate: ReturnType<typeof useNavigate> }) {
+function GoogleStep({
+  onGoogleSignUp,
+  navigate,
+}: {
+  onGoogleSignUp: () => void;
+  navigate: ReturnType<typeof useNavigate>;
+}) {
   return (
     <div
       style={{
@@ -301,18 +318,18 @@ function GoogleStep({ onGoogleSignUp, navigate }: { onGoogleSignUp: () => void; 
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
-        padding: '48px 60px',
+        padding: `${spacing.xl4} 3.375rem`,
       }}
     >
-      <div style={{ width: '100%', maxWidth: '400px' }}>
+      <div style={{ width: '100%', maxWidth: '25rem' }}>
         <h2
           style={{
             fontFamily: "'Roboto', sans-serif",
             fontWeight: 700,
-            fontSize: '36px',
-            lineHeight: '44px',
+            fontSize: '2.25rem',
+            lineHeight: 1.222,
             color: colors.textPrimary,
-            margin: '0 0 12px 0',
+            margin: `0 0 ${spacing.md} 0`,
           }}
         >
           Sign Up to Pandora
@@ -320,21 +337,21 @@ function GoogleStep({ onGoogleSignUp, navigate }: { onGoogleSignUp: () => void; 
 
         <div
           style={{
-            width: '48px',
+            width: '3rem',
             height: '3px',
             backgroundColor: colors.primary,
-            borderRadius: '2px',
-            margin: '0 auto 20px',
+            borderRadius: radius.sm,
+            margin: `0 auto ${spacing.xl}`,
           }}
         />
 
         <p
           style={{
             fontFamily: "'Archivo', sans-serif",
-            fontSize: '15px',
-            lineHeight: '24px',
+            fontSize: '0.9375rem',
+            lineHeight: 1.6,
             color: colors.blueGrayMd,
-            margin: '0 0 36px 0',
+            margin: `0 0 ${spacing.xl3} 0`,
           }}
         >
           Use your Embedded Silicon Google account to get started.
@@ -348,13 +365,16 @@ function GoogleStep({ onGoogleSignUp, navigate }: { onGoogleSignUp: () => void; 
         <p
           style={{
             fontFamily: "'Archivo', sans-serif",
-            fontSize: '14px',
+            fontSize: '0.875rem',
             color: colors.blueGrayMd,
-            margin: '28px 0 0 0',
+            margin: `${spacing.xl} 0 0 0`,
           }}
         >
           Already have an account?{' '}
-          <Link to="/sign-in" style={{ color: colors.primary, fontWeight: 700, textDecoration: 'none' }}>
+          <Link
+            to="/sign-in"
+            style={{ color: colors.primary, fontWeight: 700, textDecoration: 'none' }}
+          >
             Sign in
           </Link>
         </p>
@@ -378,16 +398,16 @@ function ProfileStep({ form, errors, isSubmitting, setField, onSubmit }: Profile
     <form
       onSubmit={onSubmit}
       noValidate
-      style={{ padding: '48px 60px', display: 'flex', flexDirection: 'column' }}
+      style={{ padding: `${spacing.xl4} 3.75rem`, display: 'flex', flexDirection: 'column' }}
     >
       <h2
         style={{
           fontFamily: "'Roboto', sans-serif",
           fontWeight: 700,
-          fontSize: '32px',
-          lineHeight: '42px',
+          fontSize: '2rem',
+          lineHeight: 1.3125,
           color: colors.textPrimary,
-          margin: '0 0 12px 0',
+          margin: `0 0 ${spacing.md} 0`,
         }}
       >
         Complete your profile
@@ -395,40 +415,44 @@ function ProfileStep({ form, errors, isSubmitting, setField, onSubmit }: Profile
 
       <div
         style={{
-          width: '48px',
+          width: '3rem',
           height: '3px',
           backgroundColor: colors.primary,
-          borderRadius: '2px',
-          margin: '0 0 16px 0',
+          borderRadius: radius.sm,
+          margin: `0 0 ${spacing.lg} 0`,
         }}
       />
 
       <p
         style={{
           fontFamily: "'Archivo', sans-serif",
-          fontSize: '15px',
-          lineHeight: '24px',
+          fontSize: '0.9375rem',
+          lineHeight: 1.6,
           color: colors.blueGrayMd,
-          margin: '0 0 32px 0',
+          margin: `0 0 ${spacing.xl3} 0`,
         }}
       >
         All fields are required.
       </p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-        <Input label="First Name" value={form.firstName} error={errors.firstName} onChange={v => setField('firstName', v)} />
-        <Input label="Last Name" value={form.lastName} error={errors.lastName} onChange={v => setField('lastName', v)} />
-        <Input label="Position" placeholder="e.g. IT Engineer" value={form.title} error={errors.title} onChange={v => setField('title', v)} />
-        <Input label="Badge Number" placeholder="e.g. ESI-1042" value={form.badgeNumber} error={errors.badgeNumber} onChange={v => setField('badgeNumber', v)} />
-        <Input label="Department" placeholder="e.g. Engineering" value={form.department} error={errors.department} onChange={v => setField('department', v)} />
-        <Input label="Office" placeholder="e.g. San Jose" value={form.location} error={errors.location} onChange={v => setField('location', v)} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.xl }}>
+        <Input label="First Name"    value={form.firstName}   error={errors.firstName}   onChange={v => setField('firstName',   v)} />
+        <Input label="Last Name"     value={form.lastName}    error={errors.lastName}    onChange={v => setField('lastName',    v)} />
+        <Input label="Position"      placeholder="e.g. IT Engineer"    value={form.title}       error={errors.title}       onChange={v => setField('title',       v)} />
+        <Input label="Badge Number"  placeholder="e.g. ESI-1042"       value={form.badgeNumber} error={errors.badgeNumber} onChange={v => setField('badgeNumber', v)} />
+        <Input label="Department"    placeholder="e.g. Engineering"    value={form.department}  error={errors.department}  onChange={v => setField('department',  v)} />
+        <Input label="Office"        placeholder="e.g. San Jose"       value={form.location}    error={errors.location}    onChange={v => setField('location',    v)} />
       </div>
 
-      <div style={{ marginTop: '20px' }}>
-        <ManagerCombobox value={form.manager} error={errors.manager} onChange={v => setField('manager', v)} />
+      <div style={{ marginTop: spacing.xl }}>
+        <ManagerCombobox
+          value={form.manager}
+          error={errors.manager}
+          onChange={v => setField('manager', v)}
+        />
       </div>
 
-      <div style={{ marginTop: '32px' }}>
+      <div style={{ marginTop: spacing.xl3 }}>
         <Button type="submit" variant="primary" loading={isSubmitting}>
           Create Account
         </Button>
@@ -439,7 +463,15 @@ function ProfileStep({ form, errors, isSubmitting, setField, onSubmit }: Profile
 
 // ─── Manager combobox ─────────────────────────────────────────────────────────
 
-function ManagerCombobox({ value, error, onChange }: { value: string; error?: string; onChange: (v: string) => void }) {
+function ManagerCombobox({
+  value,
+  error,
+  onChange,
+}: {
+  value: string;
+  error?: string;
+  onChange: (v: string) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -462,8 +494,19 @@ function ManagerCombobox({ value, error, onChange }: { value: string; error?: st
   const borderColor = error ? '#ef4444' : focused ? colors.primary : '#d1d5db';
 
   return (
-    <div ref={ref} style={{ display: 'flex', flexDirection: 'column', gap: '6px', position: 'relative' }}>
-      <label style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: '13px', lineHeight: '20px', color: colors.textPrimary }}>
+    <div
+      ref={ref}
+      style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs, position: 'relative' }}
+    >
+      <label
+        style={{
+          fontFamily: "'Archivo', sans-serif",
+          fontWeight: 700,
+          fontSize: '0.8125rem',
+          lineHeight: 1.538,
+          color: colors.textPrimary,
+        }}
+      >
         Manager
       </label>
       <div style={{ position: 'relative' }}>
@@ -475,19 +518,29 @@ function ManagerCombobox({ value, error, onChange }: { value: string; error?: st
           onFocus={() => { setFocused(true); setOpen(true); }}
           style={{
             width: '100%',
-            padding: '12px 40px 12px 14px',
-            borderRadius: '8px',
+            padding: `${spacing.md} 2.5rem ${spacing.md} 0.875rem`,
+            borderRadius: radius.md,
             border: `1.5px solid ${borderColor}`,
             fontFamily: "'Archivo', sans-serif",
-            fontSize: '15px',
-            lineHeight: '26px',
+            fontSize: '0.9375rem',
+            lineHeight: 1.625,
             color: colors.textPrimary,
             outline: 'none',
             boxSizing: 'border-box',
             transition: 'border-color 0.15s ease',
           }}
         />
-        <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: colors.blueGrayMd, display: 'flex' }}>
+        <span
+          style={{
+            position: 'absolute',
+            right: '0.875rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            pointerEvents: 'none',
+            color: colors.blueGrayMd,
+            display: 'flex',
+          }}
+        >
           <svg width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true">
             <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -504,9 +557,9 @@ function ManagerCombobox({ value, error, onChange }: { value: string; error?: st
             zIndex: 20,
             backgroundColor: '#fff',
             border: '1.5px solid #d1d5db',
-            borderRadius: '8px',
-            boxShadow: '0 8px 24px rgba(3,12,35,0.12)',
-            maxHeight: '196px',
+            borderRadius: radius.md,
+            boxShadow: '0 0.5rem 1.5rem rgba(3,12,35,0.12)',
+            maxHeight: '12.25rem',
             overflowY: 'auto',
             margin: 0,
             padding: 0,
@@ -517,7 +570,13 @@ function ManagerCombobox({ value, error, onChange }: { value: string; error?: st
             <li
               key={name}
               onMouseDown={() => { onChange(name); setOpen(false); setFocused(false); }}
-              style={{ padding: '12px 16px', fontFamily: "'Archivo', sans-serif", fontSize: '14px', color: colors.textPrimary, cursor: 'pointer' }}
+              style={{
+                padding: `${spacing.md} ${spacing.lg}`,
+                fontFamily: "'Archivo', sans-serif",
+                fontSize: '0.875rem',
+                color: colors.textPrimary,
+                cursor: 'pointer',
+              }}
               onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f0f5ff')}
               onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#fff')}
             >
@@ -528,7 +587,13 @@ function ManagerCombobox({ value, error, onChange }: { value: string; error?: st
       )}
 
       {error && (
-        <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: '12px', color: '#ef4444' }}>
+        <span
+          style={{
+            fontFamily: "'Archivo', sans-serif",
+            fontSize: '0.75rem',
+            color: '#ef4444',
+          }}
+        >
           {error}
         </span>
       )}
