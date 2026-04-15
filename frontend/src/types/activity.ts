@@ -7,4 +7,5 @@ export interface TransactionLog {
   item: string;
   toFrom: string;
   notes: string;
+  department?: string;
 }
