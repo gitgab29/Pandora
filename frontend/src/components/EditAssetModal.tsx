@@ -118,7 +118,6 @@ function SelectInput({
 
 function assetToForm(a: Asset): AddAssetFormData {
   return {
-    asset_name: a.asset_name,
     asset_tag: a.asset_tag,
     category: a.category,
     status: a.status,
@@ -131,7 +130,6 @@ function assetToForm(a: Asset): AddAssetFormData {
     depreciation_value: a.depreciation_value?.toString() ?? '',
     manufacturer: a.manufacturer ?? '',
     supplier: a.supplier ?? '',
-    location: a.location ?? '',
     department: a.department ?? '',
     assigned_to: a.assigned_to ?? '',
     notes: a.notes ?? '',
@@ -163,10 +161,9 @@ export default function EditAssetModal({ isOpen, asset, onClose, onSave }: EditA
     setForm(prev => prev ? { ...prev, [key]: v } : prev);
 
   const handleSubmit = () => {
-    if (!form.asset_name.trim() || !form.serial_number.trim()) return;
+    if (!form.asset_tag.trim() || !form.serial_number.trim()) return;
     const updated: Asset = {
       ...asset,
-      asset_name: form.asset_name.trim(),
       asset_tag: form.asset_tag.trim(),
       category: form.category || asset.category,
       status: (form.status as AssetStatus) || asset.status,
@@ -179,7 +176,6 @@ export default function EditAssetModal({ isOpen, asset, onClose, onSave }: EditA
       depreciation_value: form.depreciation_value ? parseFloat(form.depreciation_value) : undefined,
       manufacturer: form.manufacturer || undefined,
       supplier: form.supplier || undefined,
-      location: form.location || undefined,
       department: form.department || undefined,
       assigned_to: form.assigned_to || undefined,
       notes: form.notes || undefined,
@@ -264,9 +260,6 @@ export default function EditAssetModal({ isOpen, asset, onClose, onSave }: EditA
           {/* ── Basic Information ── */}
           <p style={sectionHeadStyle}>Basic Information</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <TextInput label="Asset Name *" value={form.asset_name} onChange={set('asset_name')} placeholder="e.g. MacBook Pro 14" />
-            </div>
             <TextInput label="Asset Tag *" value={form.asset_tag} onChange={set('asset_tag')} placeholder="e.g. ES-0042" />
             <TextInput label="Serial Number *" value={form.serial_number} onChange={set('serial_number')} placeholder="e.g. C02X12ABCDEF" />
             <SelectInput label="Category *" value={form.category} options={ASSET_CATEGORIES} onChange={set('category')} />
@@ -279,7 +272,6 @@ export default function EditAssetModal({ isOpen, asset, onClose, onSave }: EditA
             <TextInput label="Assigned To" value={form.assigned_to} onChange={set('assigned_to')} placeholder="e.g. Jane Smith" />
             <TextInput label="Group" value={form.group} onChange={set('group')} placeholder="e.g. Engineering" />
             <TextInput label="Department" value={form.department} onChange={set('department')} placeholder="e.g. IT" />
-            <TextInput label="Location" value={form.location} onChange={set('location')} placeholder="e.g. HQ - Floor 2" />
           </div>
 
           {/* ── Hardware Specifications ── */}

@@ -131,7 +131,7 @@ export default function AssetCheckOutModal({
                 Check Out Asset
               </h2>
               <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, color: 'rgba(255,255,255,0.8)', margin: `0.2rem 0 0` }}>
-                {asset.asset_name} · {asset.asset_tag}
+                {asset.asset_tag}
               </p>
             </div>
           </div>

@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
-import { X, LogIn } from 'lucide-react';
+import { X, RefreshCw } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
-import type { Asset } from '../types/asset';
+import type { Asset, AssetStatus } from '../types/asset';
 
-interface AssetCheckInModalProps {
+interface ChangeStatusModalProps {
   isOpen: boolean;
   asset: Asset | null;
   onClose: () => void;
-  onConfirm: (assetId: number, notes: string) => void;
+  onConfirm: (assetId: number, status: AssetStatus, notes: string) => void;
 }
+
+const STATUSES: AssetStatus[] = ['Available', 'Deployed', 'In Repair', 'Retired', 'To Audit'];
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "'Archivo', sans-serif",
@@ -35,23 +37,28 @@ const inputStyle: React.CSSProperties = {
   transition: 'border-color 0.15s ease',
 };
 
-export default function AssetCheckInModal({
+export default function ChangeStatusModal({
   isOpen,
   asset,
   onClose,
   onConfirm,
-}: AssetCheckInModalProps) {
+}: ChangeStatusModalProps) {
+  const [status, setStatus] = useState<AssetStatus>('Available');
   const [notes, setNotes] = useState('');
-  const [focused, setFocused] = useState(false);
+  const [selectFocused, setSelectFocused] = useState(false);
+  const [notesFocused, setNotesFocused] = useState(false);
 
   useEffect(() => {
-    if (isOpen) setNotes('');
-  }, [isOpen]);
+    if (isOpen && asset) {
+      setStatus(asset.status);
+      setNotes('');
+    }
+  }, [isOpen, asset]);
 
   if (!isOpen || !asset) return null;
 
   const handleConfirm = () => {
-    onConfirm(asset.id, notes.trim());
+    onConfirm(asset.id, status, notes.trim());
     onClose();
   };
 
@@ -82,7 +89,7 @@ export default function AssetCheckInModal({
         {/* Coloured header bar */}
         <div
           style={{
-            backgroundColor: colors.orangeAccent,
+            backgroundColor: colors.primary,
             padding: `${spacing.xl} ${spacing.xl} ${spacing.lg}`,
             display: 'flex',
             alignItems: 'flex-start',
@@ -103,11 +110,11 @@ export default function AssetCheckInModal({
                 flexShrink: 0,
               }}
             >
-              <LogIn size={16} color="#ffffff" />
+              <RefreshCw size={16} color="#ffffff" />
             </div>
             <div>
               <h2 style={{ fontFamily: "'Roboto', sans-serif", fontSize: '1rem', fontWeight: 700, color: colors.white, margin: 0 }}>
-                Check In Asset
+                Change Status
               </h2>
               <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, color: 'rgba(255,255,255,0.85)', margin: `0.2rem 0 0` }}>
                 {asset.asset_tag}
@@ -129,38 +136,38 @@ export default function AssetCheckInModal({
 
         {/* Body */}
         <div style={{ padding: spacing.xl, display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
-
-          {/* Current holder info */}
-          {asset.assigned_to && (
-            <div
+          <div>
+            <label style={labelStyle}>Status</label>
+            <select
+              value={status}
+              onChange={e => setStatus(e.target.value as AssetStatus)}
+              onFocus={() => setSelectFocused(true)}
+              onBlur={() => setSelectFocused(false)}
               style={{
-                padding: `${spacing.sm} ${spacing.md}`,
-                borderRadius: radius.md,
-                backgroundColor: 'rgba(252,156,45,0.08)',
-                border: '1px solid rgba(252,156,45,0.2)',
+                ...inputStyle,
+                appearance: 'none',
+                cursor: 'pointer',
+                borderColor: selectFocused ? colors.primary : colors.border,
               }}
             >
-              <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.sm, color: colors.textPrimary, margin: 0 }}>
-                Currently assigned to <strong>{asset.assigned_to}</strong>. Checking in will unassign and mark the asset as Available.
-              </p>
-            </div>
-          )}
+              {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
 
-          {/* Notes */}
           <div>
             <label style={labelStyle}>Notes</label>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              placeholder="Optional notes about this check-in…"
+              placeholder="Optional notes about this status change…"
               rows={3}
-              onFocus={() => setFocused(true)}
-              onBlur={() => setFocused(false)}
+              onFocus={() => setNotesFocused(true)}
+              onBlur={() => setNotesFocused(false)}
               style={{
                 ...inputStyle,
                 resize: 'vertical',
                 lineHeight: 1.5,
-                borderColor: focused ? colors.primary : colors.border,
+                borderColor: notesFocused ? colors.primary : colors.border,
               }}
             />
           </div>
@@ -198,7 +205,7 @@ export default function AssetCheckInModal({
               padding: `${spacing.sm} ${spacing.lg}`,
               borderRadius: radius.full,
               border: 'none',
-              backgroundColor: colors.orangeAccent,
+              backgroundColor: colors.primary,
               fontFamily: "'Archivo', sans-serif",
               fontSize: '0.875rem',
               fontWeight: 600,
@@ -206,7 +213,7 @@ export default function AssetCheckInModal({
               cursor: 'pointer',
             }}
           >
-            Check In
+            Save
           </button>
         </div>
       </div>

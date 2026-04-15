@@ -128,7 +128,6 @@ function SelectInput({
 
 function assetToForm(a: Asset): AddAssetFormData {
   return {
-    asset_name: a.asset_name,
     asset_tag: '',          // must be unique — user fills in
     category: a.category,
     status: 'Available',    // copies start as Available
@@ -141,7 +140,6 @@ function assetToForm(a: Asset): AddAssetFormData {
     depreciation_value: a.depreciation_value?.toString() ?? '',
     manufacturer: a.manufacturer ?? '',
     supplier: a.supplier ?? '',
-    location: a.location ?? '',
     department: a.department ?? '',
     assigned_to: '',
     notes: a.notes ?? '',
@@ -178,10 +176,9 @@ export default function CopyAssetModal({ isOpen, asset, onClose, onSave }: CopyA
 
   const handleSubmit = () => {
     setSubmitted(true);
-    if (!form.asset_name.trim() || !form.serial_number.trim() || !form.asset_tag.trim()) return;
+    if (!form.serial_number.trim() || !form.asset_tag.trim()) return;
 
     onSave({
-      asset_name: form.asset_name.trim(),
       asset_tag: form.asset_tag.trim(),
       category: form.category || asset.category,
       status: (form.status as AssetStatus) || 'Available',
@@ -194,7 +191,6 @@ export default function CopyAssetModal({ isOpen, asset, onClose, onSave }: CopyA
       depreciation_value: form.depreciation_value ? parseFloat(form.depreciation_value) : undefined,
       manufacturer: form.manufacturer || undefined,
       supplier: form.supplier || undefined,
-      location: form.location || undefined,
       department: form.department || undefined,
       assigned_to: form.assigned_to || undefined,
       notes: form.notes || undefined,
@@ -257,7 +253,7 @@ export default function CopyAssetModal({ isOpen, asset, onClose, onSave }: CopyA
         >
           <div>
             <h2 style={{ fontFamily: "'Roboto', sans-serif", fontSize: fontSize.h6, fontWeight: 700, color: colors.textPrimary, margin: 0 }}>
-              Copy Asset — {asset.asset_name}
+              Copy Asset — {asset.asset_tag}
             </h2>
             <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, color: colors.blueGrayMd, margin: `${spacing.xs} 0 0` }}>
               Fields pre-filled from original. <span style={{ color: colors.error, fontWeight: 600 }}>Asset Tag and Serial Number must be unique.</span>
@@ -282,9 +278,6 @@ export default function CopyAssetModal({ isOpen, asset, onClose, onSave }: CopyA
           {/* ── Basic Information ── */}
           <p style={sectionHeadStyle}>Basic Information</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <TextInput label="Asset Name *" value={form.asset_name} onChange={set('asset_name')} placeholder="e.g. MacBook Pro 14" error={submitted && !form.asset_name.trim()} />
-            </div>
             <TextInput label="Asset Tag *" value={form.asset_tag} onChange={set('asset_tag')} placeholder="e.g. ES-0099 (must be unique)" error={submitted && !form.asset_tag.trim()} />
             <TextInput label="Serial Number *" value={form.serial_number} onChange={set('serial_number')} placeholder="Enter new serial number" error={submitted && !form.serial_number.trim()} />
             <SelectInput label="Category *" value={form.category} options={ASSET_CATEGORIES} onChange={set('category')} />
@@ -297,7 +290,6 @@ export default function CopyAssetModal({ isOpen, asset, onClose, onSave }: CopyA
             <TextInput label="Assigned To" value={form.assigned_to} onChange={set('assigned_to')} placeholder="e.g. Jane Smith" />
             <TextInput label="Group" value={form.group} onChange={set('group')} placeholder="e.g. Engineering" />
             <TextInput label="Department" value={form.department} onChange={set('department')} placeholder="e.g. IT" />
-            <TextInput label="Location" value={form.location} onChange={set('location')} placeholder="e.g. HQ - Floor 2" />
           </div>
 
           {/* ── Hardware Specifications ── */}

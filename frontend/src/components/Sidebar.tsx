@@ -1,9 +1,8 @@
 import { useLocation, NavLink } from 'react-router-dom';
 import {
   Home,
-  Package,
+  Gauge,
   ClipboardList,
-  FileKey,
   Activity,
   Users,
   Settings,
@@ -22,9 +21,8 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { icon: Home,          label: 'Home',      path: '/home' },
-  { icon: Package,       label: 'Assets',    path: '/assets' },
   { icon: ClipboardList, label: 'Inventory', path: '/inventory' },
-  { icon: FileKey,       label: 'Licenses',  path: '/licenses' },
+  { icon: Gauge,         label: 'Status',    path: '/status' },
   { icon: Activity,      label: 'Activity',  path: '/activity' },
   { icon: Users,         label: 'People',    path: '/people' },
   { icon: Settings,      label: 'Settings',  path: '/settings' },

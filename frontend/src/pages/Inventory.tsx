@@ -16,8 +16,13 @@ import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import EditInventoryModal from '../components/EditInventoryModal';
 import InventoryCheckInModal from '../components/InventoryCheckInModal';
 import InventoryCheckOutModal from '../components/InventoryCheckOutModal';
+import AssetsTabContent from '../components/AssetsTabContent';
+import ComingSoonPanel from '../components/ComingSoonPanel';
 import { colors, spacing, radius } from '../theme';
 import type { StoreroomInventory } from '../types/inventory';
+
+type InventoryTab = 'Assets' | 'Accessories' | 'Licenses' | 'Consumables';
+const INVENTORY_TABS: InventoryTab[] = ['Assets', 'Accessories', 'Licenses', 'Consumables'];
 
 // ── Initial dummy data ─────────────────────────────────────────────────────────
 
@@ -124,6 +129,7 @@ const TD: React.CSSProperties = {
 export default function Inventory() {
   const [inventory, setInventory] = useState<StoreroomInventory[]>(INITIAL_INVENTORY);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [activeInventoryTab, setActiveInventoryTab] = useState<InventoryTab>('Assets');
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<FilterTab>('All');
   const [currentPage, setCurrentPage] = useState(1);
@@ -295,6 +301,58 @@ export default function Inventory() {
 
         <main style={{ flex: 1, overflowY: 'auto', padding: spacing.xl2 }}>
 
+          {/* ── Inventory entity tabs ── */}
+          <div
+            style={{
+              display: 'flex',
+              gap: spacing.xs,
+              marginBottom: spacing.xl2,
+              borderBottom: '1px solid rgba(70, 98, 145, 0.15)',
+            }}
+          >
+            {INVENTORY_TABS.map(tab => {
+              const isActive = activeInventoryTab === tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveInventoryTab(tab)}
+                  style={{
+                    padding: `${spacing.sm} ${spacing.lg}`,
+                    border: 'none',
+                    background: 'transparent',
+                    fontFamily: "'Archivo', sans-serif",
+                    fontSize: '0.875rem',
+                    fontWeight: isActive ? 700 : 500,
+                    color: isActive ? colors.primary : colors.blueGrayMd,
+                    cursor: 'pointer',
+                    borderBottom: `2px solid ${isActive ? colors.primary : 'transparent'}`,
+                    marginBottom: '-1px',
+                    transition: 'color 0.15s ease, border-color 0.15s ease',
+                  }}
+                >
+                  {tab}
+                </button>
+              );
+            })}
+          </div>
+
+          {activeInventoryTab === 'Assets' && <AssetsTabContent />}
+
+          {activeInventoryTab === 'Licenses' && (
+            <ComingSoonPanel
+              label="Licenses — Coming Soon"
+              description="Software license tracking will live here. Schema and fields are still being scoped."
+            />
+          )}
+
+          {activeInventoryTab === 'Consumables' && (
+            <ComingSoonPanel
+              label="Consumables — Coming Soon"
+              description="Consumable item tracking will live here. Schema and fields are still being scoped."
+            />
+          )}
+
+          {activeInventoryTab === 'Accessories' && <>
           {/* ── Stat cards ── */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.lg, marginBottom: spacing.xl2 }}>
             {statCards.map(card => (
@@ -704,6 +762,7 @@ export default function Inventory() {
               <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
           </div>
+          </>}
         </main>
       </div>
 

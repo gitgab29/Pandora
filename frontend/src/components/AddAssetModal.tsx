@@ -9,11 +9,11 @@ interface AddAssetModalProps {
 }
 
 const EMPTY_FORM: AddAssetFormData = {
-  asset_name: '', asset_tag: '', category: '', status: '',
+  asset_tag: '', category: '', status: '',
   serial_number: '', warranty_expiry: '', end_of_life: '',
   order_number: '', purchase_date: '', purchase_cost: '',
   depreciation_value: '', manufacturer: '', supplier: '',
-  location: '', department: '', assigned_to: '', notes: '',
+  department: '', assigned_to: '', notes: '',
   group: '', imei_number: '', ssd_encryption_status: '',
   connectivity: '', cpu: '', gpu: '', operating_system: '',
   ram: '', screen_size: '', storage_size: '',
@@ -209,9 +209,6 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
           {/* ── Basic Information ── */}
           <p style={sectionHeadStyle}>Basic Information</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <TextInput label="Asset Name *" value={form.asset_name} onChange={set('asset_name')} placeholder="e.g. MacBook Pro 14" />
-            </div>
             <TextInput label="Asset Tag *" value={form.asset_tag} onChange={set('asset_tag')} placeholder="e.g. ES-0042" />
             <TextInput label="Serial Number *" value={form.serial_number} onChange={set('serial_number')} placeholder="e.g. C02X12ABCDEF" />
             <SelectInput label="Category *" value={form.category} options={ASSET_CATEGORIES} onChange={set('category')} />
@@ -224,7 +221,6 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
             <TextInput label="Assigned To" value={form.assigned_to} onChange={set('assigned_to')} placeholder="e.g. Jane Smith" />
             <TextInput label="Group" value={form.group} onChange={set('group')} placeholder="e.g. Engineering" />
             <TextInput label="Department" value={form.department} onChange={set('department')} placeholder="e.g. IT" />
-            <TextInput label="Location" value={form.location} onChange={set('location')} placeholder="e.g. HQ - Floor 2" />
           </div>
 
           {/* ── Hardware Specifications ── */}

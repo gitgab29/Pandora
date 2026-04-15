@@ -11,7 +11,6 @@ export type AssetCategory =
 
 export interface Asset {
   id: number;
-  asset_name: string;
   image_url?: string;
   asset_tag: string;
   category: AssetCategory | string;
@@ -25,7 +24,6 @@ export interface Asset {
   depreciation_value?: number;
   manufacturer?: string;
   supplier?: string;
-  location?: string;
   department?: string;
   assigned_to?: string;
   notes?: string;
@@ -44,7 +42,6 @@ export interface Asset {
 }
 
 export interface AddAssetFormData {
-  asset_name: string;
   asset_tag: string;
   category: string;
   status: AssetStatus | '';
@@ -57,7 +54,6 @@ export interface AddAssetFormData {
   depreciation_value: string;
   manufacturer: string;
   supplier: string;
-  location: string;
   department: string;
   assigned_to: string;
   notes: string;
