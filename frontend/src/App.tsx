@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import Inventory from './pages/Inventory';
 import Activity from './pages/Activity';
 import ComingSoon from './pages/ComingSoon';
+import People from './pages/People';
 
 export default function App() {
   return (
@@ -15,7 +16,7 @@ export default function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/inventory" element={<Inventory />} />
         <Route path="/activity" element={<Activity />} />
-        <Route path="/people" element={<ComingSoon title="People" />} />
+        <Route path="/people" element={<People />} />
         <Route path="/settings" element={<ComingSoon title="Settings" />} />
         <Route path="/archive" element={<ComingSoon title="Archive" />} />
         {/* Default redirect */}

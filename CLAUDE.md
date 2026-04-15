@@ -95,12 +95,13 @@ cd backend && source .venv/bin/activate && python manage.py runserver
 - ✅ Stub routes (`/people`, `/settings`, `/archive`) → `ComingSoon`
 - ✅ Reusable modals: `Add/Edit/Copy` Asset, `Add/Edit` Accessory, `CheckIn/CheckOut` for both, `ChangeStatusModal`, `DeleteConfirm`, `ActivityDetail`, `FeatureNotAvailable`
 - ✅ Sidebar has a logout button at the bottom (mock — navigates to `/sign-in`)
+- ✅ `/people` — **People directory page**. Table: avatar initials, Name (Surname, First), Email, Position, Business Group, Supervisor, Role badge. Sort by Name or Business Group via checkbox-pills; A–Z / Z–A direction; text search. 10 rows/page pagination. Full CRUD: Add Person modal, Edit modal, Delete (type-to-confirm). Detail modal shows all profile fields + assigned assets with per-asset Check In / Check Out. Only `is_active=true` people shown (inactive reserved for Archive). Dummy data: 16 people in `INITIAL_PEOPLE` (`pages/People.tsx`); names match `assigned_to` values in `INITIAL_ASSETS`. New files: `types/people.ts`, `components/AddEditPersonModal.tsx`, `components/PersonDetailModal.tsx`.
 - ❌ Backend `api/`: Django + DRF + JWT scaffolded, but `models.py` / `views.py` / `serializers.py` are **empty** — no real endpoints exist
 - ❌ Google OAuth: no Django endpoint yet; frontend handlers are mocks
 
 **Asset schema note:** `Asset` has no `asset_name` or `location` field — the displayed identifier is `asset_tag`. If you're adding new asset-related UI, bind to `asset_tag`.
 
-**Dummy-data hotspots to replace when backend lands:** `INITIAL_ASSETS` in `components/AssetsTabContent.tsx`, `INITIAL_INVENTORY` in `pages/Inventory.tsx`, `generateLogs()` in `pages/Home.tsx` and `pages/Activity.tsx`, `DUMMY_USERS` in both checkout modals, `DUMMY_MANAGERS` in `pages/SignUp.tsx`, dropdown data in `components/Header.tsx`.
+**Dummy-data hotspots to replace when backend lands:** `INITIAL_ASSETS` in `components/AssetsTabContent.tsx`, `INITIAL_INVENTORY` in `pages/Inventory.tsx`, `INITIAL_PEOPLE` in `pages/People.tsx`, `generateLogs()` in `pages/Home.tsx` and `pages/Activity.tsx`, `DUMMY_USERS` in both checkout modals, `DUMMY_MANAGERS` in `pages/SignUp.tsx`, dropdown data in `components/Header.tsx`.
 
 ## Design Context
 
@@ -139,4 +140,4 @@ Color restraint: Orange (`#fc9c2d`) reserved for genuine urgency (warnings, arch
 - [ ] Wire frontend auth handlers to real OAuth endpoint
 - [ ] Add protected-route wrapper (redirect to `/sign-in` if no valid JWT)
 - [ ] Replace dummy hotspots above with real `GET /api/...` calls + wire row-action endpoints
-- [ ] Build out Licenses, People, Settings, Archive pages per Figma
+- [ ] Build out Licenses, Settings, Archive pages per Figma
