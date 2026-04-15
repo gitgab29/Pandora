@@ -97,6 +97,35 @@ cd backend && source .venv/bin/activate && python manage.py runserver
 
 **Dummy-data hotspots to replace when backend lands:** `INITIAL_ASSETS` in `pages/Assets.tsx`, `INITIAL_INVENTORY` in `pages/Inventory.tsx`, `generateLogs()` in `pages/Home.tsx` and `pages/Activity.tsx`, `DUMMY_USERS` in both checkout modals, `DUMMY_MANAGERS` in `pages/SignUp.tsx`, dropdown data in `components/Header.tsx`.
 
+## Design Context
+
+### Users
+
+IT administrators at **Embedded Silicon** — a small, experienced team who live in this tool daily. Power users who manage hardware assets, storeroom inventory, and transaction audits. They are precision-oriented and get frustrated by visual noise and wasted motion. The interface should feel like a tool they trust, not a product they navigate around.
+
+### Brand Personality
+
+**Precise. Calm. Polished.** Like a well-calibrated instrument. Nothing decorative — every element earns its place by serving the data. The emotional goal is quiet confidence: the tool has everything under control so users can focus on the work.
+
+### Aesthetic Direction
+
+**Layered depth system — preserve it.** Three-layer visual hierarchy:
+1. **Dark background** — `bg-auth.jpg`, always present behind everything
+2. **Blue glass sidebar** — `rgba(46, 124, 253, 0.88)` + `backdrop-filter: blur(4px)`
+3. **White/light content panels** — crisp, high-contrast working surface
+
+Never flatten into purely dark or purely light. Never add a fourth layer (no card-in-card).
+
+Color restraint: Orange (`#fc9c2d`) reserved for genuine urgency (warnings, archive badge, overdue). Cyan (`#2dfcf9`) used sparingly — risks looking garish on white. Blue primary anchors navigation and CTAs only.
+
+### Design Principles
+
+1. **Precision over decoration** — every element serves the data or the task
+2. **Depth through layers** — dark → glass → white is the product's identity; slot all surfaces into one of these three
+3. **Calm by default, urgent when needed** — quiet UI, accents reserved for real signals
+4. **Density without fatigue** — tight table rows, hierarchy through weight/color not size
+5. **Trustworthy at first glance** — consistent radii, exact alignment, required hover/focus states
+
 ## Next up
 
 - [ ] Define models in `backend/api/models.py` (User, Asset, StoreroomInventory, TransactionLog)
