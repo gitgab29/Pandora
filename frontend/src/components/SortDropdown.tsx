@@ -1,5 +1,5 @@
 import { ArrowUpDown, Check } from 'lucide-react';
-import { colors, spacing, radius } from '../theme';
+import { colors, spacing, radius, fontSize, shadows } from '../theme';
 
 interface SortDropdownProps {
   open: boolean;
@@ -29,10 +29,10 @@ export default function SortDropdown({
             top: '2.5rem',
             right: 0,
             width: '12.5rem',
-            backgroundColor: '#ffffff',
+            backgroundColor: colors.bgSurface,
             borderRadius: radius.lg,
             border: '1px solid rgba(70,98,145,0.14)',
-            boxShadow: '0 0.5rem 2rem rgba(3,12,35,0.12)',
+            boxShadow: shadows.dropdown,
             padding: spacing.sm,
             zIndex: 100,
           }}
@@ -41,7 +41,7 @@ export default function SortDropdown({
             style={{
               margin: `0.25rem ${spacing.sm} ${spacing.sm}`,
               fontFamily: "'Roboto', sans-serif",
-              fontSize: '0.719rem',
+              fontSize: fontSize.label,
               fontWeight: 700,
               color: colors.blueGrayMd,
               letterSpacing: '0.05em',
@@ -65,13 +65,13 @@ export default function SortDropdown({
                 backgroundColor: activeSort === opt ? 'rgba(46,124,253,0.06)' : 'transparent',
                 cursor: 'pointer',
                 fontFamily: "'Archivo', sans-serif",
-                fontSize: '0.8125rem',
+                fontSize: fontSize.sm,
                 color: activeSort === opt ? colors.primary : colors.textPrimary,
                 fontWeight: activeSort === opt ? 600 : 400,
                 textAlign: 'left',
               }}
               onMouseEnter={e => {
-                if (activeSort !== opt) e.currentTarget.style.backgroundColor = '#f5f7fb';
+                if (activeSort !== opt) e.currentTarget.style.backgroundColor = colors.bgSubtle;
               }}
               onMouseLeave={e => {
                 if (activeSort !== opt) e.currentTarget.style.backgroundColor = 'transparent';
@@ -109,25 +109,25 @@ function ActionIconBtn({
         height: '2.125rem',
         borderRadius: radius.md,
         border: `1px solid ${active ? colors.primary : 'rgba(70, 98, 145, 0.2)'}`,
-        backgroundColor: active ? 'rgba(46,124,253,0.06)' : '#ffffff',
+        backgroundColor: active ? 'rgba(46,124,253,0.06)' : colors.bgSurface,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
         color: active ? colors.primary : colors.blueGrayMd,
-        transition: 'all 0.15s ease',
+        transition: 'background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease',
         flexShrink: 0,
       }}
       onMouseEnter={e => {
         if (!active) {
-          e.currentTarget.style.backgroundColor = '#f5f7fb';
+          e.currentTarget.style.backgroundColor = colors.bgSubtle;
           e.currentTarget.style.borderColor = colors.primary;
           e.currentTarget.style.color = colors.primary;
         }
       }}
       onMouseLeave={e => {
         if (!active) {
-          e.currentTarget.style.backgroundColor = '#ffffff';
+          e.currentTarget.style.backgroundColor = colors.bgSurface;
           e.currentTarget.style.borderColor = 'rgba(70, 98, 145, 0.2)';
           e.currentTarget.style.color = colors.blueGrayMd;
         }

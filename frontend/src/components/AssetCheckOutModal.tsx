@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, LogOut } from 'lucide-react';
-import { colors, spacing, radius } from '../theme';
+import { colors, spacing, radius, fontSize } from '../theme';
 import type { Asset } from '../types/asset';
 
 interface AssetCheckOutModalProps {
@@ -25,7 +25,7 @@ const DUMMY_USERS = [
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "'Archivo', sans-serif",
-  fontSize: '0.6875rem',
+  fontSize: fontSize.micro,
   fontWeight: 600,
   color: colors.blueGrayMd,
   letterSpacing: '0.04em',
@@ -38,11 +38,11 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.4375rem 0.625rem',
   borderRadius: radius.md,
-  border: '1.5px solid #d1d5db',
+  border: `1.5px solid ${colors.border}`,
   fontFamily: "'Archivo', sans-serif",
-  fontSize: '0.8125rem',
+  fontSize: fontSize.sm,
   color: colors.textPrimary,
-  backgroundColor: '#ffffff',
+  backgroundColor: colors.bgSurface,
   outline: 'none',
   boxSizing: 'border-box',
   transition: 'border-color 0.15s ease',
@@ -82,7 +82,7 @@ export default function AssetCheckOutModal({
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(3,12,35,0.45)',
+        backgroundColor: colors.overlay,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -92,7 +92,7 @@ export default function AssetCheckOutModal({
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: colors.bgSurface,
           borderRadius: radius.xl,
           width: '26rem',
           position: 'relative',
@@ -103,7 +103,7 @@ export default function AssetCheckOutModal({
         {/* Coloured header bar */}
         <div
           style={{
-            backgroundColor: '#22c55e',
+            backgroundColor: colors.success,
             padding: `${spacing.xl} ${spacing.xl} ${spacing.lg}`,
             display: 'flex',
             alignItems: 'flex-start',
@@ -127,10 +127,10 @@ export default function AssetCheckOutModal({
               <LogOut size={16} color="#ffffff" />
             </div>
             <div>
-              <h2 style={{ fontFamily: "'Roboto', sans-serif", fontSize: '1rem', fontWeight: 700, color: '#ffffff', margin: 0 }}>
+              <h2 style={{ fontFamily: "'Roboto', sans-serif", fontSize: '1rem', fontWeight: 700, color: colors.white, margin: 0 }}>
                 Check Out Asset
               </h2>
-              <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', color: 'rgba(255,255,255,0.8)', margin: `0.2rem 0 0` }}>
+              <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, color: 'rgba(255,255,255,0.8)', margin: `0.2rem 0 0` }}>
                 {asset.asset_name} · {asset.asset_tag}
               </p>
             </div>
@@ -141,7 +141,7 @@ export default function AssetCheckOutModal({
               width: '1.75rem', height: '1.75rem', borderRadius: radius.full,
               backgroundColor: 'rgba(0,0,0,0.2)', border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#ffffff', padding: 0, flexShrink: 0,
+              color: colors.white, padding: 0, flexShrink: 0,
             }}
           >
             <X size={14} />
@@ -161,18 +161,18 @@ export default function AssetCheckOutModal({
               onBlur={() => setFocused(null)}
               style={{
                 ...inputStyle,
-                borderColor: submitted && !assignedTo ? '#ef4444' : focused === 'user' ? colors.primary : '#d1d5db',
+                borderColor: submitted && !assignedTo ? colors.error : focused === 'user' ? colors.primary : colors.border,
                 appearance: 'none',
                 cursor: 'pointer',
-                backgroundColor: assignedTo ? '#ffffff' : '#fafafa',
-                color: assignedTo ? colors.textPrimary : '#9ca3af',
+                backgroundColor: assignedTo ? colors.bgSurface : colors.bgEmpty,
+                color: assignedTo ? colors.textPrimary : colors.textDisabled,
               }}
             >
               <option value="">Select a user…</option>
               {DUMMY_USERS.map(u => <option key={u} value={u}>{u}</option>)}
             </select>
             {submitted && !assignedTo && (
-              <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.6875rem', color: '#ef4444', marginTop: '0.15rem', display: 'block' }}>
+              <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.error, marginTop: '0.15rem', display: 'block' }}>
                 Please select a user
               </span>
             )}
@@ -192,7 +192,7 @@ export default function AssetCheckOutModal({
                 ...inputStyle,
                 resize: 'vertical',
                 lineHeight: 1.5,
-                borderColor: focused === 'notes' ? colors.primary : '#d1d5db',
+                borderColor: focused === 'notes' ? colors.primary : colors.border,
               }}
             />
           </div>
@@ -212,8 +212,8 @@ export default function AssetCheckOutModal({
               flex: 1,
               padding: `${spacing.sm} ${spacing.lg}`,
               borderRadius: radius.full,
-              border: '1.5px solid #d1d5db',
-              backgroundColor: '#ffffff',
+              border: `1.5px solid ${colors.border}`,
+              backgroundColor: colors.bgSurface,
               fontFamily: "'Archivo', sans-serif",
               fontSize: '0.875rem',
               fontWeight: 600,
@@ -230,11 +230,11 @@ export default function AssetCheckOutModal({
               padding: `${spacing.sm} ${spacing.lg}`,
               borderRadius: radius.full,
               border: 'none',
-              backgroundColor: '#22c55e',
+              backgroundColor: colors.success,
               fontFamily: "'Archivo', sans-serif",
               fontSize: '0.875rem',
               fontWeight: 600,
-              color: '#ffffff',
+              color: colors.white,
               cursor: 'pointer',
             }}
           >

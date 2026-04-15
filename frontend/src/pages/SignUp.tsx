@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { colors, spacing, radius } from '../theme';
+import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import type { GoogleUser, SignUpFormData } from '../types/auth';
@@ -92,7 +92,7 @@ export default function SignUp() {
           minHeight: '30rem',
           borderRadius: radius.xl2,
           overflow: 'hidden',
-          boxShadow: '0 2.5rem 6.25rem rgba(3,12,35,0.45)',
+          boxShadow: shadows.auth,
         }}
       >
         {/* LEFT — blue brand panel */}
@@ -130,9 +130,9 @@ export default function SignUp() {
                     style={{
                       fontFamily: "'Roboto', sans-serif",
                       fontWeight: 700,
-                      fontSize: '2.5rem',
+                      fontSize: fontSize.h2,
                       lineHeight: 1.25,
-                      color: '#ffffff',
+                      color: colors.white,
                       margin: `0 0 ${spacing.md} 0`,
                     }}
                   >
@@ -150,7 +150,7 @@ export default function SignUp() {
                   <p
                     style={{
                       fontFamily: "'Archivo', sans-serif",
-                      fontSize: '0.9375rem',
+                      fontSize: fontSize.lg,
                       lineHeight: 1.625,
                       color: 'rgba(255,255,255,0.75)',
                       margin: 0,
@@ -165,9 +165,9 @@ export default function SignUp() {
                     style={{
                       fontFamily: "'Roboto', sans-serif",
                       fontWeight: 700,
-                      fontSize: '2.25rem',
+                      fontSize: fontSize.h3,
                       lineHeight: 1.278,
-                      color: '#ffffff',
+                      color: colors.white,
                       margin: `0 0 ${spacing.md} 0`,
                     }}
                   >
@@ -185,7 +185,7 @@ export default function SignUp() {
                   <p
                     style={{
                       fontFamily: "'Archivo', sans-serif",
-                      fontSize: '0.9375rem',
+                      fontSize: fontSize.lg,
                       lineHeight: 1.625,
                       color: 'rgba(255,255,255,0.75)',
                       margin: `0 0 ${spacing.xl3} 0`,
@@ -217,8 +217,8 @@ export default function SignUp() {
                           justifyContent: 'center',
                           fontFamily: "'Archivo', sans-serif",
                           fontWeight: 700,
-                          fontSize: '0.8125rem',
-                          color: '#ffffff',
+                          fontSize: fontSize.sm,
+                          color: colors.white,
                           flexShrink: 0,
                         }}
                       >
@@ -229,8 +229,8 @@ export default function SignUp() {
                           style={{
                             fontFamily: "'Archivo', sans-serif",
                             fontWeight: 700,
-                            fontSize: '0.8125rem',
-                            color: '#ffffff',
+                            fontSize: fontSize.sm,
+                            color: colors.white,
                             margin: 0,
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
@@ -242,7 +242,7 @@ export default function SignUp() {
                         <p
                           style={{
                             fontFamily: "'Archivo', sans-serif",
-                            fontSize: '0.6875rem',
+                            fontSize: fontSize.micro,
                             color: 'rgba(255,255,255,0.6)',
                             margin: 0,
                             whiteSpace: 'nowrap',
@@ -263,7 +263,7 @@ export default function SignUp() {
           <p
             style={{
               fontFamily: "'Archivo', sans-serif",
-              fontSize: '0.75rem',
+              fontSize: fontSize.xs,
               color: 'rgba(255,255,255,0.4)',
               margin: 0,
             }}
@@ -276,7 +276,7 @@ export default function SignUp() {
         <div
           style={{
             flex: '0 0 62%',
-            backgroundColor: '#ffffff',
+            backgroundColor: colors.bgSurface,
             display: 'flex',
             flexDirection: 'column',
             boxSizing: 'border-box',
@@ -284,7 +284,7 @@ export default function SignUp() {
           }}
         >
           {step === 'google' ? (
-            <GoogleStep onGoogleSignUp={handleGoogleSignUp} navigate={navigate} />
+            <GoogleStep onGoogleSignUp={handleGoogleSignUp} />
           ) : (
             <ProfileStep
               form={form}
@@ -304,10 +304,8 @@ export default function SignUp() {
 
 function GoogleStep({
   onGoogleSignUp,
-  navigate,
 }: {
   onGoogleSignUp: () => void;
-  navigate: ReturnType<typeof useNavigate>;
 }) {
   return (
     <div
@@ -326,7 +324,7 @@ function GoogleStep({
           style={{
             fontFamily: "'Roboto', sans-serif",
             fontWeight: 700,
-            fontSize: '2.25rem',
+            fontSize: fontSize.h3,
             lineHeight: 1.222,
             color: colors.textPrimary,
             margin: `0 0 ${spacing.md} 0`,
@@ -348,7 +346,7 @@ function GoogleStep({
         <p
           style={{
             fontFamily: "'Archivo', sans-serif",
-            fontSize: '0.9375rem',
+            fontSize: fontSize.lg,
             lineHeight: 1.6,
             color: colors.blueGrayMd,
             margin: `0 0 ${spacing.xl3} 0`,
@@ -365,7 +363,7 @@ function GoogleStep({
         <p
           style={{
             fontFamily: "'Archivo', sans-serif",
-            fontSize: '0.875rem',
+            fontSize: fontSize.md,
             color: colors.blueGrayMd,
             margin: `${spacing.xl} 0 0 0`,
           }}
@@ -404,7 +402,7 @@ function ProfileStep({ form, errors, isSubmitting, setField, onSubmit }: Profile
         style={{
           fontFamily: "'Roboto', sans-serif",
           fontWeight: 700,
-          fontSize: '2rem',
+          fontSize: fontSize.h4,
           lineHeight: 1.3125,
           color: colors.textPrimary,
           margin: `0 0 ${spacing.md} 0`,
@@ -426,7 +424,7 @@ function ProfileStep({ form, errors, isSubmitting, setField, onSubmit }: Profile
       <p
         style={{
           fontFamily: "'Archivo', sans-serif",
-          fontSize: '0.9375rem',
+          fontSize: fontSize.lg,
           lineHeight: 1.6,
           color: colors.blueGrayMd,
           margin: `0 0 ${spacing.xl3} 0`,
@@ -491,7 +489,7 @@ function ManagerCombobox({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const borderColor = error ? '#ef4444' : focused ? colors.primary : '#d1d5db';
+  const borderColor = error ? colors.error : focused ? colors.primary : colors.border;
 
   return (
     <div
@@ -502,7 +500,7 @@ function ManagerCombobox({
         style={{
           fontFamily: "'Archivo', sans-serif",
           fontWeight: 700,
-          fontSize: '0.8125rem',
+          fontSize: fontSize.sm,
           lineHeight: 1.538,
           color: colors.textPrimary,
         }}
@@ -522,7 +520,7 @@ function ManagerCombobox({
             borderRadius: radius.md,
             border: `1.5px solid ${borderColor}`,
             fontFamily: "'Archivo', sans-serif",
-            fontSize: '0.9375rem',
+            fontSize: fontSize.lg,
             lineHeight: 1.625,
             color: colors.textPrimary,
             outline: 'none',
@@ -555,10 +553,10 @@ function ManagerCombobox({
             left: 0,
             right: 0,
             zIndex: 20,
-            backgroundColor: '#fff',
-            border: '1.5px solid #d1d5db',
+            backgroundColor: colors.bgSurface,
+            border: `1.5px solid ${colors.border}`,
             borderRadius: radius.md,
-            boxShadow: '0 0.5rem 1.5rem rgba(3,12,35,0.12)',
+            boxShadow: shadows.dropdown,
             maxHeight: '12.25rem',
             overflowY: 'auto',
             margin: 0,
@@ -573,12 +571,12 @@ function ManagerCombobox({
               style={{
                 padding: `${spacing.md} ${spacing.lg}`,
                 fontFamily: "'Archivo', sans-serif",
-                fontSize: '0.875rem',
+                fontSize: fontSize.md,
                 color: colors.textPrimary,
                 cursor: 'pointer',
               }}
-              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f0f5ff')}
-              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#fff')}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.bgHover)}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = colors.bgSurface)}
             >
               {name}
             </li>
@@ -590,8 +588,8 @@ function ManagerCombobox({
         <span
           style={{
             fontFamily: "'Archivo', sans-serif",
-            fontSize: '0.75rem',
-            color: '#ef4444',
+            fontSize: fontSize.xs,
+            color: colors.error,
           }}
         >
           {error}

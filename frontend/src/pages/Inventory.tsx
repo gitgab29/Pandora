@@ -67,7 +67,7 @@ const CATEGORY_META: Record<CategoryKey, { Icon: React.ElementType; bg: string; 
   'Headset':       { Icon: Headphones,  bg: 'rgba(252,156,45,0.12)',  iconColor: colors.orangeAccent },
   'Power Supply':  { Icon: Zap,         bg: 'rgba(252,156,45,0.12)',  iconColor: colors.orangeAccent },
   'Storage':       { Icon: HardDrive,   bg: 'rgba(46,124,253,0.10)',  iconColor: colors.primary },
-  'RAM':           { Icon: MemoryStick, bg: 'rgba(34,197,94,0.10)',   iconColor: '#22c55e' },
+  'RAM':           { Icon: MemoryStick, bg: 'rgba(34,197,94,0.10)',   iconColor: colors.success },
   'Monitor':       { Icon: Monitor,     bg: 'rgba(70,98,145,0.10)',   iconColor: colors.blueGrayMd },
   'Other':         { Icon: Package,     bg: 'rgba(66,80,102,0.10)',   iconColor: colors.blueGrayDark },
 };
@@ -107,7 +107,7 @@ const TH: React.CSSProperties = {
   textTransform: 'uppercase',
   whiteSpace: 'nowrap',
   borderBottom: '1px solid rgba(70, 98, 145, 0.12)',
-  backgroundColor: '#f8fafc',
+  backgroundColor: colors.bgStripe,
 };
 
 const TD: React.CSSProperties = {
@@ -305,7 +305,7 @@ export default function Inventory() {
           {/* ── Inventory table card ── */}
           <div
             style={{
-              backgroundColor: '#ffffff',
+              backgroundColor: colors.bgSurface,
               borderRadius: radius.lg,
               border: '1px solid rgba(70, 98, 145, 0.1)',
               boxShadow: '0 1px 4px rgba(3, 12, 35, 0.06)',
@@ -347,11 +347,11 @@ export default function Inventory() {
                         borderRadius: radius.full,
                         border: activeTab === tab ? 'none' : '1px solid rgba(70,98,145,0.25)',
                         backgroundColor: activeTab === tab
-                          ? tab === 'Out of Stock' ? '#ef4444'
+                          ? tab === 'Out of Stock' ? colors.error
                           : tab === 'Low Stock'   ? colors.orangeAccent
                           : colors.primary
                           : 'transparent',
-                        color: activeTab === tab ? '#ffffff' : colors.blueGrayMd,
+                        color: activeTab === tab ? colors.white : colors.blueGrayMd,
                         fontFamily: "'Archivo', sans-serif",
                         fontSize: '0.75rem',
                         fontWeight: 500,
@@ -408,7 +408,7 @@ export default function Inventory() {
                     padding: `0.375rem ${spacing.md}`,
                     borderRadius: radius.md,
                     border: '1px solid rgba(70,98,145,0.25)',
-                    backgroundColor: '#ffffff',
+                    backgroundColor: colors.bgSurface,
                     fontFamily: "'Archivo', sans-serif",
                     fontSize: '0.8125rem',
                     fontWeight: 500,
@@ -431,7 +431,7 @@ export default function Inventory() {
                     fontFamily: "'Archivo', sans-serif",
                     fontSize: '0.8125rem',
                     fontWeight: 600,
-                    color: '#ffffff',
+                    color: colors.white,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
                   }}
@@ -460,7 +460,7 @@ export default function Inventory() {
                   borderRadius: radius.full,
                   border: activeCategory === '' ? 'none' : '1px solid rgba(70,98,145,0.25)',
                   backgroundColor: activeCategory === '' ? colors.primary : 'transparent',
-                  color: activeCategory === '' ? '#ffffff' : colors.blueGrayMd,
+                  color: activeCategory === '' ? colors.white : colors.blueGrayMd,
                   fontFamily: "'Archivo', sans-serif",
                   fontSize: '0.75rem',
                   fontWeight: 500,
@@ -480,7 +480,7 @@ export default function Inventory() {
                     borderRadius: radius.full,
                     border: activeCategory === cat ? 'none' : '1px solid rgba(70,98,145,0.25)',
                     backgroundColor: activeCategory === cat ? colors.primary : 'transparent',
-                    color: activeCategory === cat ? '#ffffff' : colors.blueGrayMd,
+                    color: activeCategory === cat ? colors.white : colors.blueGrayMd,
                     fontFamily: "'Archivo', sans-serif",
                     fontSize: '0.75rem',
                     fontWeight: 500,
@@ -541,7 +541,7 @@ export default function Inventory() {
                       return (
                         <tr
                           key={item.id}
-                          style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}
+                          style={{ backgroundColor: idx % 2 === 0 ? 'colors.bgSurface' : 'colors.bgStripe' }}
                         >
                           {/* Checkbox */}
                           <td style={{ ...TD, textAlign: 'center', width: '2.5rem' }}>
@@ -563,10 +563,10 @@ export default function Inventory() {
                             <span style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
                               {item.item_name}
                               {isLowStock && (
-                                <AlertTriangle size={11} color={colors.orangeAccent} title="Low stock" />
+                                <AlertTriangle size={11} color={colors.orangeAccent} aria-label="Low stock" />
                               )}
                               {isOutOfStock && (
-                                <AlertTriangle size={11} color="#ef4444" title="Out of stock" />
+                                <AlertTriangle size={11} color={colors.error} aria-label="Out of stock" />
                               )}
                             </span>
                           </td>
@@ -599,7 +599,7 @@ export default function Inventory() {
                             <span
                               style={{
                                 fontWeight: 700,
-                                color: isOutOfStock ? '#ef4444' : isLowStock ? colors.orangeAccent : '#22c55e',
+                                color: isOutOfStock ? colors.error : isLowStock ? colors.orangeAccent : colors.success,
                               }}
                             >
                               {item.quantity_available}
@@ -628,7 +628,7 @@ export default function Inventory() {
                               <button
                                 onClick={() => setDeleteTarget(item)}
                                 title="Delete"
-                                style={iconBtnStyle('#ef4444')}
+                                style={iconBtnStyle(colors.error)}
                               >
                                 <Trash2 size={11} />
                               </button>
@@ -653,8 +653,8 @@ export default function Inventory() {
                                   padding: `0.2rem 0`,
                                   borderRadius: radius.full,
                                   border: 'none',
-                                  backgroundColor: '#22c55e',
-                                  color: '#ffffff',
+                                  backgroundColor: colors.success,
+                                  color: colors.white,
                                   fontFamily: "'Archivo', sans-serif",
                                   fontSize: '0.6875rem',
                                   fontWeight: 700,
@@ -678,7 +678,7 @@ export default function Inventory() {
                                   borderRadius: radius.full,
                                   border: 'none',
                                   backgroundColor: colors.orangeAccent,
-                                  color: '#ffffff',
+                                  color: colors.white,
                                   fontFamily: "'Archivo', sans-serif",
                                   fontSize: '0.6875rem',
                                   fontWeight: 700,
@@ -760,7 +760,7 @@ function iconBtnStyle(bg: string): React.CSSProperties {
     borderRadius: radius.sm,
     border: 'none',
     backgroundColor: bg,
-    color: '#ffffff',
+    color: colors.white,
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -800,7 +800,7 @@ function InventoryFilterDropdown({
           height: '2.125rem',
           borderRadius: radius.md,
           border: `1px solid ${open || hasActive ? colors.primary : 'rgba(70, 98, 145, 0.2)'}`,
-          backgroundColor: open || hasActive ? 'rgba(46,124,253,0.06)' : '#ffffff',
+          backgroundColor: open || hasActive ? 'rgba(46,124,253,0.06)' : colors.bgSurface,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -808,7 +808,7 @@ function InventoryFilterDropdown({
           color: open || hasActive ? colors.primary : colors.blueGrayMd,
           position: 'relative',
           flexShrink: 0,
-          transition: 'all 0.15s ease',
+          transition: 'background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease',
         }}
       >
         <Filter size={15} />
@@ -834,7 +834,7 @@ function InventoryFilterDropdown({
             top: '2.5rem',
             right: 0,
             width: '16rem',
-            backgroundColor: '#ffffff',
+            backgroundColor: colors.bgSurface,
             borderRadius: radius.lg,
             border: '1px solid rgba(70,98,145,0.14)',
             boxShadow: '0 0.5rem 2rem rgba(3,12,35,0.12)',
@@ -867,7 +867,7 @@ function InventoryFilterDropdown({
                     borderRadius: radius.full,
                     border: `1px solid ${isActive ? colors.primary : 'rgba(70,98,145,0.25)'}`,
                     backgroundColor: isActive ? colors.primary : 'transparent',
-                    color: isActive ? '#ffffff' : colors.blueGrayMd,
+                    color: isActive ? colors.white : colors.blueGrayMd,
                     fontFamily: "'Archivo', sans-serif",
                     fontSize: '0.75rem',
                     fontWeight: 500,
@@ -907,7 +907,7 @@ function InventoryFilterDropdown({
                     borderRadius: radius.full,
                     border: `1px solid ${isActive ? colors.primary : 'rgba(70,98,145,0.25)'}`,
                     backgroundColor: isActive ? colors.primary : 'transparent',
-                    color: isActive ? '#ffffff' : colors.blueGrayMd,
+                    color: isActive ? colors.white : colors.blueGrayMd,
                     fontFamily: "'Archivo', sans-serif",
                     fontSize: '0.75rem',
                     fontWeight: 500,

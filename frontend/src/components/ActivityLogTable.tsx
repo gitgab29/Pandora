@@ -3,7 +3,7 @@ import SearchBar from './SearchBar';
 import Pagination from './Pagination';
 import FilterDropdown from './FilterDropdown';
 import SortDropdown from './SortDropdown';
-import { colors, spacing, radius } from '../theme';
+import { colors, spacing, radius, badgeColors, fontSize, shadows } from '../theme';
 import type { TransactionLog } from '../types/activity';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -27,7 +27,7 @@ const ROWS_PER_PAGE = 10;
 const TH: React.CSSProperties = {
   padding: '0.625rem 0.875rem',
   fontFamily: "'Archivo', sans-serif",
-  fontSize: '0.719rem',
+  fontSize: fontSize.label,
   fontWeight: 600,
   color: colors.blueGrayMd,
   textAlign: 'left',
@@ -35,22 +35,22 @@ const TH: React.CSSProperties = {
   textTransform: 'uppercase',
   whiteSpace: 'nowrap',
   borderBottom: '1px solid rgba(70, 98, 145, 0.12)',
-  backgroundColor: '#f8fafc',
+  backgroundColor: colors.bgStripe,
 };
 
 const TD: React.CSSProperties = {
   padding: '0.6875rem 0.875rem',
   fontFamily: "'Archivo', sans-serif",
-  fontSize: '0.8125rem',
+  fontSize: fontSize.sm,
   color: colors.textPrimary,
   borderBottom: '1px solid rgba(70, 98, 145, 0.07)',
   whiteSpace: 'nowrap',
 };
 
 const TYPE_COLORS: Record<string, { bg: string; color: string }> = {
-  Asset:     { bg: 'rgba(46, 124, 253, 0.1)',  color: colors.primary },
-  Inventory: { bg: 'rgba(45, 252, 249, 0.12)', color: '#0891b2' },
-  License:   { bg: 'rgba(252, 156, 45, 0.12)', color: '#b45309' },
+  Asset:     { bg: badgeColors.asset.bg,     color: badgeColors.asset.text },
+  Inventory: { bg: badgeColors.inventory.bg, color: badgeColors.inventory.text },
+  License:   { bg: badgeColors.license.bg,   color: badgeColors.license.text },
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -91,10 +91,10 @@ export default function ActivityLogTable({ logs }: ActivityLogTableProps) {
   return (
     <div
       style={{
-        backgroundColor: '#ffffff',
+        backgroundColor: colors.bgSurface,
         borderRadius: radius.lg,
         border: '1px solid rgba(70, 98, 145, 0.1)',
-        boxShadow: '0 1px 4px rgba(3, 12, 35, 0.06)',
+        boxShadow: shadows.card,
         overflow: 'hidden',
       }}
     >
@@ -194,7 +194,7 @@ export default function ActivityLogTable({ logs }: ActivityLogTableProps) {
               pageLogs.map((log, idx) => (
                 <tr
                   key={log.id}
-                  style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}
+                  style={{ backgroundColor: idx % 2 === 0 ? colors.bgSurface : colors.bgStripe }}
                 >
                   <td style={{ ...TD, color: colors.blueGrayMd, fontSize: '0.75rem' }}>
                     {log.date}
@@ -232,7 +232,7 @@ export default function ActivityLogTable({ logs }: ActivityLogTableProps) {
 // ── Private helper ─────────────────────────────────────────────────────────────
 
 function TypeBadge({ type }: { type: string }) {
-  const s = TYPE_COLORS[type] ?? { bg: '#f3f4f6', color: '#374151' };
+  const s = TYPE_COLORS[type] ?? { bg: colors.bgDisabled, color: colors.closeBtn };
   return (
     <span
       style={{

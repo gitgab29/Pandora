@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, Trash2 } from 'lucide-react';
-import { colors, spacing, radius } from '../theme';
+import { colors, spacing, radius, fontSize, shadows } from '../theme';
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;
@@ -42,7 +42,7 @@ export default function DeleteConfirmModal({
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(3,12,35,0.45)',
+        backgroundColor: colors.overlay,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -52,13 +52,13 @@ export default function DeleteConfirmModal({
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: colors.bgSurface,
           borderRadius: radius.xl,
           padding: `${spacing.xl3} ${spacing.xl} ${spacing.xl}`,
           width: '22rem',
           position: 'relative',
           textAlign: 'center',
-          boxShadow: '0 1.5rem 4rem rgba(3,12,35,0.18)',
+          boxShadow: shadows.modal,
         }}
       >
         {/* Close button */}
@@ -71,13 +71,13 @@ export default function DeleteConfirmModal({
             width: '1.75rem',
             height: '1.75rem',
             borderRadius: radius.full,
-            backgroundColor: '#374151',
+            backgroundColor: colors.closeBtn,
             border: 'none',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#ffffff',
+            color: colors.white,
             padding: 0,
           }}
         >
@@ -90,20 +90,20 @@ export default function DeleteConfirmModal({
             width: '3.75rem',
             height: '3.75rem',
             borderRadius: radius.full,
-            backgroundColor: '#ef4444',
+            backgroundColor: colors.error,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: `0 auto ${spacing.lg}`,
           }}
         >
-          <Trash2 size={22} color="#ffffff" />
+          <Trash2 size={22} color={colors.white} />
         </div>
 
         <h3
           style={{
             fontFamily: "'Roboto', sans-serif",
-            fontSize: '1.0625rem',
+            fontSize: fontSize.h6,
             fontWeight: 700,
             color: colors.textPrimary,
             margin: `0 0 ${spacing.sm}`,
@@ -115,7 +115,7 @@ export default function DeleteConfirmModal({
         <p
           style={{
             fontFamily: "'Archivo', sans-serif",
-            fontSize: '0.8125rem',
+            fontSize: fontSize.sm,
             color: colors.blueGrayMd,
             margin: `0 0 ${spacing.lg}`,
             lineHeight: 1.5,
@@ -135,9 +135,9 @@ export default function DeleteConfirmModal({
             width: '100%',
             padding: '0.4375rem 0.625rem',
             borderRadius: radius.md,
-            border: `1.5px solid ${typed.length > 0 && !canConfirm ? '#ef4444' : '#d1d5db'}`,
+            border: `1.5px solid ${typed.length > 0 && !canConfirm ? colors.error : colors.border}`,
             fontFamily: "'Archivo', sans-serif",
-            fontSize: '0.8125rem',
+            fontSize: fontSize.sm,
             color: colors.textPrimary,
             outline: 'none',
             boxSizing: 'border-box',
@@ -153,10 +153,10 @@ export default function DeleteConfirmModal({
               flex: 1,
               padding: `${spacing.sm} ${spacing.lg}`,
               borderRadius: radius.full,
-              border: '1.5px solid #d1d5db',
-              backgroundColor: '#ffffff',
+              border: `1.5px solid ${colors.border}`,
+              backgroundColor: colors.bgSurface,
               fontFamily: "'Archivo', sans-serif",
-              fontSize: '0.875rem',
+              fontSize: fontSize.md,
               fontWeight: 600,
               color: colors.textPrimary,
               cursor: 'pointer',
@@ -172,11 +172,11 @@ export default function DeleteConfirmModal({
               padding: `${spacing.sm} ${spacing.lg}`,
               borderRadius: radius.full,
               border: 'none',
-              backgroundColor: canConfirm ? '#ef4444' : '#f3f4f6',
+              backgroundColor: canConfirm ? colors.error : colors.bgDisabled,
               fontFamily: "'Archivo', sans-serif",
-              fontSize: '0.875rem',
+              fontSize: fontSize.md,
               fontWeight: 600,
-              color: canConfirm ? '#ffffff' : '#9ca3af',
+              color: canConfirm ? colors.white : colors.textDisabled,
               cursor: canConfirm ? 'pointer' : 'not-allowed',
               transition: 'background-color 0.15s',
             }}

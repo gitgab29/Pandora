@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, PackagePlus } from 'lucide-react';
-import { colors, spacing, radius } from '../theme';
+import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { StoreroomInventory } from '../types/inventory';
 
 interface InventoryCheckInModalProps {
@@ -12,7 +12,7 @@ interface InventoryCheckInModalProps {
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "'Archivo', sans-serif",
-  fontSize: '0.6875rem',
+  fontSize: fontSize.micro,
   fontWeight: 600,
   color: colors.blueGrayMd,
   letterSpacing: '0.04em',
@@ -27,9 +27,9 @@ const inputStyle: React.CSSProperties = {
   borderRadius: radius.md,
   border: '1.5px solid #d1d5db',
   fontFamily: "'Archivo', sans-serif",
-  fontSize: '0.8125rem',
+  fontSize: fontSize.sm,
   color: colors.textPrimary,
-  backgroundColor: '#ffffff',
+  backgroundColor: colors.bgSurface,
   outline: 'none',
   boxSizing: 'border-box',
   transition: 'border-color 0.15s ease',
@@ -72,7 +72,7 @@ export default function InventoryCheckInModal({
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(3,12,35,0.45)',
+        backgroundColor: colors.overlay,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -82,18 +82,18 @@ export default function InventoryCheckInModal({
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: colors.bgSurface,
           borderRadius: radius.xl,
           width: '26rem',
           position: 'relative',
-          boxShadow: '0 1.5rem 4rem rgba(3,12,35,0.18)',
+          boxShadow: shadows.modal,
           overflow: 'hidden',
         }}
       >
         {/* Coloured header bar */}
         <div
           style={{
-            backgroundColor: '#22c55e',
+            backgroundColor: colors.success,
             padding: `${spacing.xl} ${spacing.xl} ${spacing.lg}`,
             display: 'flex',
             alignItems: 'flex-start',
@@ -117,10 +117,10 @@ export default function InventoryCheckInModal({
               <PackagePlus size={16} color="#ffffff" />
             </div>
             <div>
-              <h2 style={{ fontFamily: "'Roboto', sans-serif", fontSize: '1rem', fontWeight: 700, color: '#ffffff', margin: 0 }}>
+              <h2 style={{ fontFamily: "'Roboto', sans-serif", fontSize: fontSize.body, fontWeight: 700, color: colors.white, margin: 0 }}>
                 Check In Stock
               </h2>
-              <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', color: 'rgba(255,255,255,0.85)', margin: `0.2rem 0 0` }}>
+              <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, color: 'rgba(255,255,255,0.85)', margin: `0.2rem 0 0` }}>
                 {item.item_name}
               </p>
             </div>
@@ -131,7 +131,7 @@ export default function InventoryCheckInModal({
               width: '1.75rem', height: '1.75rem', borderRadius: radius.full,
               backgroundColor: 'rgba(0,0,0,0.2)', border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#ffffff', padding: 0, flexShrink: 0,
+              color: colors.white, padding: 0, flexShrink: 0,
             }}
           >
             <X size={14} />
@@ -148,33 +148,33 @@ export default function InventoryCheckInModal({
               gap: spacing.lg,
               padding: `${spacing.sm} ${spacing.md}`,
               borderRadius: radius.md,
-              backgroundColor: '#f8fafc',
+              backgroundColor: colors.bgStripe,
               border: '1px solid rgba(70,98,145,0.1)',
             }}
           >
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.6875rem', color: colors.blueGrayMd, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 0.2rem' }}>
+              <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.blueGrayMd, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 0.2rem' }}>
                 Current Stock
               </p>
-              <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: '1.25rem', fontWeight: 700, color: colors.textPrimary, margin: 0 }}>
+              <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: fontSize.h5, fontWeight: 700, color: colors.textPrimary, margin: 0 }}>
                 {item.quantity_available}
               </p>
             </div>
             <div style={{ width: '1px', backgroundColor: 'rgba(70,98,145,0.12)' }} />
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.6875rem', color: colors.blueGrayMd, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 0.2rem' }}>
+              <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.blueGrayMd, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 0.2rem' }}>
                 After Check-In
               </p>
-              <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: '1.25rem', fontWeight: 700, color: '#22c55e', margin: 0 }}>
+              <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: fontSize.h5, fontWeight: 700, color: colors.success, margin: 0 }}>
                 {item.quantity_available + (qty > 0 ? qty : 0)}
               </p>
             </div>
             <div style={{ width: '1px', backgroundColor: 'rgba(70,98,145,0.12)' }} />
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.6875rem', color: colors.blueGrayMd, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 0.2rem' }}>
+              <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.blueGrayMd, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 0.2rem' }}>
                 Min Qty
               </p>
-              <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: '1.25rem', fontWeight: 700, color: colors.textPrimary, margin: 0 }}>
+              <p style={{ fontFamily: "'Roboto', sans-serif", fontSize: fontSize.h5, fontWeight: 700, color: colors.textPrimary, margin: 0 }}>
                 {item.min_quantity}
               </p>
             </div>
@@ -192,11 +192,11 @@ export default function InventoryCheckInModal({
               onBlur={() => setFocused(null)}
               style={{
                 ...inputStyle,
-                borderColor: qtyError ? '#ef4444' : focused === 'qty' ? colors.primary : '#d1d5db',
+                borderColor: qtyError ? colors.error : focused === 'qty' ? colors.primary : colors.border,
               }}
             />
             {qtyError && (
-              <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.6875rem', color: '#ef4444', marginTop: '0.15rem', display: 'block' }}>
+              <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.error, marginTop: '0.15rem', display: 'block' }}>
                 Enter a quantity of at least 1
               </span>
             )}
@@ -216,7 +216,7 @@ export default function InventoryCheckInModal({
                 ...inputStyle,
                 resize: 'vertical',
                 lineHeight: 1.5,
-                borderColor: focused === 'notes' ? colors.primary : '#d1d5db',
+                borderColor: focused === 'notes' ? colors.primary : colors.border,
               }}
             />
           </div>
@@ -237,7 +237,7 @@ export default function InventoryCheckInModal({
               padding: `${spacing.sm} ${spacing.lg}`,
               borderRadius: radius.full,
               border: '1.5px solid #d1d5db',
-              backgroundColor: '#ffffff',
+              backgroundColor: colors.bgSurface,
               fontFamily: "'Archivo', sans-serif",
               fontSize: '0.875rem',
               fontWeight: 600,
@@ -254,11 +254,11 @@ export default function InventoryCheckInModal({
               padding: `${spacing.sm} ${spacing.lg}`,
               borderRadius: radius.full,
               border: 'none',
-              backgroundColor: '#22c55e',
+              backgroundColor: colors.success,
               fontFamily: "'Archivo', sans-serif",
               fontSize: '0.875rem',
               fontWeight: 600,
-              color: '#ffffff',
+              color: colors.white,
               cursor: 'pointer',
             }}
           >

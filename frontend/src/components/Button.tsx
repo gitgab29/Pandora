@@ -1,4 +1,4 @@
-import { colors, radius, typography } from '../theme';
+import { colors, radius, typography, fontSize } from '../theme';
 
 type Variant = 'primary' | 'google' | 'ghost';
 
@@ -27,7 +27,7 @@ export default function Button({
     padding: '0.875rem 1.25rem',
     borderRadius: radius.lg,
     ...typography.body,
-    fontSize: '0.9375rem',
+    fontSize: fontSize.lg,
     fontWeight: 600,
     border: 'none',
     cursor: isDisabled ? 'not-allowed' : 'pointer',
@@ -39,16 +39,16 @@ export default function Button({
   const variants: Record<Variant, React.CSSProperties> = {
     primary: {
       backgroundColor: colors.primary,
-      color: '#ffffff',
+      color: colors.white,
     },
     google: {
-      backgroundColor: '#ffffff',
+      backgroundColor: colors.bgSurface,
       color: colors.textPrimary,
       border: '1.5px solid #dadce0',
     },
     ghost: {
       backgroundColor: 'transparent',
-      color: '#ffffff',
+      color: colors.white,
       border: '1.5px solid rgba(255,255,255,0.7)',
     },
   };
@@ -60,13 +60,13 @@ export default function Button({
       onMouseEnter={e => {
         if (isDisabled) return;
         if (variant === 'primary') e.currentTarget.style.backgroundColor = colors.primaryDark;
-        if (variant === 'google')  e.currentTarget.style.backgroundColor = '#f8f9fa';
+        if (variant === 'google')  e.currentTarget.style.backgroundColor = colors.bgStripe;
         if (variant === 'ghost')   e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
       }}
       onMouseLeave={e => {
         if (isDisabled) return;
         if (variant === 'primary') e.currentTarget.style.backgroundColor = colors.primary;
-        if (variant === 'google')  e.currentTarget.style.backgroundColor = '#ffffff';
+        if (variant === 'google')  e.currentTarget.style.backgroundColor = colors.bgSurface;
         if (variant === 'ghost')   e.currentTarget.style.backgroundColor = 'transparent';
       }}
       {...props}

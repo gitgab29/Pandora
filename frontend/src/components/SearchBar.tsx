@@ -1,5 +1,5 @@
 import { Search, X } from 'lucide-react';
-import { colors, spacing, radius } from '../theme';
+import { colors, spacing, radius } from '../theme'; 
 
 interface SearchBarProps {
   value: string;
@@ -14,7 +14,7 @@ export default function SearchBar({ value, onChange, placeholder = 'Search...' }
         display: 'flex',
         alignItems: 'center',
         gap: spacing.sm,
-        backgroundColor: '#f5f7fb',
+        backgroundColor: colors.bgSubtle,
         border: `1px solid ${value ? colors.primary : 'rgba(70, 98, 145, 0.2)'}`,
         borderRadius: radius.md,
         padding: `0.4375rem ${spacing.md}`,

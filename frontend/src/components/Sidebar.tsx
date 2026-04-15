@@ -11,7 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import { colors, sizing, spacing, radius } from '../theme';
+import { colors, sizing, spacing, radius } from '../theme'; 
 
 type NavItem = {
   icon: React.ElementType;
@@ -46,7 +46,6 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     <aside
       style={{
         width: collapsed ? sizing.sidebarCollapsed : sizing.sidebarExpanded,
-        transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
         backgroundColor: SIDEBAR_BG,
         backdropFilter: 'blur(4px)',
         display: 'flex',
@@ -166,7 +165,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                       fontFamily: "'Archivo', sans-serif",
                       fontSize: '0.844rem',
                       fontWeight: isActive ? 600 : 400,
-                      color: '#ffffff',
+                      color: colors.white,
                       opacity: isActive ? 1 : 0.75,
                       whiteSpace: 'nowrap',
                     }}
@@ -189,7 +188,7 @@ const toggleBtnStyle: React.CSSProperties = {
   borderRadius: radius.sm,
   border: 'none',
   backgroundColor: 'rgba(255,255,255,0.12)',
-  color: '#ffffff',
+  color: colors.white,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',

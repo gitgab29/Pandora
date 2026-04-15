@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { colors, spacing, radius } from '../theme';
+import { colors, spacing, radius } from '../theme'; 
 
 interface PaginationProps {
   currentPage: number;
@@ -26,7 +26,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
     height: '2rem',
     borderRadius: radius.sm,
     border: '1px solid rgba(70, 98, 145, 0.2)',
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.bgSurface,
     fontFamily: "'Archivo', sans-serif",
     fontSize: '0.8125rem',
     color: colors.textPrimary,
@@ -81,8 +81,8 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
             style={{
               ...btnBase,
               width: '2rem',
-              backgroundColor: currentPage === page ? colors.primary : '#ffffff',
-              color: currentPage === page ? '#ffffff' : colors.textPrimary,
+              backgroundColor: currentPage === page ? colors.primary : colors.bgSurface,
+              color: currentPage === page ? colors.white : colors.textPrimary,
               fontWeight: currentPage === page ? 600 : 400,
               border: currentPage === page ? 'none' : '1px solid rgba(70, 98, 145, 0.2)',
             }}

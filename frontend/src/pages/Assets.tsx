@@ -13,7 +13,7 @@ import EditAssetModal from '../components/EditAssetModal';
 import CopyAssetModal from '../components/CopyAssetModal';
 import AssetCheckOutModal from '../components/AssetCheckOutModal';
 import AssetCheckInModal from '../components/AssetCheckInModal';
-import { colors, spacing, radius } from '../theme';
+import { colors, spacing, radius, statusColors } from '../theme';
 import type { Asset, AssetStatus } from '../types/asset';
 
 // ── Initial dummy data ─────────────────────────────────────────────────────────
@@ -57,11 +57,11 @@ const STAT_CARDS = [
 // ── Status config ──────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<AssetStatus, { dot: string; label: string }> = {
-  'Available': { dot: '#22c55e', label: 'Available' },
+  'Available': { dot: colors.success, label: 'Available' },
   'Deployed':  { dot: colors.primary, label: 'Deployed' },
   'In Repair': { dot: colors.orangeAccent, label: 'In Repair' },
-  'Retired':   { dot: '#6b7280', label: 'Retired' },
-  'To Audit':  { dot: '#eab308', label: 'To Audit' },
+  'Retired':   { dot: statusColors.retired, label: 'Retired' },
+  'To Audit':  { dot: statusColors.toAudit, label: 'To Audit' },
 };
 
 const FILTER_TABS: Array<AssetStatus | 'All'> = [
@@ -85,7 +85,7 @@ const TH: React.CSSProperties = {
   textTransform: 'uppercase',
   whiteSpace: 'nowrap',
   borderBottom: '1px solid rgba(70, 98, 145, 0.12)',
-  backgroundColor: '#f8fafc',
+  backgroundColor: colors.bgStripe,
 };
 
 const TD: React.CSSProperties = {
@@ -257,7 +257,7 @@ export default function Assets() {
           {/* ── Asset table card ── */}
           <div
             style={{
-              backgroundColor: '#ffffff',
+              backgroundColor: colors.bgSurface,
               borderRadius: radius.lg,
               border: '1px solid rgba(70, 98, 145, 0.1)',
               boxShadow: '0 1px 4px rgba(3, 12, 35, 0.06)',
@@ -299,7 +299,7 @@ export default function Assets() {
                         borderRadius: radius.full,
                         border: activeTab === tab ? 'none' : '1px solid rgba(70,98,145,0.25)',
                         backgroundColor: activeTab === tab ? colors.primary : 'transparent',
-                        color: activeTab === tab ? '#ffffff' : colors.blueGrayMd,
+                        color: activeTab === tab ? colors.white : colors.blueGrayMd,
                         fontFamily: "'Archivo', sans-serif",
                         fontSize: '0.75rem',
                         fontWeight: 500,
@@ -343,7 +343,7 @@ export default function Assets() {
                     padding: `0.375rem ${spacing.md}`,
                     borderRadius: radius.md,
                     border: '1px solid rgba(70,98,145,0.25)',
-                    backgroundColor: '#ffffff',
+                    backgroundColor: colors.bgSurface,
                     fontFamily: "'Archivo', sans-serif",
                     fontSize: '0.8125rem',
                     fontWeight: 500,
@@ -366,7 +366,7 @@ export default function Assets() {
                     fontFamily: "'Archivo', sans-serif",
                     fontSize: '0.8125rem',
                     fontWeight: 600,
-                    color: '#ffffff',
+                    color: colors.white,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
                   }}
@@ -423,7 +423,7 @@ export default function Assets() {
                       return (
                         <tr
                           key={asset.id}
-                          style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}
+                          style={{ backgroundColor: idx % 2 === 0 ? 'colors.bgSurface' : 'colors.bgStripe' }}
                         >
                           {/* Checkbox */}
                           <td style={{ ...TD, textAlign: 'center', width: '2.5rem' }}>
@@ -491,7 +491,7 @@ export default function Assets() {
                               <button
                                 onClick={() => setDeleteTarget(asset)}
                                 title="Delete"
-                                style={iconBtnStyle('#ef4444')}
+                                style={iconBtnStyle(colors.error)}
                               >
                                 <Trash2 size={11} />
                               </button>
@@ -529,8 +529,8 @@ export default function Assets() {
                                   padding: `0.2rem 0`,
                                   borderRadius: radius.full,
                                   border: 'none',
-                                  backgroundColor: isAvailable ? '#22c55e' : colors.orangeAccent,
-                                  color: '#ffffff',
+                                  backgroundColor: isAvailable ? colors.success : colors.orangeAccent,
+                                  color: colors.white,
                                   fontFamily: "'Archivo', sans-serif",
                                   fontSize: '0.6875rem',
                                   fontWeight: 700,
@@ -620,7 +620,7 @@ function iconBtnStyle(bg: string): React.CSSProperties {
     borderRadius: radius.sm,
     border: 'none',
     backgroundColor: bg,
-    color: '#ffffff',
+    color: colors.white,
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -656,7 +656,7 @@ function CategoryFilterDropdown({
           height: '2.125rem',
           borderRadius: radius.md,
           border: `1px solid ${open || hasActive ? colors.primary : 'rgba(70, 98, 145, 0.2)'}`,
-          backgroundColor: open || hasActive ? 'rgba(46,124,253,0.06)' : '#ffffff',
+          backgroundColor: open || hasActive ? 'rgba(46,124,253,0.06)' : colors.bgSurface,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -664,7 +664,7 @@ function CategoryFilterDropdown({
           color: open || hasActive ? colors.primary : colors.blueGrayMd,
           position: 'relative',
           flexShrink: 0,
-          transition: 'all 0.15s ease',
+          transition: 'background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease',
         }}
       >
         <Filter size={15} />
@@ -690,7 +690,7 @@ function CategoryFilterDropdown({
             top: '2.5rem',
             right: 0,
             minWidth: '13rem',
-            backgroundColor: '#ffffff',
+            backgroundColor: colors.bgSurface,
             borderRadius: radius.lg,
             border: '1px solid rgba(70,98,145,0.14)',
             boxShadow: '0 0.5rem 2rem rgba(3,12,35,0.12)',
@@ -723,7 +723,7 @@ function CategoryFilterDropdown({
                     borderRadius: radius.full,
                     border: `1px solid ${isActive ? colors.primary : 'rgba(70,98,145,0.25)'}`,
                     backgroundColor: isActive ? colors.primary : 'transparent',
-                    color: isActive ? '#ffffff' : colors.blueGrayMd,
+                    color: isActive ? colors.white : colors.blueGrayMd,
                     fontFamily: "'Archivo', sans-serif",
                     fontSize: '0.75rem',
                     fontWeight: 500,

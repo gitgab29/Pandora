@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { colors, spacing, radius } from '../theme';
+import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Asset, AddAssetFormData, AssetStatus } from '../types/asset';
 
 interface CopyAssetModalProps {
@@ -19,7 +19,7 @@ const SSD_OPTIONS = ['Enabled', 'Disabled', 'N/A'];
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "'Archivo', sans-serif",
-  fontSize: '0.6875rem',
+  fontSize: fontSize.micro,
   fontWeight: 600,
   color: colors.blueGrayMd,
   letterSpacing: '0.04em',
@@ -32,11 +32,11 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.4375rem 0.625rem',
   borderRadius: radius.md,
-  border: '1.5px solid #d1d5db',
+  border: `1.5px solid ${colors.border}`,
   fontFamily: "'Archivo', sans-serif",
-  fontSize: '0.8125rem',
+  fontSize: fontSize.sm,
   color: colors.textPrimary,
-  backgroundColor: '#ffffff',
+  backgroundColor: colors.bgSurface,
   outline: 'none',
   boxSizing: 'border-box',
   transition: 'border-color 0.15s ease',
@@ -44,7 +44,7 @@ const inputStyle: React.CSSProperties = {
 
 const sectionHeadStyle: React.CSSProperties = {
   fontFamily: "'Roboto', sans-serif",
-  fontSize: '0.75rem',
+  fontSize: fontSize.xs,
   fontWeight: 700,
   color: colors.blueGrayDark,
   letterSpacing: '0.05em',
@@ -83,11 +83,11 @@ function TextInput({
         onBlur={() => setFocused(false)}
         style={{
           ...inputStyle,
-          borderColor: error ? '#ef4444' : focused ? colors.primary : '#d1d5db',
+          borderColor: error ? colors.error : focused ? colors.primary : colors.border,
         }}
       />
       {error && (
-        <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.6875rem', color: '#ef4444', marginTop: '0.15rem' }}>
+        <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.error, marginTop: '0.15rem' }}>
           This field is required
         </span>
       )}
@@ -110,11 +110,11 @@ function SelectInput({
         onBlur={() => setFocused(false)}
         style={{
           ...inputStyle,
-          borderColor: focused ? colors.primary : '#d1d5db',
+          borderColor: focused ? colors.primary : colors.border,
           appearance: 'none',
           cursor: 'pointer',
-          backgroundColor: value ? '#ffffff' : '#fafafa',
-          color: value ? colors.textPrimary : '#9ca3af',
+          backgroundColor: value ? colors.bgSurface : colors.bgEmpty,
+          color: value ? colors.textPrimary : colors.textDisabled,
         }}
       >
         <option value="">{placeholder ?? `Select ${label}`}</option>
@@ -223,7 +223,7 @@ export default function CopyAssetModal({ isOpen, asset, onClose, onSave }: CopyA
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(3,12,35,0.45)',
+        backgroundColor: colors.overlay,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -234,14 +234,14 @@ export default function CopyAssetModal({ isOpen, asset, onClose, onSave }: CopyA
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: colors.bgSurface,
           borderRadius: radius.xl,
           width: '100%',
           maxWidth: '42rem',
           maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 1.5rem 4rem rgba(3,12,35,0.18)',
+          boxShadow: shadows.modal,
         }}
       >
         {/* Header */}
@@ -256,20 +256,20 @@ export default function CopyAssetModal({ isOpen, asset, onClose, onSave }: CopyA
           }}
         >
           <div>
-            <h2 style={{ fontFamily: "'Roboto', sans-serif", fontSize: '1.0625rem', fontWeight: 700, color: colors.textPrimary, margin: 0 }}>
+            <h2 style={{ fontFamily: "'Roboto', sans-serif", fontSize: fontSize.h6, fontWeight: 700, color: colors.textPrimary, margin: 0 }}>
               Copy Asset — {asset.asset_name}
             </h2>
-            <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', color: colors.blueGrayMd, margin: `${spacing.xs} 0 0` }}>
-              Fields pre-filled from original. <span style={{ color: '#ef4444', fontWeight: 600 }}>Asset Tag and Serial Number must be unique.</span>
+            <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, color: colors.blueGrayMd, margin: `${spacing.xs} 0 0` }}>
+              Fields pre-filled from original. <span style={{ color: colors.error, fontWeight: 600 }}>Asset Tag and Serial Number must be unique.</span>
             </p>
           </div>
           <button
             onClick={handleClose}
             style={{
               width: '1.75rem', height: '1.75rem', borderRadius: radius.full,
-              backgroundColor: '#374151', border: 'none', cursor: 'pointer',
+              backgroundColor: colors.closeBtn, border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#ffffff', padding: 0, flexShrink: 0,
+              color: colors.white, padding: 0, flexShrink: 0,
             }}
           >
             <X size={14} />
@@ -357,10 +357,10 @@ export default function CopyAssetModal({ isOpen, asset, onClose, onSave }: CopyA
             style={{
               padding: `${spacing.sm} ${spacing.xl}`,
               borderRadius: radius.full,
-              border: '1.5px solid #d1d5db',
-              backgroundColor: '#ffffff',
+              border: `1.5px solid ${colors.border}`,
+              backgroundColor: colors.bgSurface,
               fontFamily: "'Archivo', sans-serif",
-              fontSize: '0.8125rem',
+              fontSize: fontSize.sm,
               fontWeight: 600,
               color: colors.textPrimary,
               cursor: 'pointer',
@@ -376,9 +376,9 @@ export default function CopyAssetModal({ isOpen, asset, onClose, onSave }: CopyA
               border: 'none',
               backgroundColor: colors.primary,
               fontFamily: "'Archivo', sans-serif",
-              fontSize: '0.8125rem',
+              fontSize: fontSize.sm,
               fontWeight: 600,
-              color: '#ffffff',
+              color: colors.white,
               cursor: 'pointer',
             }}
           >

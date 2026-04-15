@@ -1,5 +1,5 @@
 import { ListFilter } from 'lucide-react';
-import { colors, spacing, radius } from '../theme';
+import { colors, spacing, radius, fontSize, shadows } from '../theme';
 
 export interface FilterGroup {
   label: string;
@@ -26,10 +26,10 @@ export default function FilterDropdown({ open, onToggle, groups }: FilterDropdow
             top: '2.5rem',
             right: 0,
             width: '15rem',
-            backgroundColor: '#ffffff',
+            backgroundColor: colors.bgSurface,
             borderRadius: radius.lg,
             border: '1px solid rgba(70,98,145,0.14)',
-            boxShadow: '0 0.5rem 2rem rgba(3,12,35,0.12)',
+            boxShadow: shadows.dropdown,
             padding: spacing.md,
             zIndex: 100,
           }}
@@ -40,7 +40,7 @@ export default function FilterDropdown({ open, onToggle, groups }: FilterDropdow
                 style={{
                   margin: `0 0 ${spacing.sm}`,
                   fontFamily: "'Roboto', sans-serif",
-                  fontSize: '0.719rem',
+                  fontSize: fontSize.label,
                   fontWeight: 700,
                   color: colors.blueGrayMd,
                   letterSpacing: '0.05em',
@@ -84,25 +84,25 @@ function ActionIconBtn({
         height: '2.125rem',
         borderRadius: radius.md,
         border: `1px solid ${active ? colors.primary : 'rgba(70, 98, 145, 0.2)'}`,
-        backgroundColor: active ? 'rgba(46,124,253,0.06)' : '#ffffff',
+        backgroundColor: active ? 'rgba(46,124,253,0.06)' : colors.bgSurface,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
         color: active ? colors.primary : colors.blueGrayMd,
-        transition: 'all 0.15s ease',
+        transition: 'background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease',
         flexShrink: 0,
       }}
       onMouseEnter={e => {
         if (!active) {
-          e.currentTarget.style.backgroundColor = '#f5f7fb';
+          e.currentTarget.style.backgroundColor = colors.bgSubtle;
           e.currentTarget.style.borderColor = colors.primary;
           e.currentTarget.style.color = colors.primary;
         }
       }}
       onMouseLeave={e => {
         if (!active) {
-          e.currentTarget.style.backgroundColor = '#ffffff';
+          e.currentTarget.style.backgroundColor = colors.bgSurface;
           e.currentTarget.style.borderColor = 'rgba(70, 98, 145, 0.2)';
           e.currentTarget.style.color = colors.blueGrayMd;
         }
@@ -120,13 +120,13 @@ function FilterChip({ label, active }: { label: string; active: boolean }) {
         padding: `0.1875rem ${spacing.md}`,
         borderRadius: radius.full,
         fontFamily: "'Archivo', sans-serif",
-        fontSize: '0.75rem',
+        fontSize: fontSize.xs,
         fontWeight: active ? 600 : 400,
         cursor: 'pointer',
-        backgroundColor: active ? colors.primary : '#f5f7fb',
-        color: active ? '#ffffff' : colors.blueGrayMd,
+        backgroundColor: active ? colors.primary : colors.bgSubtle,
+        color: active ? colors.white : colors.blueGrayMd,
         border: `1px solid ${active ? colors.primary : 'rgba(70,98,145,0.15)'}`,
-        transition: 'all 0.12s ease',
+        transition: 'background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease',
       }}
     >
       {label}

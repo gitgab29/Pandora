@@ -39,7 +39,7 @@ export default function SignIn() {
         <div
           style={{
             flex: '0 0 58%',
-            backgroundColor: '#ffffff',
+            backgroundColor: colors.bgSurface,
             display: 'flex',
             flexDirection: 'column',
             padding: `${spacing.xl4} 3.125rem`,
@@ -126,7 +126,7 @@ export default function SignIn() {
             style={{
               fontFamily: "'Archivo', sans-serif",
               fontSize: '0.75rem',
-              color: '#9ca3af',
+              color: colors.textDisabled,
               margin: 0,
               textAlign: 'center',
             }}
@@ -157,7 +157,7 @@ export default function SignIn() {
                 fontWeight: 700,
                 fontSize: '2.5rem',
                 lineHeight: 1.25,
-                color: '#ffffff',
+                color: colors.white,
                 margin: `0 0 ${spacing.md} 0`,
               }}
             >

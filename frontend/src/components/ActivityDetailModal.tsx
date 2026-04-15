@@ -1,19 +1,19 @@
 import { X } from 'lucide-react';
-import { colors, spacing, radius } from '../theme';
+import { colors, spacing, radius, fontSize, shadows, badgeColors } from '../theme';
 import type { TransactionLog } from '../types/activity';
 
 const EVENT_COLORS: Record<string, { bg: string; color: string }> = {
-  'Check In':  { bg: 'rgba(34,197,94,0.12)',   color: '#15803d' },
-  'Check Out': { bg: 'rgba(252,156,45,0.12)',  color: '#b45309' },
-  'Update':    { bg: 'rgba(46,124,253,0.1)',   color: colors.primary },
-  'Audit':     { bg: 'rgba(139,92,246,0.1)',   color: '#7c3aed' },
-  'Request':   { bg: 'rgba(45,252,249,0.12)',  color: '#0891b2' },
+  'Check In':  { bg: badgeColors.checkIn.bg,  color: badgeColors.checkIn.text },
+  'Check Out': { bg: badgeColors.checkOut.bg, color: badgeColors.checkOut.text },
+  'Update':    { bg: badgeColors.update.bg,   color: badgeColors.update.text },
+  'Audit':     { bg: badgeColors.audit.bg,    color: badgeColors.audit.text },
+  'Request':   { bg: badgeColors.request.bg,  color: badgeColors.request.text },
 };
 
 const TYPE_COLORS: Record<string, { bg: string; color: string }> = {
-  Asset:     { bg: 'rgba(46,124,253,0.1)',  color: colors.primary },
-  Inventory: { bg: 'rgba(45,252,249,0.12)', color: '#0891b2' },
-  License:   { bg: 'rgba(252,156,45,0.12)', color: '#b45309' },
+  Asset:     { bg: badgeColors.asset.bg,     color: badgeColors.asset.text },
+  Inventory: { bg: badgeColors.inventory.bg, color: badgeColors.inventory.text },
+  License:   { bg: badgeColors.license.bg,   color: badgeColors.license.text },
 };
 
 interface Props {
@@ -24,8 +24,8 @@ interface Props {
 export default function ActivityDetailModal({ log, onClose }: Props) {
   if (!log) return null;
 
-  const eventStyle = EVENT_COLORS[log.event] ?? { bg: '#f3f4f6', color: '#374151' };
-  const typeStyle  = TYPE_COLORS[log.type]   ?? { bg: '#f3f4f6', color: '#374151' };
+  const eventStyle = EVENT_COLORS[log.event] ?? { bg: colors.bgDisabled, color: colors.closeBtn };
+  const typeStyle  = TYPE_COLORS[log.type]   ?? { bg: colors.bgDisabled, color: colors.closeBtn };
 
   const fields: { label: string; value: string }[] = [
     { label: 'Log ID',        value: `#${log.id}` },
@@ -45,7 +45,7 @@ export default function ActivityDetailModal({ log, onClose }: Props) {
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(3,12,35,0.45)',
+        backgroundColor: colors.overlay,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -55,12 +55,12 @@ export default function ActivityDetailModal({ log, onClose }: Props) {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: colors.bgSurface,
           borderRadius: radius.xl,
           width: '30rem',
           maxHeight: '90vh',
           overflowY: 'auto',
-          boxShadow: '0 1.5rem 4rem rgba(3,12,35,0.18)',
+          boxShadow: shadows.modal,
         }}
       >
         {/* ── Header ── */}
@@ -77,10 +77,10 @@ export default function ActivityDetailModal({ log, onClose }: Props) {
           <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
             <span
               style={{
-                color: '#ffffff',
+                color: colors.white,
                 fontFamily: "'Roboto', sans-serif",
                 fontWeight: 700,
-                fontSize: '0.9375rem',
+                fontSize: fontSize.lg,
               }}
             >
               Log #{log.id}
@@ -92,7 +92,7 @@ export default function ActivityDetailModal({ log, onClose }: Props) {
                 backgroundColor: eventStyle.bg,
                 color: eventStyle.color,
                 fontFamily: "'Archivo', sans-serif",
-                fontSize: '0.75rem',
+                fontSize: fontSize.xs,
                 fontWeight: 600,
               }}
             >
@@ -105,7 +105,7 @@ export default function ActivityDetailModal({ log, onClose }: Props) {
                 backgroundColor: typeStyle.bg,
                 color: typeStyle.color,
                 fontFamily: "'Archivo', sans-serif",
-                fontSize: '0.75rem',
+                fontSize: fontSize.xs,
                 fontWeight: 600,
               }}
             >
@@ -125,7 +125,7 @@ export default function ActivityDetailModal({ log, onClose }: Props) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#ffffff',
+              color: colors.white,
               padding: 0,
             }}
           >
@@ -150,7 +150,7 @@ export default function ActivityDetailModal({ log, onClose }: Props) {
               <span
                 style={{
                   fontFamily: "'Archivo', sans-serif",
-                  fontSize: '0.6875rem',
+                  fontSize: fontSize.micro,
                   fontWeight: 600,
                   color: colors.blueGrayMd,
                   textTransform: 'uppercase',
@@ -165,7 +165,7 @@ export default function ActivityDetailModal({ log, onClose }: Props) {
               <span
                 style={{
                   fontFamily: "'Archivo', sans-serif",
-                  fontSize: '0.875rem',
+                  fontSize: fontSize.md,
                   color: value === '—' ? colors.blueGrayMd : colors.textPrimary,
                   flex: 1,
                   wordBreak: 'break-word',

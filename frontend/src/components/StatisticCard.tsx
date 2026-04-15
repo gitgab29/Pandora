@@ -1,5 +1,5 @@
 import { ArrowUpRight, TrendingUp, TrendingDown } from 'lucide-react';
-import { colors, spacing, radius } from '../theme';
+import { colors, spacing, radius, fontSize, shadows } from '../theme';
 
 interface Trend {
   value: number;
@@ -14,17 +14,17 @@ interface StatisticCardProps {
 }
 
 export default function StatisticCard({ title, value, trend, onClick }: StatisticCardProps) {
-  const trendColor = trend?.direction === 'up' ? '#22c55e' : '#ef4444';
+  const trendColor = trend?.direction === 'up' ? colors.success : colors.error;
 
   return (
     <div
       onClick={onClick}
       style={{
-        backgroundColor: '#ffffff',
+        backgroundColor: colors.bgSurface,
         borderRadius: radius.lg,
         padding: `${spacing.xl} ${spacing.xl} 1.125rem`,
         border: '1px solid rgba(70, 98, 145, 0.1)',
-        boxShadow: '0 1px 4px rgba(3, 12, 35, 0.06)',
+        boxShadow: shadows.card,
         cursor: onClick ? 'pointer' : 'default',
         flex: '1 1 12.5rem',
         minWidth: '10rem',
@@ -35,7 +35,7 @@ export default function StatisticCard({ title, value, trend, onClick }: Statisti
         <span
           style={{
             fontFamily: "'Archivo', sans-serif",
-            fontSize: '0.75rem',
+            fontSize: fontSize.xs,
             fontWeight: 500,
             color: colors.blueGrayMd,
             letterSpacing: '0.03em',
@@ -51,7 +51,7 @@ export default function StatisticCard({ title, value, trend, onClick }: Statisti
       <div
         style={{
           fontFamily: "'Roboto', sans-serif",
-          fontSize: '2.625rem',
+          fontSize: fontSize.h1,
           fontWeight: 700,
           color: colors.textPrimary,
           lineHeight: 1.1,
@@ -79,7 +79,7 @@ export default function StatisticCard({ title, value, trend, onClick }: Statisti
           <span
             style={{
               fontFamily: "'Archivo', sans-serif",
-              fontSize: '0.75rem',
+              fontSize: fontSize.xs,
               fontWeight: 600,
               color: trendColor,
             }}

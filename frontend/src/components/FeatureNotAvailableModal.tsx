@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { colors, spacing, radius } from '../theme';
+import { colors, spacing, radius, shadows } from '../theme';
 
 interface FeatureNotAvailableModalProps {
   isOpen: boolean;
@@ -15,7 +15,7 @@ export default function FeatureNotAvailableModal({ isOpen, onClose }: FeatureNot
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(3, 12, 35, 0.45)',
+        backgroundColor: colors.overlay,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -25,13 +25,13 @@ export default function FeatureNotAvailableModal({ isOpen, onClose }: FeatureNot
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: colors.bgSurface,
           borderRadius: radius.xl,
           padding: `${spacing.xl3} ${spacing.xl} ${spacing.xl}`,
           width: '20rem',
           position: 'relative',
           textAlign: 'center',
-          boxShadow: '0 1.5rem 4rem rgba(3, 12, 35, 0.18)',
+          boxShadow: shadows.modal,
         }}
       >
         {/* Close button */}
@@ -44,13 +44,13 @@ export default function FeatureNotAvailableModal({ isOpen, onClose }: FeatureNot
             width: '1.75rem',
             height: '1.75rem',
             borderRadius: radius.full,
-            backgroundColor: '#374151',
+            backgroundColor: colors.closeBtn,
             border: 'none',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#ffffff',
+            color: colors.white,
             padding: 0,
           }}
         >
@@ -72,7 +72,7 @@ export default function FeatureNotAvailableModal({ isOpen, onClose }: FeatureNot
         >
           <span
             style={{
-              color: '#ffffff',
+              color: colors.white,
               fontSize: '1.75rem',
               fontWeight: 700,
               lineHeight: 1,
@@ -105,7 +105,7 @@ export default function FeatureNotAvailableModal({ isOpen, onClose }: FeatureNot
               padding: `${spacing.sm} ${spacing.lg}`,
               borderRadius: radius.full,
               border: '1.5px solid #d1d5db',
-              backgroundColor: '#ffffff',
+              backgroundColor: colors.bgSurface,
               fontFamily: "'Archivo', sans-serif",
               fontSize: '0.875rem',
               fontWeight: 600,
@@ -126,7 +126,7 @@ export default function FeatureNotAvailableModal({ isOpen, onClose }: FeatureNot
               fontFamily: "'Archivo', sans-serif",
               fontSize: '0.875rem',
               fontWeight: 600,
-              color: '#ffffff',
+              color: colors.white,
               cursor: 'pointer',
             }}
           >

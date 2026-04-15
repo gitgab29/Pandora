@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { colors, spacing, radius, typography } from '../theme';
+import { colors, spacing, radius, typography, fontSize } from '../theme';
 
 interface InputProps {
   label: string;
@@ -21,10 +21,10 @@ export default function Input({
   const [focused, setFocused] = useState(false);
 
   const borderColor = error
-    ? '#ef4444'
+    ? colors.error
     : focused
     ? colors.primary
-    : '#d1d5db';
+    : colors.border;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
@@ -53,9 +53,9 @@ export default function Input({
           borderRadius: radius.md,
           border: `1.5px solid ${borderColor}`,
           ...typography.body,
-          fontSize: '0.9375rem',
+          fontSize: fontSize.lg,
           color: colors.textPrimary,
-          backgroundColor: '#ffffff',
+          backgroundColor: colors.bgSurface,
           outline: 'none',
           boxSizing: 'border-box',
           transition: 'border-color 0.15s ease',
@@ -66,9 +66,9 @@ export default function Input({
         <span
           style={{
             fontFamily: "'Archivo', sans-serif",
-            fontSize: '0.75rem',
+            fontSize: fontSize.xs,
             lineHeight: 1.5,
-            color: '#ef4444',
+            color: colors.error,
           }}
         >
           {error}

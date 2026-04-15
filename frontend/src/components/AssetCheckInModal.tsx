@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, LogIn } from 'lucide-react';
-import { colors, spacing, radius } from '../theme';
+import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Asset } from '../types/asset';
 
 interface AssetCheckInModalProps {
@@ -12,7 +12,7 @@ interface AssetCheckInModalProps {
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "'Archivo', sans-serif",
-  fontSize: '0.6875rem',
+  fontSize: fontSize.micro,
   fontWeight: 600,
   color: colors.blueGrayMd,
   letterSpacing: '0.04em',
@@ -25,11 +25,11 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.4375rem 0.625rem',
   borderRadius: radius.md,
-  border: '1.5px solid #d1d5db',
+  border: `1.5px solid ${colors.border}`,
   fontFamily: "'Archivo', sans-serif",
-  fontSize: '0.8125rem',
+  fontSize: fontSize.sm,
   color: colors.textPrimary,
-  backgroundColor: '#ffffff',
+  backgroundColor: colors.bgSurface,
   outline: 'none',
   boxSizing: 'border-box',
   transition: 'border-color 0.15s ease',
@@ -61,7 +61,7 @@ export default function AssetCheckInModal({
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(3,12,35,0.45)',
+        backgroundColor: colors.overlay,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -71,11 +71,11 @@ export default function AssetCheckInModal({
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: colors.bgSurface,
           borderRadius: radius.xl,
           width: '26rem',
           position: 'relative',
-          boxShadow: '0 1.5rem 4rem rgba(3,12,35,0.18)',
+          boxShadow: shadows.modal,
           overflow: 'hidden',
         }}
       >
@@ -106,10 +106,10 @@ export default function AssetCheckInModal({
               <LogIn size={16} color="#ffffff" />
             </div>
             <div>
-              <h2 style={{ fontFamily: "'Roboto', sans-serif", fontSize: '1rem', fontWeight: 700, color: '#ffffff', margin: 0 }}>
+              <h2 style={{ fontFamily: "'Roboto', sans-serif", fontSize: '1rem', fontWeight: 700, color: colors.white, margin: 0 }}>
                 Check In Asset
               </h2>
-              <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', color: 'rgba(255,255,255,0.85)', margin: `0.2rem 0 0` }}>
+              <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, color: 'rgba(255,255,255,0.85)', margin: `0.2rem 0 0` }}>
                 {asset.asset_name} · {asset.asset_tag}
               </p>
             </div>
@@ -120,7 +120,7 @@ export default function AssetCheckInModal({
               width: '1.75rem', height: '1.75rem', borderRadius: radius.full,
               backgroundColor: 'rgba(0,0,0,0.2)', border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#ffffff', padding: 0, flexShrink: 0,
+              color: colors.white, padding: 0, flexShrink: 0,
             }}
           >
             <X size={14} />
@@ -140,7 +140,7 @@ export default function AssetCheckInModal({
                 border: '1px solid rgba(252,156,45,0.2)',
               }}
             >
-              <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.8125rem', color: colors.textPrimary, margin: 0 }}>
+              <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.sm, color: colors.textPrimary, margin: 0 }}>
                 Currently assigned to <strong>{asset.assigned_to}</strong>. Checking in will unassign and mark the asset as Available.
               </p>
             </div>
@@ -160,7 +160,7 @@ export default function AssetCheckInModal({
                 ...inputStyle,
                 resize: 'vertical',
                 lineHeight: 1.5,
-                borderColor: focused ? colors.primary : '#d1d5db',
+                borderColor: focused ? colors.primary : colors.border,
               }}
             />
           </div>
@@ -180,8 +180,8 @@ export default function AssetCheckInModal({
               flex: 1,
               padding: `${spacing.sm} ${spacing.lg}`,
               borderRadius: radius.full,
-              border: '1.5px solid #d1d5db',
-              backgroundColor: '#ffffff',
+              border: `1.5px solid ${colors.border}`,
+              backgroundColor: colors.bgSurface,
               fontFamily: "'Archivo', sans-serif",
               fontSize: '0.875rem',
               fontWeight: 600,
@@ -202,7 +202,7 @@ export default function AssetCheckInModal({
               fontFamily: "'Archivo', sans-serif",
               fontSize: '0.875rem',
               fontWeight: 600,
-              color: '#ffffff',
+              color: colors.white,
               cursor: 'pointer',
             }}
           >

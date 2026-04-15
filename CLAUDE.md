@@ -56,7 +56,7 @@ erd.html        Mermaid ERD — source of truth for entity fields
 
 ## Design system
 
-- Tokens: `frontend/src/theme.ts` exports `colors`, `typography`, `spacing`, `radius`, `sizing` — read it before adding styles
+- Tokens: `frontend/src/theme.ts` exports `colors`, `typography`, `spacing`, `radius`, `sizing`, `fontSize`, `shadows`, `badgeColors`, `statusColors` — read it before adding styles
 - Fonts: Roboto (headings) + Archivo (body), wired in `src/index.css`
 - Icons: `lucide-react` everywhere
 - App-shell visuals (sidebar widths/alphas, header blur, `bg-auth.jpg` background): see `src/components/Sidebar.tsx` and `src/components/Header.tsx`

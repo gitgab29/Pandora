@@ -92,7 +92,7 @@ export default function Header({ title }: HeaderProps) {
                       fontSize: '0.8125rem',
                       transition: 'background-color 0.12s ease',
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f5f7fb')}
+                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.bgSubtle)}
                     onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
                     <Icon size={15} color={colors.blueGrayMd} />
@@ -118,8 +118,8 @@ export default function Header({ title }: HeaderProps) {
                     width: '1rem',
                     height: '1rem',
                     borderRadius: radius.full,
-                    backgroundColor: '#ef4444',
-                    color: '#ffffff',
+                    backgroundColor: colors.error,
+                    color: colors.white,
                     fontSize: '0.625rem',
                     fontWeight: 700,
                     fontFamily: "'Archivo', sans-serif",
@@ -171,7 +171,7 @@ export default function Header({ title }: HeaderProps) {
                       onMouseEnter={e =>
                         (e.currentTarget.style.backgroundColor = n.unread
                           ? 'rgba(46,124,253,0.1)'
-                          : '#f5f7fb')
+                          : colors.bgSubtle)
                       }
                       onMouseLeave={e =>
                         (e.currentTarget.style.backgroundColor = n.unread
@@ -256,7 +256,7 @@ export default function Header({ title }: HeaderProps) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#ffffff',
+              color: colors.white,
               fontFamily: "'Archivo', sans-serif",
               fontSize: '0.75rem',
               fontWeight: 700,
@@ -293,7 +293,7 @@ function IconBtn({
         height: '2.125rem',
         borderRadius: radius.md,
         border: 'none',
-        backgroundColor: active ? '#f0f4ff' : 'transparent',
+        backgroundColor: active ? colors.bgHover : 'transparent',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -302,7 +302,7 @@ function IconBtn({
         transition: 'background-color 0.15s ease, color 0.15s ease',
       }}
       onMouseEnter={e => {
-        if (!active) e.currentTarget.style.backgroundColor = '#f5f7fb';
+        if (!active) e.currentTarget.style.backgroundColor = colors.bgSubtle;
       }}
       onMouseLeave={e => {
         if (!active) e.currentTarget.style.backgroundColor = 'transparent';
@@ -319,7 +319,7 @@ function dropdownBase(width: string): React.CSSProperties {
     top: '2.625rem',
     right: 0,
     width,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.bgSurface,
     borderRadius: radius.lg,
     border: '1px solid rgba(70,98,145,0.12)',
     boxShadow: '0 0.5rem 2rem rgba(3,12,35,0.12)',

@@ -75,7 +75,7 @@ const TH: React.CSSProperties = {
   textTransform: 'uppercase',
   whiteSpace: 'nowrap',
   borderBottom: '1px solid rgba(70,98,145,0.12)',
-  backgroundColor: '#f8fafc',
+  backgroundColor: colors.bgStripe,
 };
 
 const TD: React.CSSProperties = {
@@ -247,7 +247,7 @@ export default function Activity() {
           {/* ── Table card ── */}
           <div
             style={{
-              backgroundColor: '#ffffff',
+              backgroundColor: colors.bgSurface,
               borderRadius: radius.lg,
               border: '1px solid rgba(70,98,145,0.1)',
               boxShadow: '0 1px 4px rgba(3,12,35,0.06)',
@@ -304,8 +304,8 @@ export default function Activity() {
                       padding: `${spacing.xs} ${spacing.md}`,
                       borderRadius: radius.full,
                       border: 'none',
-                      backgroundColor: '#fef2f2',
-                      color: '#ef4444',
+                      backgroundColor: colors.bgErrorLight,
+                      color: colors.error,
                       fontFamily: "'Archivo', sans-serif",
                       fontSize: '0.75rem',
                       fontWeight: 600,
@@ -346,7 +346,7 @@ export default function Activity() {
                     padding: `0.4rem ${spacing.lg}`,
                     borderRadius: radius.full,
                     border: '1px solid rgba(70,98,145,0.2)',
-                    backgroundColor: '#ffffff',
+                    backgroundColor: colors.bgSurface,
                     fontFamily: "'Archivo', sans-serif",
                     fontSize: '0.8125rem',
                     fontWeight: 600,
@@ -446,7 +446,7 @@ export default function Activity() {
                           style={{
                             backgroundColor: isSelected
                               ? 'rgba(46,124,253,0.05)'
-                              : idx % 2 === 0 ? '#ffffff' : '#f8fafc',
+                              : idx % 2 === 0 ? 'colors.bgSurface' : 'colors.bgStripe',
                             cursor: 'pointer',
                             transition: 'background-color 0.1s',
                           }}
@@ -457,7 +457,7 @@ export default function Activity() {
                           onMouseLeave={e => {
                             if (!isSelected)
                               (e.currentTarget as HTMLTableRowElement).style.backgroundColor =
-                                idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+                                idx % 2 === 0 ? 'colors.bgSurface' : 'colors.bgStripe';
                           }}
                         >
                           {/* Checkbox — stop propagation so clicking it doesn't open detail */}
@@ -581,7 +581,7 @@ export default function Activity() {
 // ── Private helpers ────────────────────────────────────────────────────────────
 
 function TypeBadge({ type }: { type: string }) {
-  const s = TYPE_COLORS[type] ?? { bg: '#f3f4f6', color: '#374151' };
+  const s = TYPE_COLORS[type] ?? { bg: colors.bgDisabled, color: colors.closeBtn };
   return (
     <span
       style={{
@@ -601,7 +601,7 @@ function TypeBadge({ type }: { type: string }) {
 }
 
 function EventBadge({ event }: { event: string }) {
-  const s = EVENT_COLORS[event] ?? { bg: '#f3f4f6', color: '#374151' };
+  const s = EVENT_COLORS[event] ?? { bg: colors.bgDisabled, color: colors.closeBtn };
   return (
     <span
       style={{
@@ -647,7 +647,7 @@ function RowIconBtn({
         cursor: 'pointer',
         color: colors.blueGrayDark,
         padding: 0,
-        transition: 'all 0.12s',
+        transition: 'background-color 0.12s ease, color 0.12s ease',
       }}
       onMouseEnter={e => {
         (e.currentTarget as HTMLButtonElement).style.backgroundColor = `${hoverColor}18`;
@@ -694,7 +694,7 @@ function ActivityFilterDropdown({
           height: '2.125rem',
           borderRadius: radius.md,
           border: `1px solid ${open || filterActive ? colors.primary : 'rgba(70,98,145,0.2)'}`,
-          backgroundColor: open || filterActive ? 'rgba(46,124,253,0.06)' : '#ffffff',
+          backgroundColor: open || filterActive ? 'rgba(46,124,253,0.06)' : colors.bgSurface,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -702,7 +702,7 @@ function ActivityFilterDropdown({
           color: open || filterActive ? colors.primary : colors.blueGrayMd,
           position: 'relative',
           flexShrink: 0,
-          transition: 'all 0.15s',
+          transition: 'background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease',
         }}
       >
         <ListFilter size={15} />
@@ -729,7 +729,7 @@ function ActivityFilterDropdown({
             top: '2.5rem',
             right: 0,
             width: '15rem',
-            backgroundColor: '#ffffff',
+            backgroundColor: colors.bgSurface,
             borderRadius: radius.lg,
             border: '1px solid rgba(70,98,145,0.14)',
             boxShadow: '0 0.5rem 2rem rgba(3,12,35,0.12)',
@@ -801,10 +801,10 @@ function FilterChip({
         fontSize: '0.75rem',
         fontWeight: active ? 600 : 400,
         cursor: 'pointer',
-        backgroundColor: active ? colors.primary : '#f5f7fb',
-        color: active ? '#ffffff' : colors.blueGrayMd,
+        backgroundColor: active ? colors.primary : colors.bgSubtle,
+        color: active ? colors.white : colors.blueGrayMd,
         border: `1px solid ${active ? colors.primary : 'rgba(70,98,145,0.15)'}`,
-        transition: 'all 0.12s',
+        transition: 'background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease',
       }}
     >
       {label}
