@@ -74,7 +74,7 @@ export default function People() {
   const [people, setPeople]     = useState<Person[]>([]);
 
   useEffect(() => {
-    usersApi.list().then(setPeople);
+    usersApi.list().then(setPeople).catch(() => {});
   }, []);
   const [search, setSearch]     = useState('');
   const [sortField, setSortField] = useState<SortField>('name');
@@ -366,8 +366,9 @@ export default function People() {
                     </tr>
                   ) : (
                     pageItems.map((person, idx) => {
-                      const palette  = AVATAR_PALETTE[person.id % AVATAR_PALETTE.length];
-                      const initials = `${person.first_name[0]}${person.last_name[0]}`.toUpperCase();
+                      const hash = Array.from(person.id).reduce((acc, c) => acc + c.charCodeAt(0), 0);
+                      const palette  = AVATAR_PALETTE[hash % AVATAR_PALETTE.length];
+                      const initials = `${person.first_name[0] ?? ''}${person.last_name[0] ?? ''}`.toUpperCase();
                       const role     = ROLE_BADGE[person.role] ?? ROLE_BADGE.STAFF;
                       const displayName = `${person.last_name}, ${person.first_name}`;
 

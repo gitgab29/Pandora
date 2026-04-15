@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Asset, AddAssetFormData, AssetStatus } from '../types/asset';
+import { ASSET_STATUS_LABELS } from '../types/asset';
 
 interface CopyAssetModalProps {
   isOpen: boolean;
@@ -11,7 +12,7 @@ interface CopyAssetModalProps {
   onSave: (data: Omit<Asset, 'id' | 'created_at' | 'updated_at'>) => void;
 }
 
-const ASSET_STATUSES: AssetStatus[] = ['Available', 'Deployed', 'In Repair', 'Retired', 'To Audit'];
+const ASSET_STATUSES: AssetStatus[] = ['AVAILABLE', 'DEPLOYED', 'IN_REPAIR', 'IN_MAINTENANCE', 'TO_AUDIT', 'LOST'];
 const ASSET_CATEGORIES = ['Laptop', 'Phone', 'Tablet', 'PC', 'Monitor', 'Accessory', 'Other'];
 const SSD_OPTIONS = ['Enabled', 'Disabled', 'N/A'];
 
@@ -118,7 +119,7 @@ function SelectInput({
         }}
       >
         <option value="">{placeholder ?? `Select ${label}`}</option>
-        {options.map(o => <option key={o} value={o}>{o}</option>)}
+        {options.map(o => <option key={o} value={o}>{(ASSET_STATUS_LABELS as Record<string, string>)[o] ?? o}</option>)}
       </select>
     </Field>
   );
@@ -130,7 +131,7 @@ function assetToForm(a: Asset): AddAssetFormData {
   return {
     asset_tag: '',          // must be unique — user fills in
     category: a.category,
-    status: 'Available',    // copies start as Available
+    status: 'AVAILABLE',    // copies start as Available
     serial_number: '',      // must be unique — user fills in
     warranty_expiry: a.warranty_expiry ?? '',
     end_of_life: a.end_of_life ?? '',
@@ -181,7 +182,7 @@ export default function CopyAssetModal({ isOpen, asset, onClose, onSave }: CopyA
     onSave({
       asset_tag: form.asset_tag.trim(),
       category: form.category || asset.category,
-      status: (form.status as AssetStatus) || 'Available',
+      status: (form.status as AssetStatus) || 'AVAILABLE',
       serial_number: form.serial_number.trim(),
       warranty_expiry: form.warranty_expiry || undefined,
       end_of_life: form.end_of_life || undefined,

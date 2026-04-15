@@ -3,6 +3,7 @@ import { X, Pencil, LogIn, LogOut, Package } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows, badgeColors } from '../theme';
 import type { Person } from '../types/people';
 import type { Asset } from '../types/asset';
+import { ASSET_STATUS_LABELS } from '../types/asset';
 import { assetsApi } from '../api';
 import AssetCheckOutModal from './AssetCheckOutModal';
 import AssetCheckInModal from './AssetCheckInModal';
@@ -71,11 +72,12 @@ function InfoField({ label, value }: { label: string; value: string | null | und
 // ── Asset status dot & label ───────────────────────────────────────────────────
 
 const ASSET_STATUS_COLORS: Record<string, string> = {
-  'Available': colors.success,
-  'Deployed':  colors.primary,
-  'In Repair': colors.orangeAccent,
-  'Retired':   colors.grayMed,
-  'To Audit':  '#eab308',
+  'AVAILABLE':      colors.success,
+  'DEPLOYED':       colors.primary,
+  'IN_REPAIR':      colors.orangeAccent,
+  'IN_MAINTENANCE': colors.grayMed,
+  'TO_AUDIT':       '#eab308',
+  'LOST':           colors.error,
 };
 
 // ── Main component ─────────────────────────────────────────────────────────────
@@ -115,7 +117,7 @@ export default function PersonDetailModal({
   const handleCheckOut = (assetId: string, assignedTo: string, _notes: string) => {
     setAssets(prev => prev.map(a =>
       a.id === assetId
-        ? { ...a, status: 'Deployed' as const, assigned_to: assignedTo, updated_at: new Date().toISOString().split('T')[0] }
+        ? { ...a, status: 'DEPLOYED' as const, assigned_to: assignedTo, updated_at: new Date().toISOString().split('T')[0] }
         : a,
     ));
   };
@@ -412,7 +414,7 @@ export default function PersonDetailModal({
                   <tbody>
                     {assets.map((asset, idx) => {
                       const dotColor = ASSET_STATUS_COLORS[asset.status] ?? colors.grayMed;
-                      const isDeployed = asset.status === 'Deployed';
+                      const isDeployed = asset.status === 'DEPLOYED';
                       return (
                         <tr
                           key={asset.id}
@@ -431,7 +433,7 @@ export default function PersonDetailModal({
                                   backgroundColor: dotColor, flexShrink: 0,
                                 }}
                               />
-                              {asset.status}
+                              {ASSET_STATUS_LABELS[asset.status] ?? asset.status}
                             </span>
                           </td>
                           <td style={assetTD({ textAlign: 'right' })}>
@@ -443,7 +445,7 @@ export default function PersonDetailModal({
                                 <LogIn size={10} />
                                 Check In
                               </button>
-                            ) : asset.status === 'Available' ? (
+                            ) : asset.status === 'AVAILABLE' ? (
                               <button
                                 onClick={() => setCheckOutTarget(asset)}
                                 style={actionPillStyle(colors.success)}

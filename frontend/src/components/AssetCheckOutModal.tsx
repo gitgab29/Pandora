@@ -7,7 +7,7 @@ interface AssetCheckOutModalProps {
   isOpen: boolean;
   asset: Asset | null;
   onClose: () => void;
-  onConfirm: (assetId: number, assignedTo: string, notes: string) => void;
+  onConfirm: (assetId: string, assignedTo: string, notes: string) => void;
 }
 
 const DUMMY_USERS = [

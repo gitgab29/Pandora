@@ -23,15 +23,16 @@ const STAT_CARDS = [
 ];
 
 const STATUS_CONFIG: Record<AssetStatus, { dot: string; label: string }> = {
-  'Available': { dot: colors.success, label: 'Available' },
-  'Deployed':  { dot: colors.primary, label: 'Deployed' },
-  'In Repair': { dot: colors.orangeAccent, label: 'In Repair' },
-  'Retired':   { dot: statusColors.retired, label: 'Retired' },
-  'To Audit':  { dot: statusColors.toAudit, label: 'To Audit' },
+  'AVAILABLE':      { dot: colors.success,      label: 'Available' },
+  'DEPLOYED':       { dot: colors.primary,      label: 'Deployed' },
+  'IN_REPAIR':      { dot: colors.orangeAccent, label: 'In Repair' },
+  'IN_MAINTENANCE': { dot: statusColors.retired, label: 'In Maintenance' },
+  'LOST':           { dot: colors.error,        label: 'Lost' },
+  'TO_AUDIT':       { dot: statusColors.toAudit, label: 'To Audit' },
 };
 
 const FILTER_TABS: Array<AssetStatus | 'All'> = [
-  'All', 'Available', 'Deployed', 'In Repair', 'Retired', 'To Audit',
+  'All', 'AVAILABLE', 'DEPLOYED', 'IN_REPAIR', 'TO_AUDIT', 'LOST',
 ];
 
 const SORT_OPTIONS = ['Tag (A–Z)', 'Tag (Z–A)', 'Date Added (Newest)', 'Date Added (Oldest)', 'Status'];
@@ -62,11 +63,15 @@ const TD: React.CSSProperties = {
 };
 
 export default function AssetsTabContent() {
-  const [assets, setAssets] = useState<Asset[]>(INITIAL_ASSETS);
+  const [assets, setAssets] = useState<Asset[]>([]);
+
+  useEffect(() => {
+    assetsApi.list().then(setAssets).catch(() => {});
+  }, []);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<AssetStatus | 'All'>('All');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [featureModalOpen, setFeatureModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [activeCategories, setActiveCategories] = useState<string[]>([]);
@@ -92,12 +97,17 @@ export default function AssetsTabContent() {
     if (activeCategories.length > 0) items = items.filter(a => activeCategories.includes(a.category));
     const q = search.toLowerCase().trim();
     if (q) {
-      items = items.filter(a =>
-        a.asset_tag.toLowerCase().includes(q) ||
-        a.serial_number.toLowerCase().includes(q) ||
-        a.category.toLowerCase().includes(q) ||
-        (a.assigned_to ?? '').toLowerCase().includes(q),
-      );
+      items = items.filter(a => {
+        const holder = a.assigned_to_detail
+          ? `${a.assigned_to_detail.first_name} ${a.assigned_to_detail.last_name}`
+          : '';
+        return (
+          a.asset_tag.toLowerCase().includes(q) ||
+          a.serial_number.toLowerCase().includes(q) ||
+          a.category.toLowerCase().includes(q) ||
+          holder.toLowerCase().includes(q)
+        );
+      });
     }
     const sorted = [...items];
     if (activeSort === 'Tag (A–Z)')              sorted.sort((a, b) => a.asset_tag.localeCompare(b.asset_tag));
@@ -131,7 +141,7 @@ export default function AssetsTabContent() {
       return next;
     });
   };
-  const toggleRow = (id: number) => {
+  const toggleRow = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -153,20 +163,20 @@ export default function AssetsTabContent() {
   };
 
   const handleSaveCopy = (data: Omit<Asset, 'id' | 'created_at' | 'updated_at'>) => {
-    const newId = Math.max(0, ...assets.map(a => a.id)) + 1;
+    const newId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
     const today = new Date().toISOString().split('T')[0];
     setAssets(prev => [...prev, { ...data, id: newId, created_at: today, updated_at: today }]);
   };
 
-  const handleCheckOut = (assetId: number, assignedTo: string, _notes: string) => {
+  const handleCheckOut = (assetId: string, assignedTo: string, _notes: string) => {
     setAssets(prev => prev.map(a =>
-      a.id === assetId ? { ...a, status: 'Deployed', assigned_to: assignedTo, updated_at: new Date().toISOString().split('T')[0] } : a,
+      a.id === assetId ? { ...a, status: 'DEPLOYED', assigned_to: assignedTo, updated_at: new Date().toISOString().split('T')[0] } : a,
     ));
   };
 
-  const handleCheckIn = (assetId: number, _notes: string) => {
+  const handleCheckIn = (assetId: string, _notes: string) => {
     setAssets(prev => prev.map(a =>
-      a.id === assetId ? { ...a, status: 'Available', assigned_to: undefined, updated_at: new Date().toISOString().split('T')[0] } : a,
+      a.id === assetId ? { ...a, status: 'AVAILABLE', assigned_to: null, updated_at: new Date().toISOString().split('T')[0] } : a,
     ));
   };
 
@@ -258,7 +268,7 @@ export default function AssetsTabContent() {
                     transition: 'background-color 0.15s, color 0.15s',
                   }}
                 >
-                  {tab === 'All' ? 'All Assets' : tab}
+                  {tab === 'All' ? 'All Assets' : STATUS_CONFIG[tab].label}
                 </button>
               ))}
             </div>
@@ -364,9 +374,9 @@ export default function AssetsTabContent() {
                 </tr>
               ) : (
                 pageItems.map((asset, idx) => {
-                  const statusCfg = STATUS_CONFIG[asset.status];
-                  const isAvailable = asset.status === 'Available';
-                  const isDeployed  = asset.status === 'Deployed';
+                  const statusCfg = STATUS_CONFIG[asset.status] ?? { dot: colors.blueGrayMd, label: asset.status };
+                  const isAvailable = asset.status === 'AVAILABLE';
+                  const isDeployed  = asset.status === 'DEPLOYED';
                   const pillVisible = isAvailable || isDeployed;
                   return (
                     <tr
@@ -404,8 +414,10 @@ export default function AssetsTabContent() {
 
                       <td style={TD}>{asset.category}</td>
 
-                      <td style={{ ...TD, color: asset.assigned_to ? colors.textPrimary : colors.blueGrayMd }}>
-                        {asset.assigned_to ?? '—'}
+                      <td style={{ ...TD, color: asset.assigned_to_detail ? colors.textPrimary : colors.blueGrayMd }}>
+                        {asset.assigned_to_detail
+                          ? `${asset.assigned_to_detail.first_name} ${asset.assigned_to_detail.last_name}`
+                          : '—'}
                       </td>
 
                       <td style={TD}>

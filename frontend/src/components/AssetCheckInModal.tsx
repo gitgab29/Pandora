@@ -7,7 +7,7 @@ interface AssetCheckInModalProps {
   isOpen: boolean;
   asset: Asset | null;
   onClose: () => void;
-  onConfirm: (assetId: number, notes: string) => void;
+  onConfirm: (assetId: string, notes: string) => void;
 }
 
 const labelStyle: React.CSSProperties = {

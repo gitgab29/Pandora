@@ -117,14 +117,14 @@ Filter params: `?category=`, `?status=`, `?business_group=`, `?transaction_type=
 - ✅ `AuthContext` (`context/AuthContext.tsx`) — stores `user`, `access`/`refresh` tokens, `isAuthenticated`, `loading`; exposes `login()`, `logout()`, `register()`
 - ✅ `/home` dashboard — 5 stat cards + `ActivityLogTable` (dummy data)
 - ✅ `/inventory` — **tabbed catalog page**. Four tabs: `Assets` · `Accessories` · `Licenses` · `Consumables`
-  - **Assets tab** = full CRUD (add/edit/copy/delete), lives in `components/AssetsTabContent.tsx`, backed by `INITIAL_ASSETS` dummy data
-  - **Accessories tab** = Accessory CRUD (body inlined in `pages/Inventory.tsx`, backed by `INITIAL_INVENTORY`). Has toggleable stat cards.
+  - **Assets tab** = full CRUD (add/edit/copy/delete), lives in `components/AssetsTabContent.tsx`. **Wired to `assetsApi.list()`** — fetches real data on mount.
+  - **Accessories tab** = Accessory CRUD (body inlined in `pages/Inventory.tsx`, still backed by `INITIAL_INVENTORY` dummy data). Has toggleable stat cards.
   - **Licenses / Consumables tabs** = `ComingSoonPanel` placeholder; schemas not yet defined
 - ✅ `/activity` — table with search / sort / pagination, view-detail modal, delete modal (dummy logs in `useState`)
 - ✅ Stub routes (`/settings`, `/archive`) → `ComingSoon`
 - ✅ Reusable modals: `Add/Edit/Copy` Asset, `Add/Edit` Accessory, `CheckIn/CheckOut` for both, `ChangeStatusModal`, `DeleteConfirm`, `ActivityDetail`, `FeatureNotAvailable`
 - ✅ Sidebar logout button — clears `AuthContext` and navigates to `/sign-in`
-- ✅ `/people` — People directory. Table: avatar initials, Name, Email, Position, Business Group, Supervisor, Role badge. Sort/search/paginate. Full CRUD + Detail modal with assigned assets. Dummy data: `INITIAL_PEOPLE` in `pages/People.tsx`.
+- ✅ `/people` — People directory. Table: avatar initials, Name, Email, Position, Business Group, Supervisor, Role badge. Sort/search/paginate. Full CRUD + Detail modal with assigned assets. **Wired to `usersApi.list()`** — fetches real data on mount; create/edit/delete also call the API.
 - ✅ **Backend fully implemented** — `backend/api/` has real models, serializers, views, auth:
   - `models.py`: `User` (email-auth, UUID PK, role, supervisor FK), `Asset`, `Accessory`, `TransactionLog`
   - `serializers.py`: Full DRF serializers with nested `*_detail` read fields
@@ -134,12 +134,17 @@ Filter params: `?category=`, `?status=`, `?business_group=`, `?transaction_type=
   - `admin.py`: All models registered in Django admin
   - Migration: `0001_initial.py` created and applied
   - Superuser: `admin@embeddedsilicon.com` (run `python manage.py changepassword` to reset)
-- ⚠️ Frontend pages still use **dummy data** — backend endpoints exist but pages not yet wired to real API calls
 - ❌ Google OAuth: backend endpoint scaffolded but requires `GOOGLE_OAUTH_CLIENT_ID` env var to function
 
 **Asset schema note:** `Asset` has no `asset_name` or `location` field — the displayed identifier is `asset_tag`. Bind new asset UI to `asset_tag`.
 
-**Dummy-data hotspots to replace with real API calls:** `INITIAL_ASSETS` in `components/AssetsTabContent.tsx`, `INITIAL_INVENTORY` in `pages/Inventory.tsx`, `INITIAL_PEOPLE` in `pages/People.tsx`, `generateLogs()` in `pages/Home.tsx` and `pages/Activity.tsx`, `DUMMY_USERS` in checkout modals, `DUMMY_MANAGERS` in `pages/SignUp.tsx`.
+**`AssetStatus` is the backend enum, not Title Case.** Frontend `AssetStatus` type uses `'AVAILABLE' | 'DEPLOYED' | 'IN_REPAIR' | 'IN_MAINTENANCE' | 'TO_AUDIT' | 'LOST'` — matching `Asset.Status` in `backend/api/models.py`. Use `ASSET_STATUS_LABELS` (exported from `types/asset.ts`) when rendering display text. Never compare `asset.status === 'Available'` — it will silently fail.
+
+**ID fields are UUID strings, not numbers.** All entity `id`s (`Asset.id`, `Person.id`, `Accessory.id`) are UUIDs from the backend. Use `Set<string>`, never `Set<number>`. Never do `id % n` (NaN) or `Math.max(...ids)` for new IDs — use `crypto.randomUUID()` for client-side temporary IDs.
+
+**Holder display:** `asset.assigned_to` is a UUID. To render the user's name, use `asset.assigned_to_detail.first_name + last_name` (the nested read-only object from the serializer).
+
+**Remaining dummy-data hotspots:** `INITIAL_INVENTORY` in `pages/Inventory.tsx` (Accessories tab), `generateLogs()` in `pages/Home.tsx` and `pages/Activity.tsx`, `DUMMY_USERS` in `AssetCheckOutModal`, `DUMMY_MANAGERS` in `pages/SignUp.tsx`.
 
 ## Design Context
 
@@ -172,7 +177,7 @@ Color restraint: Orange (`#fc9c2d`) reserved for genuine urgency (warnings, arch
 
 ## Next up
 
-- [ ] Wire frontend pages to real API endpoints (replace dummy-data hotspots listed above)
+- [ ] Wire remaining dummy-data hotspots (Accessories tab, Home/Activity logs, SignUp managers, CheckOut user list)
 - [ ] Set `GOOGLE_OAUTH_CLIENT_ID` env var + test Google OAuth end-to-end
 - [ ] Build out Licenses, Settings, Archive pages
 - [ ] Add protected-route role guard (admin-only sections)

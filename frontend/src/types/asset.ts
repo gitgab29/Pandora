@@ -1,10 +1,23 @@
 export type AssetStatus =
-  | 'Available'
-  | 'Deployed'
-  | 'In Repair'
-  | 'In Maintenance'
-  | 'Lost'
-  | 'To Audit';
+  | 'AVAILABLE'
+  | 'DEPLOYED'
+  | 'IN_REPAIR'
+  | 'IN_MAINTENANCE'
+  | 'LOST'
+  | 'TO_AUDIT';
+
+export const ASSET_STATUS_OPTIONS: { value: AssetStatus; label: string }[] = [
+  { value: 'AVAILABLE',      label: 'Available' },
+  { value: 'DEPLOYED',       label: 'Deployed' },
+  { value: 'IN_REPAIR',      label: 'In Repair' },
+  { value: 'IN_MAINTENANCE', label: 'In Maintenance' },
+  { value: 'TO_AUDIT',       label: 'To Audit' },
+  { value: 'LOST',           label: 'Lost' },
+];
+
+export const ASSET_STATUS_LABELS: Record<AssetStatus, string> = Object.fromEntries(
+  ASSET_STATUS_OPTIONS.map(o => [o.value, o.label]),
+) as Record<AssetStatus, string>;
 
 export type AssetCategory =
   | 'Laptop'

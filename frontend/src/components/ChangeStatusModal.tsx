@@ -2,15 +2,16 @@ import { useState, useEffect } from 'react';
 import { X, RefreshCw } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Asset, AssetStatus } from '../types/asset';
+import { ASSET_STATUS_LABELS } from '../types/asset';
 
 interface ChangeStatusModalProps {
   isOpen: boolean;
   asset: Asset | null;
   onClose: () => void;
-  onConfirm: (assetId: number, status: AssetStatus, notes: string) => void;
+  onConfirm: (assetId: string, status: AssetStatus, notes: string) => void;
 }
 
-const STATUSES: AssetStatus[] = ['Available', 'Deployed', 'In Repair', 'Retired', 'To Audit'];
+const STATUSES: AssetStatus[] = ['AVAILABLE', 'DEPLOYED', 'IN_REPAIR', 'IN_MAINTENANCE', 'TO_AUDIT', 'LOST'];
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "'Archivo', sans-serif",
@@ -43,7 +44,7 @@ export default function ChangeStatusModal({
   onClose,
   onConfirm,
 }: ChangeStatusModalProps) {
-  const [status, setStatus] = useState<AssetStatus>('Available');
+  const [status, setStatus] = useState<AssetStatus>('AVAILABLE');
   const [notes, setNotes] = useState('');
   const [selectFocused, setSelectFocused] = useState(false);
   const [notesFocused, setNotesFocused] = useState(false);
@@ -150,7 +151,7 @@ export default function ChangeStatusModal({
                 borderColor: selectFocused ? colors.primary : colors.border,
               }}
             >
-              {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+              {STATUSES.map(s => <option key={s} value={s}>{ASSET_STATUS_LABELS[s]}</option>)}
             </select>
           </div>
 

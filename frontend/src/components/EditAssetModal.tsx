@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Asset, AddAssetFormData, AssetStatus } from '../types/asset';
+import { ASSET_STATUS_LABELS } from '../types/asset';
 
 interface EditAssetModalProps {
   isOpen: boolean;
@@ -10,7 +11,7 @@ interface EditAssetModalProps {
   onSave: (updated: Asset) => void;
 }
 
-const ASSET_STATUSES: AssetStatus[] = ['Available', 'Deployed', 'In Repair', 'Retired', 'To Audit'];
+const ASSET_STATUSES: AssetStatus[] = ['AVAILABLE', 'DEPLOYED', 'IN_REPAIR', 'IN_MAINTENANCE', 'TO_AUDIT', 'LOST'];
 const ASSET_CATEGORIES = ['Laptop', 'Phone', 'Tablet', 'PC', 'Monitor', 'Accessory', 'Other'];
 const SSD_OPTIONS = ['Enabled', 'Disabled', 'N/A'];
 
@@ -108,7 +109,7 @@ function SelectInput({
         }}
       >
         <option value="">{placeholder ?? `Select ${label}`}</option>
-        {options.map(o => <option key={o} value={o}>{o}</option>)}
+        {options.map(o => <option key={o} value={o}>{(ASSET_STATUS_LABELS as Record<string, string>)[o] ?? o}</option>)}
       </select>
     </Field>
   );

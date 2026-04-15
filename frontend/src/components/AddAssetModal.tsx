@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { AddAssetFormData, AssetStatus } from '../types/asset';
+import { ASSET_STATUS_LABELS } from '../types/asset';
 
 interface AddAssetModalProps {
   isOpen: boolean;
@@ -19,7 +20,7 @@ const EMPTY_FORM: AddAssetFormData = {
   ram: '', screen_size: '', storage_size: '',
 };
 
-const ASSET_STATUSES: AssetStatus[] = ['Available', 'Deployed', 'In Repair', 'Retired', 'To Audit'];
+const ASSET_STATUSES: AssetStatus[] = ['AVAILABLE', 'DEPLOYED', 'IN_REPAIR', 'IN_MAINTENANCE', 'TO_AUDIT', 'LOST'];
 const ASSET_CATEGORIES = ['Laptop', 'Phone', 'Tablet', 'PC', 'Monitor', 'Accessory', 'Other'];
 const SSD_OPTIONS = ['Enabled', 'Disabled', 'N/A'];
 
@@ -99,6 +100,7 @@ function SelectInput({
 }: {
   label: string; value: string; options: string[]; onChange: (v: string) => void; placeholder?: string;
 }) {
+  const optionLabel = (o: string) => (ASSET_STATUS_LABELS as Record<string, string>)[o] ?? o;
   const [focused, setFocused] = useState(false);
   return (
     <Field label={label}>
@@ -117,7 +119,7 @@ function SelectInput({
         }}
       >
         <option value="">{placeholder ?? `Select ${label}`}</option>
-        {options.map(o => <option key={o} value={o}>{o}</option>)}
+        {options.map(o => <option key={o} value={o}>{optionLabel(o)}</option>)}
       </select>
     </Field>
   );
