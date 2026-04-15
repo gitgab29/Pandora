@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { X, PackageMinus } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
-import type { StoreroomInventory } from '../types/inventory';
+import type { Accessory } from '../types/inventory';
 
 interface InventoryCheckOutModalProps {
   isOpen: boolean;
-  item: StoreroomInventory | null;
+  item: Accessory | null;
   onClose: () => void;
   onConfirm: (itemId: number, quantity: number, assignedTo: string, notes: string) => void;
 }

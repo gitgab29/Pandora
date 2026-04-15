@@ -1,4 +1,4 @@
-export interface StoreroomInventory {
+export interface Accessory {
   id: number;
   item_name: string;
   image_url?: string;

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Trash2, Pencil, Copy, Plus, Download, Filter } from 'lucide-react';
+import { Trash2, Pencil, Copy, Plus, Download, Filter, Eye, EyeOff } from 'lucide-react';
 import StatisticCard from './StatisticCard';
 import SearchBar from './SearchBar';
 import Pagination from './Pagination';
@@ -101,6 +101,7 @@ export default function AssetsTabContent() {
   const [activeSort, setActiveSort] = useState('Tag (A–Z)');
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
+  const [showStats, setShowStats] = useState(true);
 
   const [deleteTarget,   setDeleteTarget]   = useState<Asset | null>(null);
   const [editTarget,     setEditTarget]     = useState<Asset | null>(null);
@@ -199,11 +200,40 @@ export default function AssetsTabContent() {
 
   return (
     <>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.lg, marginBottom: spacing.xl2 }}>
-        {STAT_CARDS.map(card => (
-          <StatisticCard key={card.title} title={card.title} value={card.value} trend={card.trend} />
-        ))}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showStats ? spacing.md : spacing.xl2 }}>
+        <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: '0.75rem', fontWeight: 600, color: colors.blueGrayMd, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+          Statistics
+        </span>
+        <button
+          onClick={() => setShowStats(s => !s)}
+          title={showStats ? 'Hide statistics' : 'Show statistics'}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '0.3rem',
+            padding: '0.25rem 0.625rem',
+            borderRadius: radius.full,
+            border: '1px solid rgba(70,98,145,0.2)',
+            backgroundColor: 'transparent',
+            color: colors.blueGrayMd,
+            fontFamily: "'Archivo', sans-serif",
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            cursor: 'pointer',
+            transition: 'background-color 0.15s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(70,98,145,0.07)')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+        >
+          {showStats ? <EyeOff size={12} /> : <Eye size={12} />}
+          {showStats ? 'Hide' : 'Show'}
+        </button>
       </div>
+      {showStats && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.lg, marginBottom: spacing.xl2 }}>
+          {STAT_CARDS.map(card => (
+            <StatisticCard key={card.title} title={card.title} value={card.value} trend={card.trend} />
+          ))}
+        </div>
+      )}
 
       <div
         style={{

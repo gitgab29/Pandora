@@ -1,7 +1,6 @@
-import { useLocation, NavLink } from 'react-router-dom';
+import { useLocation, NavLink, useNavigate } from 'react-router-dom';
 import {
   Home,
-  Gauge,
   ClipboardList,
   Activity,
   Users,
@@ -9,6 +8,7 @@ import {
   Archive,
   ChevronLeft,
   ChevronRight,
+  LogOut,
 } from 'lucide-react';
 import { colors, sizing, spacing, radius } from '../theme'; 
 
@@ -22,7 +22,6 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { icon: Home,          label: 'Home',      path: '/home' },
   { icon: ClipboardList, label: 'Inventory', path: '/inventory' },
-  { icon: Gauge,         label: 'Status',    path: '/status' },
   { icon: Activity,      label: 'Activity',  path: '/activity' },
   { icon: Users,         label: 'People',    path: '/people' },
   { icon: Settings,      label: 'Settings',  path: '/settings' },
@@ -39,6 +38,7 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
 
   return (
     <aside
@@ -176,6 +176,51 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           );
         })}
       </nav>
+
+      {/* ── Logout ── */}
+      <div
+        style={{
+          padding: `${spacing.sm} ${spacing.sm}`,
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          flexShrink: 0,
+        }}
+      >
+        <button
+          onClick={() => navigate('/sign-in')}
+          title={collapsed ? 'Log out' : undefined}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            gap: spacing.sm,
+            width: '100%',
+            padding: collapsed ? `${spacing.md} 0` : `0.5625rem ${spacing.md}`,
+            borderRadius: radius.md,
+            border: 'none',
+            backgroundColor: 'transparent',
+            cursor: 'pointer',
+            transition: 'background-color 0.15s ease',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)')}
+          onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+        >
+          <LogOut size={19} color="#ffffff" strokeWidth={2} style={{ opacity: 0.75, flexShrink: 0 }} />
+          {!collapsed && (
+            <span
+              style={{
+                fontFamily: "'Archivo', sans-serif",
+                fontSize: '0.844rem',
+                fontWeight: 400,
+                color: colors.white,
+                opacity: 0.75,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Log out
+            </span>
+          )}
+        </button>
+      </div>
     </aside>
   );
 }

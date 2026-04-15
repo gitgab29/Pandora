@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
-import type { StoreroomInventory, AddInventoryFormData } from '../types/inventory';
+import type { Accessory, AddInventoryFormData } from '../types/inventory';
 
 interface EditInventoryModalProps {
   isOpen: boolean;
-  item: StoreroomInventory | null;
+  item: Accessory | null;
   onClose: () => void;
-  onSave: (updated: StoreroomInventory) => void;
+  onSave: (updated: Accessory) => void;
 }
 
 const INVENTORY_CATEGORIES = [
@@ -117,7 +117,7 @@ function SelectInput({
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function itemToForm(i: StoreroomInventory): AddInventoryFormData {
+function itemToForm(i: Accessory): AddInventoryFormData {
   return {
     item_name: i.item_name,
     category: i.category ?? '',
@@ -153,7 +153,7 @@ export default function EditInventoryModal({ isOpen, item, onClose, onSave }: Ed
     if (!form.item_name.trim()) return;
     const qty = parseInt(form.quantity_available) || 0;
     const minQty = parseInt(form.min_quantity) || 0;
-    const updated: StoreroomInventory = {
+    const updated: Accessory = {
       ...item,
       item_name: form.item_name.trim(),
       category: form.category || undefined,

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import {
   Trash2, Pencil, Plus, Download, AlertTriangle, Filter,
   Cable, Plug, Keyboard, Mouse, Headphones, Zap, HardDrive,
-  MemoryStick, Monitor, Package,
+  MemoryStick, Monitor, Package, Eye, EyeOff,
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
@@ -19,14 +19,14 @@ import InventoryCheckOutModal from '../components/InventoryCheckOutModal';
 import AssetsTabContent from '../components/AssetsTabContent';
 import ComingSoonPanel from '../components/ComingSoonPanel';
 import { colors, spacing, radius } from '../theme';
-import type { StoreroomInventory } from '../types/inventory';
+import type { Accessory } from '../types/inventory';
 
 type InventoryTab = 'Assets' | 'Accessories' | 'Licenses' | 'Consumables';
 const INVENTORY_TABS: InventoryTab[] = ['Assets', 'Accessories', 'Licenses', 'Consumables'];
 
 // ── Initial dummy data ─────────────────────────────────────────────────────────
 
-const INITIAL_INVENTORY: StoreroomInventory[] = [
+const INITIAL_INVENTORY: Accessory[] = [
   { id:  1, item_name: 'USB-C Cable 2m',       category: 'Cable',        quantity_available: 24, min_quantity: 10, model_number: 'ANK-USB2M',   manufacturer: 'Anker',    supplier: 'Amazon Business', location: 'Storeroom A, Shelf 1', department: 'IT',       unit_cost: 12.99,  total_cost: 311.76, purchase_date: '2024-01-10', created_at: '2024-01-10', updated_at: '2024-01-10' },
   { id:  2, item_name: 'HDMI Cable 1.5m',      category: 'Cable',        quantity_available: 3,  min_quantity: 8,  model_number: 'HDMI-1M5-BK', manufacturer: 'Belkin',   supplier: 'CDW',             location: 'Storeroom A, Shelf 1', department: 'IT',       unit_cost: 9.99,   total_cost: 29.97,  purchase_date: '2024-01-12', created_at: '2024-01-12', updated_at: '2024-01-12' },
   { id:  3, item_name: 'USB-C to HDMI Adapter',category: 'Adapter',      quantity_available: 0,  min_quantity: 5,  model_number: 'UCA-HDMI-4K', manufacturer: 'Anker',    supplier: 'Amazon Business', location: 'Storeroom A, Shelf 2', department: 'IT',       unit_cost: 18.99,  total_cost: 0,      purchase_date: '2024-01-15', created_at: '2024-01-15', updated_at: '2024-01-15' },
@@ -127,7 +127,7 @@ const TD: React.CSSProperties = {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function Inventory() {
-  const [inventory, setInventory] = useState<StoreroomInventory[]>(INITIAL_INVENTORY);
+  const [inventory, setInventory] = useState<Accessory[]>(INITIAL_INVENTORY);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeInventoryTab, setActiveInventoryTab] = useState<InventoryTab>('Assets');
   const [search, setSearch] = useState('');
@@ -141,12 +141,13 @@ export default function Inventory() {
   const [activeSort, setActiveSort] = useState('Name (A–Z)');
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
+  const [showStats, setShowStats] = useState(true);
 
   // ── Modal targets ────────────────────────────────────────────────────────
-  const [deleteTarget,   setDeleteTarget]   = useState<StoreroomInventory | null>(null);
-  const [editTarget,     setEditTarget]     = useState<StoreroomInventory | null>(null);
-  const [checkInTarget,  setCheckInTarget]  = useState<StoreroomInventory | null>(null);
-  const [checkOutTarget, setCheckOutTarget] = useState<StoreroomInventory | null>(null);
+  const [deleteTarget,   setDeleteTarget]   = useState<Accessory | null>(null);
+  const [editTarget,     setEditTarget]     = useState<Accessory | null>(null);
+  const [checkInTarget,  setCheckInTarget]  = useState<Accessory | null>(null);
+  const [checkOutTarget, setCheckOutTarget] = useState<Accessory | null>(null);
 
   // ── Derived data ─────────────────────────────────────────────────────────
   const allInvCategories = useMemo(
@@ -251,7 +252,7 @@ export default function Inventory() {
     setDeleteTarget(null);
   };
 
-  const handleSaveEdit = (updated: StoreroomInventory) => {
+  const handleSaveEdit = (updated: Accessory) => {
     // TODO: PATCH /api/inventory/:id/ + POST /api/transactions/ when backend is ready
     setInventory(prev => prev.map(i => i.id === updated.id ? updated : i));
   };
@@ -354,11 +355,40 @@ export default function Inventory() {
 
           {activeInventoryTab === 'Accessories' && <>
           {/* ── Stat cards ── */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.lg, marginBottom: spacing.xl2 }}>
-            {statCards.map(card => (
-              <StatisticCard key={card.title} title={card.title} value={card.value} trend={card.trend} />
-            ))}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showStats ? spacing.md : spacing.xl2 }}>
+            <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: '0.75rem', fontWeight: 600, color: colors.blueGrayMd, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              Statistics
+            </span>
+            <button
+              onClick={() => setShowStats(s => !s)}
+              title={showStats ? 'Hide statistics' : 'Show statistics'}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.3rem',
+                padding: '0.25rem 0.625rem',
+                borderRadius: radius.full,
+                border: '1px solid rgba(70,98,145,0.2)',
+                backgroundColor: 'transparent',
+                color: colors.blueGrayMd,
+                fontFamily: "'Archivo', sans-serif",
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'background-color 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(70,98,145,0.07)')}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+            >
+              {showStats ? <EyeOff size={12} /> : <Eye size={12} />}
+              {showStats ? 'Hide' : 'Show'}
+            </button>
           </div>
+          {showStats && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.lg, marginBottom: spacing.xl2 }}>
+              {statCards.map(card => (
+                <StatisticCard key={card.title} title={card.title} value={card.value} trend={card.trend} />
+              ))}
+            </div>
+          )}
 
           {/* ── Inventory table card ── */}
           <div
@@ -393,7 +423,7 @@ export default function Inventory() {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  Storeroom Inventory
+                  Accessories
                 </span>
                 <div style={{ display: 'flex', gap: spacing.xs }}>
                   {FILTER_TABS.map(tab => (

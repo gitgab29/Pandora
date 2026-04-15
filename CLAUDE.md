@@ -63,7 +63,7 @@ erd.html        Mermaid ERD — source of truth for entity fields
 
 ## Data model
 
-Current entities: `User`, `Asset`, `StoreroomInventory`, `TransactionLog`. Future entities (Licenses, Consumables, and a first-class Accessory if/when StoreroomInventory is split) are not yet scoped — their Inventory tabs render `ComingSoonPanel` until schemas land. **Field-level schema lives in `backend/api/models.py` and `erd.html` — read those when you need fields. Don't trust this file for schema details.**
+Current entities: `User`, `Asset`, `Accessory`, `TransactionLog`. Future entities (Licenses, Consumables) are not yet scoped — their Inventory tabs render `ComingSoonPanel` until schemas land. **Field-level schema lives in `backend/api/models.py` and `erd.html` — read those when you need fields. Don't trust this file for schema details.**
 
 ## Dev commands
 
@@ -89,18 +89,18 @@ cd backend && source .venv/bin/activate && python manage.py runserver
 - ✅ `/home` dashboard — 5 stat cards + `ActivityLogTable` (dummy data)
 - ✅ `/inventory` — **tabbed catalog page**. Four tabs: `Assets` · `Accessories` · `Licenses` · `Consumables`
   - **Assets tab** = full CRUD (add/edit/copy/delete), lives in `components/AssetsTabContent.tsx`, backed by `INITIAL_ASSETS` dummy data exported from that same file
-  - **Accessories tab** = the legacy StoreroomInventory CRUD (body still inlined in `pages/Inventory.tsx`, backed by `INITIAL_INVENTORY`)
+  - **Accessories tab** = Accessory CRUD (body still inlined in `pages/Inventory.tsx`, backed by `INITIAL_INVENTORY`). Has toggleable stat cards (Eye/EyeOff button).
   - **Licenses / Consumables tabs** = `ComingSoonPanel` placeholder; schemas not yet defined
-- ✅ `/status` — operational page: 3 stat cards (Available / Deployed / To Audit), entity filter tabs (All/Assets/Accessories/Licenses/Consumables), status filter tabs, row actions for Check In, Check Out, Change Status. No Add/Edit/Delete here. Non-asset entity tabs render `ComingSoonPanel`
 - ✅ `/activity` — table with search / sort / pagination, view-detail modal, delete modal (dummy logs in `useState`)
 - ✅ Stub routes (`/people`, `/settings`, `/archive`) → `ComingSoon`
-- ✅ Reusable modals: `Add/Edit/Copy` Asset, `Add/Edit` Inventory, `CheckIn/CheckOut` for both, `ChangeStatusModal`, `DeleteConfirm`, `ActivityDetail`, `FeatureNotAvailable`
+- ✅ Reusable modals: `Add/Edit/Copy` Asset, `Add/Edit` Accessory, `CheckIn/CheckOut` for both, `ChangeStatusModal`, `DeleteConfirm`, `ActivityDetail`, `FeatureNotAvailable`
+- ✅ Sidebar has a logout button at the bottom (mock — navigates to `/sign-in`)
 - ❌ Backend `api/`: Django + DRF + JWT scaffolded, but `models.py` / `views.py` / `serializers.py` are **empty** — no real endpoints exist
 - ❌ Google OAuth: no Django endpoint yet; frontend handlers are mocks
 
 **Asset schema note:** `Asset` has no `asset_name` or `location` field — the displayed identifier is `asset_tag`. If you're adding new asset-related UI, bind to `asset_tag`.
 
-**Dummy-data hotspots to replace when backend lands:** `INITIAL_ASSETS` in `components/AssetsTabContent.tsx` (also imported by `pages/Status.tsx`), `INITIAL_INVENTORY` in `pages/Inventory.tsx`, `generateLogs()` in `pages/Home.tsx` and `pages/Activity.tsx`, `DUMMY_USERS` in both checkout modals, `DUMMY_MANAGERS` in `pages/SignUp.tsx`, dropdown data in `components/Header.tsx`.
+**Dummy-data hotspots to replace when backend lands:** `INITIAL_ASSETS` in `components/AssetsTabContent.tsx`, `INITIAL_INVENTORY` in `pages/Inventory.tsx`, `generateLogs()` in `pages/Home.tsx` and `pages/Activity.tsx`, `DUMMY_USERS` in both checkout modals, `DUMMY_MANAGERS` in `pages/SignUp.tsx`, dropdown data in `components/Header.tsx`.
 
 ## Design Context
 
@@ -133,7 +133,7 @@ Color restraint: Orange (`#fc9c2d`) reserved for genuine urgency (warnings, arch
 
 ## Next up
 
-- [ ] Define models in `backend/api/models.py` (User, Asset, StoreroomInventory, TransactionLog)
+- [ ] Define models in `backend/api/models.py` (User, Asset, Accessory, TransactionLog)
 - [ ] Write serializers + views for each model
 - [ ] Implement Google OAuth on Django (`/api/auth/google/`) → issue JWT
 - [ ] Wire frontend auth handlers to real OAuth endpoint
