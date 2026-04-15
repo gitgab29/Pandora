@@ -1,16 +1,17 @@
 export type PersonRole = 'ADMIN' | 'STAFF';
 
 export interface Person {
-  id: number;
+  id: string;
   first_name: string;
   last_name: string;
   email: string;
   /** Displayed as "Position" in the UI */
   title: string;
   /** Displayed as "Business Group" in the UI */
-  department: string;
+  business_group: string;
   /** Self-ref FK to Person.id — displayed as "Supervisor" */
-  manager_id: number | null;
+  supervisor: string | null;
+  supervisor_detail?: { id: string; first_name: string; last_name: string; email: string } | null;
   location: string;
   badge_number: string;
   role: PersonRole;

@@ -1,12 +1,40 @@
-import { Link } from 'react-router-dom';
-import { colors, spacing, radius } from '../theme';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { colors, spacing, radius, fontSize } from '../theme';
 import Button from '../components/Button';
+import Input from '../components/Input';
+import { useAuth } from '../context/AuthContext';
 
 export default function SignIn() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleEmailSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!email.trim() || !password) {
+      setError('Email and password are required.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await login(email.trim(), password);
+      navigate('/home');
+    } catch {
+      setError('Invalid email or password.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGoogleSignIn = () => {
-    // TODO: Replace with actual Google OAuth redirect
-    // window.location.href = '/api/auth/google/login';
-    console.log('Google sign-in initiated');
+    // Requires VITE_GOOGLE_OAUTH_CLIENT_ID to be configured
+    // Google Identity Services flow would call useAuth().loginWithGoogle(id_token)
+    setError('Google sign-in requires configuration. Use email/password for now.');
   };
 
   return (
@@ -86,22 +114,66 @@ export default function SignIn() {
                 }}
               />
 
-              <p
-                style={{
-                  fontFamily: "'Archivo', sans-serif",
-                  fontSize: '0.9375rem',
-                  lineHeight: 1.6,
-                  color: colors.blueGrayMd,
-                  margin: `0 0 ${spacing.xl3} 0`,
-                }}
-              >
-                Use your Embedded Silicon Google account to continue.
-              </p>
-
               <Button variant="google" onClick={handleGoogleSignIn}>
                 <GoogleIcon />
                 Sign In with Google
               </Button>
+
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: spacing.md,
+                  margin: `${spacing.xl} 0`,
+                }}
+              >
+                <div style={{ flex: 1, height: '1px', backgroundColor: colors.border }} />
+                <span
+                  style={{
+                    fontFamily: "'Archivo', sans-serif",
+                    fontSize: fontSize.xs,
+                    color: colors.textDisabled,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  or sign in with email
+                </span>
+                <div style={{ flex: 1, height: '1px', backgroundColor: colors.border }} />
+              </div>
+
+              <form onSubmit={handleEmailSignIn} noValidate style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg, textAlign: 'left' }}>
+                <Input
+                  label="Email"
+                  type="email"
+                  placeholder="you@embeddedsilicon.com"
+                  value={email}
+                  onChange={setEmail}
+                />
+                <Input
+                  label="Password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={setPassword}
+                />
+
+                {error && (
+                  <p
+                    style={{
+                      fontFamily: "'Archivo', sans-serif",
+                      fontSize: fontSize.xs,
+                      color: colors.error,
+                      margin: 0,
+                    }}
+                  >
+                    {error}
+                  </p>
+                )}
+
+                <Button type="submit" variant="primary" loading={loading}>
+                  Sign In
+                </Button>
+              </form>
 
               <p
                 style={{
@@ -109,6 +181,7 @@ export default function SignIn() {
                   fontSize: '0.875rem',
                   color: colors.blueGrayMd,
                   margin: `${spacing.xl} 0 0 0`,
+                  textAlign: 'center',
                 }}
               >
                 New to Pandora?{' '}

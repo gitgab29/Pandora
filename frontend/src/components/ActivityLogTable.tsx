@@ -4,7 +4,7 @@ import Pagination from './Pagination';
 import FilterDropdown from './FilterDropdown';
 import SortDropdown from './SortDropdown';
 import { colors, spacing, radius, badgeColors, fontSize, shadows } from '../theme';
-import type { TransactionLog } from '../types/activity';
+import type { ActivityLogEntry as TransactionLog } from '../types/activity';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 

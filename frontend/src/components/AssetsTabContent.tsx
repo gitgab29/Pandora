@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Trash2, Pencil, Copy, Plus, Download, Filter, Eye, EyeOff } from 'lucide-react';
 import StatisticCard from './StatisticCard';
 import SearchBar from './SearchBar';
@@ -13,36 +13,8 @@ import AssetCheckOutModal from './AssetCheckOutModal';
 import AssetCheckInModal from './AssetCheckInModal';
 import { colors, spacing, radius, statusColors } from '../theme';
 import type { Asset, AssetStatus } from '../types/asset';
+import { assetsApi } from '../api';
 
-// ── Initial dummy data ─────────────────────────────────────────────────────────
-
-const INITIAL_ASSETS: Asset[] = [
-  { id:  1, asset_tag: 'ES-001', category: 'Laptop', status: 'Available', serial_number: 'q13411234ldsf',    assigned_to: undefined,           created_at: '2024-01-10', updated_at: '2024-01-10' },
-  { id:  2, asset_tag: 'ES-002', category: 'Laptop', status: 'Deployed',  serial_number: '412345dsfq',        assigned_to: 'Lebron Jeymz',      created_at: '2024-01-12', updated_at: '2024-03-15' },
-  { id:  3, asset_tag: 'ES-003', category: 'Phone',  status: 'Available', serial_number: '14231asdfgasd',    assigned_to: undefined,           created_at: '2024-01-15', updated_at: '2024-01-15' },
-  { id:  4, asset_tag: 'ES-004', category: 'Phone',  status: 'Deployed',  serial_number: 'q131dsf13s',        assigned_to: 'Stephen Carry',     created_at: '2024-01-18', updated_at: '2024-02-20' },
-  { id:  5, asset_tag: 'ES-005', category: 'Laptop', status: 'Available', serial_number: 'asd13241dgjwe',    assigned_to: undefined,           created_at: '2024-01-20', updated_at: '2024-01-20' },
-  { id:  6, asset_tag: 'ES-006', category: 'Laptop', status: 'Deployed',  serial_number: '12345y0jf',         assigned_to: 'Ronald MacDonald',  created_at: '2024-01-22', updated_at: '2024-03-01' },
-  { id:  7, asset_tag: 'ES-007', category: 'PC',     status: 'Available', serial_number: '14234568978f9gr',  assigned_to: undefined,           created_at: '2024-01-25', updated_at: '2024-01-25' },
-  { id:  8, asset_tag: 'ES-008', category: 'Phone',  status: 'Available', serial_number: 'qerjqkhwekjq',     assigned_to: undefined,           created_at: '2024-02-01', updated_at: '2024-02-01' },
-  { id:  9, asset_tag: 'ES-009', category: 'Laptop', status: 'Available', serial_number: '14321ksdafadfd',   assigned_to: undefined,           created_at: '2024-02-03', updated_at: '2024-02-03' },
-  { id: 10, asset_tag: 'ES-010', category: 'Tablet', status: 'Deployed',  serial_number: 'ipad2024xpro12',   assigned_to: 'Maria Chen',        created_at: '2024-02-05', updated_at: '2024-03-10' },
-  { id: 11, asset_tag: 'ES-011', category: 'Tablet', status: 'Available', serial_number: 'surf9pro2024ab',   assigned_to: undefined,           created_at: '2024-02-08', updated_at: '2024-02-08' },
-  { id: 12, asset_tag: 'ES-012', category: 'Laptop', status: 'In Repair', serial_number: 'tpx1c2024q1',      assigned_to: undefined,           created_at: '2024-02-10', updated_at: '2024-04-01' },
-  { id: 13, asset_tag: 'ES-013', category: 'Laptop', status: 'Available', serial_number: 'hpelite840g9x',   assigned_to: undefined,           created_at: '2024-02-12', updated_at: '2024-02-12' },
-  { id: 14, asset_tag: 'ES-014', category: 'PC',     status: 'Deployed',  serial_number: 'macpro2024m2u',    assigned_to: 'Tyler Brooks',      created_at: '2024-02-15', updated_at: '2024-03-20' },
-  { id: 15, asset_tag: 'ES-015', category: 'Phone',  status: 'Available', serial_number: 'ip14pro2024bb',    assigned_to: undefined,           created_at: '2024-02-18', updated_at: '2024-02-18' },
-  { id: 16, asset_tag: 'ES-016', category: 'Laptop', status: 'Available', serial_number: 'dlat5540x2024',   assigned_to: undefined,           created_at: '2024-02-20', updated_at: '2024-02-20' },
-  { id: 17, asset_tag: 'ES-017', category: 'Laptop', status: 'Deployed',  serial_number: 'mbp16m3pro2024',   assigned_to: 'Priya Nair',        created_at: '2024-02-22', updated_at: '2024-03-25' },
-  { id: 18, asset_tag: 'ES-018', category: 'Phone',  status: 'Retired',   serial_number: 'sgs23u2022ret',    assigned_to: undefined,           created_at: '2022-06-01', updated_at: '2024-01-05' },
-  { id: 19, asset_tag: 'ES-019', category: 'Laptop', status: 'Available', serial_number: 'zenbookux482024',  assigned_to: undefined,           created_at: '2024-03-01', updated_at: '2024-03-01' },
-  { id: 20, asset_tag: 'ES-020', category: 'Laptop', status: 'In Repair', serial_number: 'hpspec360x2024',   assigned_to: undefined,           created_at: '2024-03-05', updated_at: '2024-04-02' },
-  { id: 21, asset_tag: 'ES-021', category: 'Phone',  status: 'Available', serial_number: 'ip152024stdx',     assigned_to: undefined,           created_at: '2024-03-08', updated_at: '2024-03-08' },
-  { id: 22, asset_tag: 'ES-022', category: 'Tablet', status: 'Deployed',  serial_number: 'ipadair52024s',    assigned_to: 'Sam Okafor',        created_at: '2024-03-10', updated_at: '2024-03-28' },
-  { id: 23, asset_tag: 'ES-023', category: 'Laptop', status: 'Available', serial_number: 'lenovoidea5i24',   assigned_to: undefined,           created_at: '2024-03-12', updated_at: '2024-03-12' },
-  { id: 24, asset_tag: 'ES-024', category: 'Phone',  status: 'To Audit',  serial_number: 'pixel7a2023chk',   assigned_to: undefined,           created_at: '2023-08-01', updated_at: '2024-04-10' },
-  { id: 25, asset_tag: 'ES-025', category: 'PC',     status: 'Available', serial_number: 'dellprec3680x',    assigned_to: undefined,           created_at: '2024-03-15', updated_at: '2024-03-15' },
-];
 
 const STAT_CARDS = [
   { title: 'Available', value: 56, trend: { value: 66, direction: 'up' as const } },
@@ -698,4 +670,3 @@ function CategoryFilterDropdown({
   );
 }
 
-export { INITIAL_ASSETS };

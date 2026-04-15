@@ -1,5 +1,5 @@
 export interface Accessory {
-  id: number;
+  id: string;
   item_name: string;
   image_url?: string;
   quantity_available: number;
@@ -13,7 +13,7 @@ export interface Accessory {
   manufacturer?: string;
   supplier?: string;
   location?: string;
-  department?: string;
+  business_group?: string;
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -31,6 +31,6 @@ export interface AddInventoryFormData {
   manufacturer: string;
   supplier: string;
   location: string;
-  department: string;
+  business_group: string;
   notes: string;
 }

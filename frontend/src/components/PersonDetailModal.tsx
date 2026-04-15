@@ -3,7 +3,7 @@ import { X, Pencil, LogIn, LogOut, Package } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows, badgeColors } from '../theme';
 import type { Person } from '../types/people';
 import type { Asset } from '../types/asset';
-import { INITIAL_ASSETS } from './AssetsTabContent';
+import { assetsApi } from '../api';
 import AssetCheckOutModal from './AssetCheckOutModal';
 import AssetCheckInModal from './AssetCheckInModal';
 
@@ -26,8 +26,9 @@ const AVATAR_PALETTE = [
   { bg: 'rgba(239,68,68,0.15)',  fg: '#b91c1c' },
 ];
 
-function getAvatarColor(id: number) {
-  return AVATAR_PALETTE[id % AVATAR_PALETTE.length];
+function getAvatarColor(id: string) {
+  const hash = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  return AVATAR_PALETTE[hash % AVATAR_PALETTE.length];
 }
 
 // ── Role badge ─────────────────────────────────────────────────────────────────
@@ -89,8 +90,7 @@ export default function PersonDetailModal({
 
   useEffect(() => {
     if (isOpen && person) {
-      const fullName = `${person.first_name} ${person.last_name}`;
-      setAssets(INITIAL_ASSETS.filter(a => a.assigned_to === fullName));
+      assetsApi.list({ assigned_to: person.id }).then(setAssets);
     }
   }, [isOpen, person]);
 
@@ -101,8 +101,8 @@ export default function PersonDetailModal({
   const displayName  = `${person.last_name}, ${person.first_name}`;
   const roleBadge    = ROLE_BADGE[person.role] ?? ROLE_BADGE.STAFF;
 
-  const supervisor = person.manager_id
-    ? allPeople.find(p => p.id === person.manager_id)
+  const supervisor = person.supervisor
+    ? allPeople.find(p => p.id === person.supervisor)
     : null;
   const supervisorLabel = supervisor
     ? `${supervisor.last_name}, ${supervisor.first_name}`
@@ -112,16 +112,15 @@ export default function PersonDetailModal({
     year: 'numeric', month: 'long', day: 'numeric',
   });
 
-  const handleCheckOut = (assetId: number, assignedTo: string, _notes: string) => {
+  const handleCheckOut = (assetId: string, assignedTo: string, _notes: string) => {
     setAssets(prev => prev.map(a =>
       a.id === assetId
-        ? { ...a, status: 'Deployed', assigned_to: assignedTo, updated_at: new Date().toISOString().split('T')[0] }
+        ? { ...a, status: 'Deployed' as const, assigned_to: assignedTo, updated_at: new Date().toISOString().split('T')[0] }
         : a,
     ));
   };
 
-  const handleCheckIn = (assetId: number, _notes: string) => {
-    // Asset is returned — remove it from this person's list
+  const handleCheckIn = (assetId: string, _notes: string) => {
     setAssets(prev => prev.filter(a => a.id !== assetId));
   };
 
@@ -311,7 +310,7 @@ export default function PersonDetailModal({
               }}
             >
               <InfoField label="Position"       value={person.title      || null} />
-              <InfoField label="Business Group" value={person.department || null} />
+              <InfoField label="Business Group" value={person.business_group || null} />
               <InfoField label="Supervisor"     value={supervisorLabel}           />
               <InfoField label="Location"       value={person.location   || null} />
               <InfoField label="Badge Number"   value={person.badge_number || null} />

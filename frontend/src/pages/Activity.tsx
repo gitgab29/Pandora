@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Trash2, Eye, Download, ListFilter } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
@@ -9,40 +9,11 @@ import FeatureNotAvailableModal from '../components/FeatureNotAvailableModal';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import ActivityDetailModal from '../components/ActivityDetailModal';
 import { colors, spacing, radius } from '../theme';
-import type { TransactionLog } from '../types/activity';
+import type { ActivityLogEntry as TransactionLog } from '../types/activity';
+import { toActivityLogEntry } from '../types/activity';
+import { transactionsApi } from '../api';
 
-// ── Dummy data ─────────────────────────────────────────────────────────────────
-
-const USERS       = ['LeJon James', 'Maria Chen', 'Tyler Brooks', 'Priya Nair', 'Sam Okafor', 'Jordan Lee', 'Alexis Wong', 'Devon Martinez'];
-const TYPES       = ['Asset', 'Inventory', 'License'] as const;
-const EVENTS      = ['Check In', 'Check Out', 'Update', 'Audit', 'Request'] as const;
-const ITEMS       = ['MacBook Pro', 'Dell Monitor', 'USB-C Dock', 'iPhone 15 Pro', 'iPad Air', 'Magic Keyboard', 'MX Master Mouse', 'Samsung S24', 'HP EliteBook', 'Mac Mini', 'Surface Pro 9', 'Logitech Headset', 'USB Hub', 'Dell Precision', 'ThinkPad X1'];
-const DEPARTMENTS = ['Engineering', 'Operations', 'IT', 'Finance', 'HR', 'Marketing', 'Sales'];
-const NOTES       = ['Updated the RAM detail', 'Device returned in good condition', 'Assigned to new hire', 'Warranty verified', 'Replaced broken unit', 'Upgraded storage to 1TB', 'Synced with inventory system', '—', 'Serial number confirmed', 'Pending approval'];
-
-function pick<T>(arr: readonly T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function generateLogs(count: number): TransactionLog[] {
-  const base = new Date('2026-04-14T09:00:00');
-  return Array.from({ length: count }, (_, i) => {
-    const d = new Date(base.getTime() - i * 1000 * 60 * 73);
-    return {
-      id:         i + 1,
-      date:       `${d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
-      user:       pick(USERS),
-      type:       pick(TYPES),
-      event:      pick(EVENTS),
-      item:       pick(ITEMS),
-      toFrom:     Math.random() > 0.4 ? pick(USERS) : '—',
-      notes:      pick(NOTES),
-      department: pick(DEPARTMENTS),
-    };
-  });
-}
-
-const INITIAL_LOGS: TransactionLog[] = generateLogs(120);
+const DEPARTMENTS = ['Engineering', 'Operations', 'IT', 'Finance', 'HR', 'Human Resources', 'Product'];
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -113,7 +84,11 @@ const EVENT_TAB_ACCENT: Record<string, string> = {
 
 export default function Activity() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [logs, setLogs] = useState<TransactionLog[]>(INITIAL_LOGS);
+  const [logs, setLogs] = useState<TransactionLog[]>([]);
+
+  useEffect(() => {
+    transactionsApi.list().then(data => setLogs(data.map(toActivityLogEntry)));
+  }, []);
 
   // Filters & search
   const [eventTab,    setEventTab]    = useState<EventTab>('All');
@@ -126,7 +101,7 @@ export default function Activity() {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Selection
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Modals
   const [detailLog,       setDetailLog]       = useState<TransactionLog | null>(null);
@@ -160,11 +135,11 @@ export default function Activity() {
 
     return [...result].sort((a, b) => {
       switch (activeSort) {
-        case 'Date (Oldest first)': return a.id - b.id;
+        case 'Date (Oldest first)': return a.date.localeCompare(b.date);
         case 'User (A–Z)':          return a.user.localeCompare(b.user);
         case 'Item (A–Z)':          return a.item.localeCompare(b.item);
         case 'Event (A–Z)':         return a.event.localeCompare(b.event);
-        default:                    return b.id - a.id;
+        default:                    return b.date.localeCompare(a.date);
       }
     });
   }, [logs, eventTab, activeType, activeDept, search, activeSort]);
@@ -193,7 +168,7 @@ export default function Activity() {
     });
   };
 
-  const toggleOne = (id: number) => {
+  const toggleOne = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -205,6 +180,7 @@ export default function Activity() {
   // ── Delete ────────────────────────────────────────────────────────────────
 
   const handleDelete = (log: TransactionLog) => {
+    // TransactionLogs are read-only in the API; remove from local list only
     setLogs(prev => prev.filter(l => l.id !== log.id));
     setSelectedIds(prev => { const next = new Set(prev); next.delete(log.id); return next; });
     setDeleteTarget(null);

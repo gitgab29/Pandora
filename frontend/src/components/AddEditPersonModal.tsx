@@ -17,8 +17,8 @@ const EMPTY_FORM = {
   last_name: '',
   email: '',
   title: '',
-  department: '',
-  manager_id: '' as string | number,
+  business_group: '',
+  supervisor: '' as string,
   location: '',
   badge_number: '',
   role: 'STAFF' as PersonRole,
@@ -133,16 +133,16 @@ export default function AddEditPersonModal({
     if (isOpen) {
       if (mode === 'edit' && person) {
         setForm({
-          first_name:   person.first_name,
-          last_name:    person.last_name,
-          email:        person.email,
-          title:        person.title,
-          department:   person.department,
-          manager_id:   person.manager_id ?? '',
-          location:     person.location,
-          badge_number: person.badge_number,
-          role:         person.role,
-          notes:        person.notes,
+          first_name:     person.first_name,
+          last_name:      person.last_name,
+          email:          person.email,
+          title:          person.title,
+          business_group: person.business_group,
+          supervisor:     person.supervisor ?? '',
+          location:       person.location,
+          badge_number:   person.badge_number,
+          role:           person.role,
+          notes:          person.notes,
         });
       } else {
         setForm(EMPTY_FORM);
@@ -172,20 +172,20 @@ export default function AddEditPersonModal({
     if (!canSubmit) return;
     const today = new Date().toISOString().split('T')[0];
     onSave({
-      id:           person?.id ?? 0,
-      first_name:   form.first_name.trim(),
-      last_name:    form.last_name.trim(),
-      email:        form.email.trim(),
-      title:        form.title.trim(),
-      department:   form.department,
-      manager_id:   form.manager_id !== '' ? Number(form.manager_id) : null,
-      location:     form.location.trim(),
-      badge_number: form.badge_number.trim(),
-      role:         form.role,
-      is_active:    true,
-      notes:        form.notes.trim(),
-      created_at:   person?.created_at ?? today,
-      updated_at:   today,
+      id:             person?.id ?? '',
+      first_name:     form.first_name.trim(),
+      last_name:      form.last_name.trim(),
+      email:          form.email.trim(),
+      title:          form.title.trim(),
+      business_group: form.business_group,
+      supervisor:     form.supervisor !== '' ? form.supervisor : null,
+      location:       form.location.trim(),
+      badge_number:   form.badge_number.trim(),
+      role:           form.role,
+      is_active:      true,
+      notes:          form.notes.trim(),
+      created_at:     person?.created_at ?? today,
+      updated_at:     today,
     });
     onClose();
   };
@@ -265,12 +265,12 @@ export default function AddEditPersonModal({
           <p style={sectionHead}>Role &amp; Organisation</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
             <TextInput label="Position" value={form.title} onChange={set('title')} placeholder="e.g. IT Specialist" />
-            <SelectInput label="Business Group" value={form.department} options={bgOptions} onChange={set('department')} placeholder="Select group" />
+            <SelectInput label="Business Group" value={form.business_group} options={bgOptions} onChange={set('business_group')} placeholder="Select group" />
             <SelectInput
               label="Supervisor"
-              value={form.manager_id !== '' ? String(form.manager_id) : ''}
+              value={form.supervisor}
               options={supervisorOptions}
-              onChange={v => set('manager_id')(v)}
+              onChange={v => set('supervisor')(v)}
               placeholder="None"
             />
             <SelectInput label="Role" value={form.role} options={roleOptions} onChange={v => set('role')(v as PersonRole)} />

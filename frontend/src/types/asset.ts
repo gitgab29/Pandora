@@ -1,4 +1,10 @@
-export type AssetStatus = 'Available' | 'Deployed' | 'In Repair' | 'Retired' | 'To Audit';
+export type AssetStatus =
+  | 'Available'
+  | 'Deployed'
+  | 'In Repair'
+  | 'In Maintenance'
+  | 'Lost'
+  | 'To Audit';
 
 export type AssetCategory =
   | 'Laptop'
@@ -9,8 +15,16 @@ export type AssetCategory =
   | 'Accessory'
   | 'Other';
 
+/** Minimal user shape returned in nested _detail fields. */
+export interface UserMinimal {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
 export interface Asset {
-  id: number;
+  id: string;
   image_url?: string;
   asset_tag: string;
   category: AssetCategory | string;
@@ -24,12 +38,13 @@ export interface Asset {
   depreciation_value?: number;
   manufacturer?: string;
   supplier?: string;
-  department?: string;
-  assigned_to?: string;
+  business_group?: string;
+  assigned_to?: string | null;
+  assigned_to_detail?: UserMinimal | null;
   notes?: string;
   group?: string;
   imei_number?: string;
-  ssd_encryption_status?: 'Enabled' | 'Disabled' | 'N/A';
+  ssd_encryption_status?: 'ENABLED' | 'DISABLED' | 'N/A';
   connectivity?: string;
   cpu?: string;
   gpu?: string;
@@ -37,6 +52,7 @@ export interface Asset {
   ram?: string;
   screen_size?: string;
   storage_size?: string;
+  metadata?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -54,7 +70,7 @@ export interface AddAssetFormData {
   depreciation_value: string;
   manufacturer: string;
   supplier: string;
-  department: string;
+  business_group: string;
   assigned_to: string;
   notes: string;
   group: string;

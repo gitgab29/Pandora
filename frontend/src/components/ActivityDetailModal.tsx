@@ -1,6 +1,6 @@
 import { X } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows, badgeColors } from '../theme';
-import type { TransactionLog } from '../types/activity';
+import type { ActivityLogEntry as TransactionLog } from '../types/activity';
 
 const EVENT_COLORS: Record<string, { bg: string; color: string }> = {
   'Check In':  { bg: badgeColors.checkIn.bg,  color: badgeColors.checkIn.text },

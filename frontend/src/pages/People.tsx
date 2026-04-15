@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Trash2, Pencil, Eye, Plus, ArrowUpAZ, ArrowDownAZ, Check } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
@@ -9,28 +9,8 @@ import AddEditPersonModal from '../components/AddEditPersonModal';
 import PersonDetailModal from '../components/PersonDetailModal';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Person } from '../types/people';
+import { usersApi } from '../api';
 
-// ── Dummy data ─────────────────────────────────────────────────────────────────
-// Names match assigned_to values in INITIAL_ASSETS so the detail modal links up.
-
-const INITIAL_PEOPLE: Person[] = [
-  { id:  1, first_name: 'Maria',   last_name: 'Santos',    email: 'maria.santos@embeddedsilicon.com',    title: 'Chief Executive Officer', department: 'Executive Leadership', manager_id: null, location: 'HQ - Office 100', badge_number: 'ES-B-001', role: 'ADMIN', is_active: true, notes: '',                                                                                    created_at: '2022-01-15', updated_at: '2024-01-01' },
-  { id:  2, first_name: 'Carlos',  last_name: 'Reyes',     email: 'carlos.reyes@embeddedsilicon.com',    title: 'Chief Technology Officer', department: 'Engineering',          manager_id: 1,    location: 'HQ - Office 101', badge_number: 'ES-B-002', role: 'ADMIN', is_active: true, notes: '',                                                                                    created_at: '2022-02-01', updated_at: '2024-01-01' },
-  { id:  3, first_name: 'Gabriel', last_name: 'Limbo',     email: 'gabriel.limbo@embeddedsilicon.com',   title: 'IT Manager',               department: 'IT',                   manager_id: 2,    location: 'HQ - IT Room',    badge_number: 'ES-B-003', role: 'ADMIN', is_active: true, notes: 'Primary IT admin. Handles hardware procurement and asset management.',           created_at: '2022-03-10', updated_at: '2024-01-01' },
-  { id:  4, first_name: 'James',   last_name: 'Chen',      email: 'james.chen@embeddedsilicon.com',      title: 'Senior Engineer',          department: 'Engineering',          manager_id: 2,    location: 'HQ - Lab A',      badge_number: 'ES-B-004', role: 'STAFF', is_active: true, notes: '',                                                                                    created_at: '2022-06-01', updated_at: '2024-01-01' },
-  { id:  5, first_name: 'Sarah',   last_name: 'Kim',       email: 'sarah.kim@embeddedsilicon.com',       title: 'Software Engineer',        department: 'Engineering',          manager_id: 4,    location: 'HQ - Lab A',      badge_number: 'ES-B-005', role: 'STAFF', is_active: true, notes: '',                                                                                    created_at: '2022-08-15', updated_at: '2024-01-01' },
-  { id:  6, first_name: 'Sam',     last_name: 'Okafor',    email: 'sam.okafor@embeddedsilicon.com',      title: 'Hardware Engineer',        department: 'Engineering',          manager_id: 4,    location: 'HQ - Lab B',      badge_number: 'ES-B-006', role: 'STAFF', is_active: true, notes: '',                                                                                    created_at: '2022-08-15', updated_at: '2024-01-01' },
-  { id:  7, first_name: 'Tyler',   last_name: 'Brooks',    email: 'tyler.brooks@embeddedsilicon.com',    title: 'IT Specialist',            department: 'IT',                   manager_id: 3,    location: 'HQ - IT Room',    badge_number: 'ES-B-007', role: 'STAFF', is_active: true, notes: '',                                                                                    created_at: '2023-01-10', updated_at: '2024-01-01' },
-  { id:  8, first_name: 'Priya',   last_name: 'Nair',      email: 'priya.nair@embeddedsilicon.com',      title: 'Product Manager',          department: 'Product',              manager_id: 1,    location: 'HQ - Office 202', badge_number: 'ES-B-008', role: 'STAFF', is_active: true, notes: '',                                                                                    created_at: '2023-02-20', updated_at: '2024-01-01' },
-  { id:  9, first_name: 'Ronald',  last_name: 'MacDonald', email: 'ronald.macdonald@embeddedsilicon.com',title: 'QA Engineer',              department: 'Engineering',          manager_id: 2,    location: 'HQ - Lab A',      badge_number: 'ES-B-009', role: 'STAFF', is_active: true, notes: '',                                                                                    created_at: '2023-03-15', updated_at: '2024-01-01' },
-  { id: 10, first_name: 'Lebron',  last_name: 'Jeymz',     email: 'lebron.jeymz@embeddedsilicon.com',    title: 'Operations Lead',          department: 'Operations',           manager_id: 1,    location: 'HQ - Office 150', badge_number: 'ES-B-010', role: 'STAFF', is_active: true, notes: '',                                                                                    created_at: '2023-04-01', updated_at: '2024-01-01' },
-  { id: 11, first_name: 'Stephen', last_name: 'Carry',     email: 'stephen.carry@embeddedsilicon.com',   title: 'Finance Manager',          department: 'Finance',              manager_id: 1,    location: 'HQ - Office 120', badge_number: 'ES-B-011', role: 'STAFF', is_active: true, notes: '',                                                                                    created_at: '2023-05-10', updated_at: '2024-01-01' },
-  { id: 12, first_name: 'Chioma',  last_name: 'Obi',       email: 'chioma.obi@embeddedsilicon.com',      title: 'HR Manager',               department: 'Human Resources',      manager_id: 1,    location: 'HQ - Office 110', badge_number: 'ES-B-012', role: 'STAFF', is_active: true, notes: '',                                                                                    created_at: '2023-05-10', updated_at: '2024-01-01' },
-  { id: 13, first_name: 'Wei',     last_name: 'Zhang',     email: 'wei.zhang@embeddedsilicon.com',       title: 'Data Analyst',             department: 'Engineering',          manager_id: 2,    location: 'HQ - Lab A',      badge_number: 'ES-B-013', role: 'STAFF', is_active: true, notes: '',                                                                                    created_at: '2023-07-01', updated_at: '2024-01-01' },
-  { id: 14, first_name: 'Yuki',    last_name: 'Nakamura',  email: 'yuki.nakamura@embeddedsilicon.com',   title: 'UX Designer',              department: 'Product',              manager_id: 8,    location: 'HQ - Studio',     badge_number: 'ES-B-014', role: 'STAFF', is_active: true, notes: '',                                                                                    created_at: '2023-08-15', updated_at: '2024-01-01' },
-  { id: 15, first_name: 'Kola',    last_name: 'Adeyemi',   email: 'kola.adeyemi@embeddedsilicon.com',    title: 'System Administrator',     department: 'IT',                   manager_id: 3,    location: 'HQ - IT Room',    badge_number: 'ES-B-015', role: 'STAFF', is_active: true, notes: 'Secondary IT admin. Handles server maintenance and network configuration.',      created_at: '2023-09-20', updated_at: '2024-01-01' },
-  { id: 16, first_name: 'Maria',   last_name: 'Chen',      email: 'maria.chen@embeddedsilicon.com',      title: 'Operations Analyst',       department: 'Operations',           manager_id: 10,   location: 'HQ - Office 155', badge_number: 'ES-B-016', role: 'STAFF', is_active: true, notes: '',                                                                                    created_at: '2023-10-01', updated_at: '2024-01-01' },
-];
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -91,7 +71,11 @@ function iconBtnStyle(bg: string): React.CSSProperties {
 
 export default function People() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [people, setPeople]     = useState<Person[]>(INITIAL_PEOPLE);
+  const [people, setPeople]     = useState<Person[]>([]);
+
+  useEffect(() => {
+    usersApi.list().then(setPeople);
+  }, []);
   const [search, setSearch]     = useState('');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDir, setSortDir]   = useState<SortDir>('asc');
@@ -112,17 +96,17 @@ export default function People() {
         p.first_name.toLowerCase().includes(q) ||
         p.last_name.toLowerCase().includes(q)  ||
         p.email.toLowerCase().includes(q)      ||
-        p.department.toLowerCase().includes(q) ||
+        p.business_group.toLowerCase().includes(q) ||
         p.title.toLowerCase().includes(q),
       );
     }
     return [...items].sort((a, b) => {
       const valA = sortField === 'name'
         ? `${a.last_name} ${a.first_name}`.toLowerCase()
-        : a.department.toLowerCase();
+        : a.business_group.toLowerCase();
       const valB = sortField === 'name'
         ? `${b.last_name} ${b.first_name}`.toLowerCase()
-        : b.department.toLowerCase();
+        : b.business_group.toLowerCase();
       return sortDir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
     });
   }, [people, search, sortField, sortDir]);
@@ -130,9 +114,9 @@ export default function People() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
   const pageItems  = filtered.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE);
 
-  const supervisorLabel = (managerId: number | null) => {
-    if (!managerId) return '—';
-    const mgr = people.find(p => p.id === managerId);
+  const supervisorLabel = (supervisorId: string | null | undefined) => {
+    if (!supervisorId) return '—';
+    const mgr = people.find(p => p.id === supervisorId);
     return mgr ? `${mgr.last_name}, ${mgr.first_name}` : '—';
   };
 
@@ -145,12 +129,16 @@ export default function People() {
   const handleSortField = (field: SortField) => { setSortField(field); setCurrentPage(1); };
 
   const handleAdd = (person: Person) => {
-    const newId = Math.max(0, ...people.map(p => p.id)) + 1;
-    const today = new Date().toISOString().split('T')[0];
-    setPeople(prev => [...prev, { ...person, id: newId, created_at: today, updated_at: today }]);
+    usersApi.create({
+      ...person,
+      password: 'password123',
+    }).then(created => setPeople(prev => [...prev, created]));
   };
 
   const handleEdit = (updated: Person) => {
+    usersApi.update(updated.id, updated).then(saved => {
+      setPeople(prev => prev.map(p => p.id === saved.id ? saved : p));
+    });
     setPeople(prev =>
       prev.map(p => p.id === updated.id
         ? { ...updated, updated_at: new Date().toISOString().split('T')[0] }
@@ -161,7 +149,9 @@ export default function People() {
 
   const handleDelete = () => {
     if (!deletePerson) return;
-    setPeople(prev => prev.filter(p => p.id !== deletePerson.id));
+    usersApi.remove(deletePerson.id).then(() => {
+      setPeople(prev => prev.filter(p => p.id !== deletePerson.id));
+    });
     setDeletePerson(null);
   };
 
@@ -422,11 +412,11 @@ export default function People() {
                           <td style={TD}>{person.title || '—'}</td>
 
                           {/* Business Group */}
-                          <td style={TD}>{person.department || '—'}</td>
+                          <td style={TD}>{person.business_group || '—'}</td>
 
                           {/* Supervisor */}
-                          <td style={{ ...TD, color: person.manager_id ? colors.textPrimary : colors.textDisabled }}>
-                            {supervisorLabel(person.manager_id)}
+                          <td style={{ ...TD, color: person.supervisor ? colors.textPrimary : colors.textDisabled }}>
+                            {supervisorLabel(person.supervisor)}
                           </td>
 
                           {/* Role badge */}

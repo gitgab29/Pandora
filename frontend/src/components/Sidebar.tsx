@@ -1,4 +1,5 @@
 import { useLocation, NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
   Home,
   ClipboardList,
@@ -39,6 +40,7 @@ interface SidebarProps {
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   return (
     <aside
@@ -186,7 +188,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         }}
       >
         <button
-          onClick={() => navigate('/sign-in')}
+          onClick={() => { logout(); navigate('/sign-in'); }}
           title={collapsed ? 'Log out' : undefined}
           style={{
             display: 'flex',

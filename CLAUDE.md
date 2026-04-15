@@ -82,26 +82,64 @@ python manage.py runserver                      # http://localhost:8000
 cd backend && source .venv/bin/activate && python manage.py runserver
 ```
 
+## API endpoints
+
+All endpoints require JWT (`Authorization: Bearer <access>`) except auth routes.
+
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/auth/login/` | Email + password → access/refresh + user |
+| POST | `/api/auth/register/` | Create account → access/refresh + user |
+| POST | `/api/auth/google/` | Google ID token → access/refresh + user |
+| POST | `/api/auth/refresh/` | Rotate access token |
+| GET | `/api/auth/me/` | Current user profile |
+| GET/POST | `/api/users/` | List / create users |
+| GET/PUT/PATCH/DELETE | `/api/users/<id>/` | Retrieve / update / delete user |
+| GET/POST | `/api/assets/` | List / create assets |
+| GET/PUT/PATCH/DELETE | `/api/assets/<id>/` | Retrieve / update / delete asset |
+| POST | `/api/assets/<id>/check_out/` | Check out asset (body: `user_id`, `notes`) |
+| POST | `/api/assets/<id>/check_in/` | Check in asset (body: `notes`) |
+| POST | `/api/assets/<id>/change_status/` | Change asset status (body: `status`, `notes`) |
+| GET/POST | `/api/accessories/` | List / create accessories |
+| GET/PUT/PATCH/DELETE | `/api/accessories/<id>/` | Retrieve / update / delete accessory |
+| POST | `/api/accessories/<id>/check_out/` | Check out qty (body: `quantity`, `user_id`, `notes`) |
+| POST | `/api/accessories/<id>/check_in/` | Check in qty (body: `quantity`, `notes`) |
+| GET | `/api/transactions/` | List transaction logs (read-only) |
+| GET | `/api/transactions/<id>/` | Retrieve single log |
+
+Filter params: `?category=`, `?status=`, `?business_group=`, `?transaction_type=`, `?search=`, `?ordering=`, `?include_archived=1`
+
 ## Status snapshot
 
 - ✅ Frontend shell: collapsible Sidebar + Header + `bg-auth.jpg` background, used by every authenticated page
-- ✅ Auth pages: `/sign-in`, `/sign-up` (Google OAuth **mocked** on frontend)
+- ✅ Auth pages: `/sign-in` wired to real `POST /api/auth/login/` + `AuthContext`; `/sign-up` wired to real `POST /api/auth/register/`; Google OAuth endpoint exists on backend but requires `GOOGLE_OAUTH_CLIENT_ID` env var
+- ✅ Protected routes: `ProtectedRoute` component wraps all authenticated pages; redirects to `/sign-in` if no valid JWT
+- ✅ `AuthContext` (`context/AuthContext.tsx`) — stores `user`, `access`/`refresh` tokens, `isAuthenticated`, `loading`; exposes `login()`, `logout()`, `register()`
 - ✅ `/home` dashboard — 5 stat cards + `ActivityLogTable` (dummy data)
 - ✅ `/inventory` — **tabbed catalog page**. Four tabs: `Assets` · `Accessories` · `Licenses` · `Consumables`
-  - **Assets tab** = full CRUD (add/edit/copy/delete), lives in `components/AssetsTabContent.tsx`, backed by `INITIAL_ASSETS` dummy data exported from that same file
-  - **Accessories tab** = Accessory CRUD (body still inlined in `pages/Inventory.tsx`, backed by `INITIAL_INVENTORY`). Has toggleable stat cards (Eye/EyeOff button).
+  - **Assets tab** = full CRUD (add/edit/copy/delete), lives in `components/AssetsTabContent.tsx`, backed by `INITIAL_ASSETS` dummy data
+  - **Accessories tab** = Accessory CRUD (body inlined in `pages/Inventory.tsx`, backed by `INITIAL_INVENTORY`). Has toggleable stat cards.
   - **Licenses / Consumables tabs** = `ComingSoonPanel` placeholder; schemas not yet defined
 - ✅ `/activity` — table with search / sort / pagination, view-detail modal, delete modal (dummy logs in `useState`)
-- ✅ Stub routes (`/people`, `/settings`, `/archive`) → `ComingSoon`
+- ✅ Stub routes (`/settings`, `/archive`) → `ComingSoon`
 - ✅ Reusable modals: `Add/Edit/Copy` Asset, `Add/Edit` Accessory, `CheckIn/CheckOut` for both, `ChangeStatusModal`, `DeleteConfirm`, `ActivityDetail`, `FeatureNotAvailable`
-- ✅ Sidebar has a logout button at the bottom (mock — navigates to `/sign-in`)
-- ✅ `/people` — **People directory page**. Table: avatar initials, Name (Surname, First), Email, Position, Business Group, Supervisor, Role badge. Sort by Name or Business Group via checkbox-pills; A–Z / Z–A direction; text search. 10 rows/page pagination. Full CRUD: Add Person modal, Edit modal, Delete (type-to-confirm). Detail modal shows all profile fields + assigned assets with per-asset Check In / Check Out. Only `is_active=true` people shown (inactive reserved for Archive). Dummy data: 16 people in `INITIAL_PEOPLE` (`pages/People.tsx`); names match `assigned_to` values in `INITIAL_ASSETS`. New files: `types/people.ts`, `components/AddEditPersonModal.tsx`, `components/PersonDetailModal.tsx`.
-- ❌ Backend `api/`: Django + DRF + JWT scaffolded, but `models.py` / `views.py` / `serializers.py` are **empty** — no real endpoints exist
-- ❌ Google OAuth: no Django endpoint yet; frontend handlers are mocks
+- ✅ Sidebar logout button — clears `AuthContext` and navigates to `/sign-in`
+- ✅ `/people` — People directory. Table: avatar initials, Name, Email, Position, Business Group, Supervisor, Role badge. Sort/search/paginate. Full CRUD + Detail modal with assigned assets. Dummy data: `INITIAL_PEOPLE` in `pages/People.tsx`.
+- ✅ **Backend fully implemented** — `backend/api/` has real models, serializers, views, auth:
+  - `models.py`: `User` (email-auth, UUID PK, role, supervisor FK), `Asset`, `Accessory`, `TransactionLog`
+  - `serializers.py`: Full DRF serializers with nested `*_detail` read fields
+  - `views.py`: `UserViewSet`, `AssetViewSet` (+ check_in/out/change_status actions), `AccessoryViewSet` (+ check_in/out), `TransactionLogViewSet` (read-only)
+  - `auth.py`: `EmailLoginView`, `RegisterView`, `GoogleAuthView`, `MeView`
+  - `urls.py`: DRF router + auth sub-routes all wired
+  - `admin.py`: All models registered in Django admin
+  - Migration: `0001_initial.py` created and applied
+  - Superuser: `admin@embeddedsilicon.com` (run `python manage.py changepassword` to reset)
+- ⚠️ Frontend pages still use **dummy data** — backend endpoints exist but pages not yet wired to real API calls
+- ❌ Google OAuth: backend endpoint scaffolded but requires `GOOGLE_OAUTH_CLIENT_ID` env var to function
 
-**Asset schema note:** `Asset` has no `asset_name` or `location` field — the displayed identifier is `asset_tag`. If you're adding new asset-related UI, bind to `asset_tag`.
+**Asset schema note:** `Asset` has no `asset_name` or `location` field — the displayed identifier is `asset_tag`. Bind new asset UI to `asset_tag`.
 
-**Dummy-data hotspots to replace when backend lands:** `INITIAL_ASSETS` in `components/AssetsTabContent.tsx`, `INITIAL_INVENTORY` in `pages/Inventory.tsx`, `INITIAL_PEOPLE` in `pages/People.tsx`, `generateLogs()` in `pages/Home.tsx` and `pages/Activity.tsx`, `DUMMY_USERS` in both checkout modals, `DUMMY_MANAGERS` in `pages/SignUp.tsx`, dropdown data in `components/Header.tsx`.
+**Dummy-data hotspots to replace with real API calls:** `INITIAL_ASSETS` in `components/AssetsTabContent.tsx`, `INITIAL_INVENTORY` in `pages/Inventory.tsx`, `INITIAL_PEOPLE` in `pages/People.tsx`, `generateLogs()` in `pages/Home.tsx` and `pages/Activity.tsx`, `DUMMY_USERS` in checkout modals, `DUMMY_MANAGERS` in `pages/SignUp.tsx`.
 
 ## Design Context
 
@@ -134,10 +172,8 @@ Color restraint: Orange (`#fc9c2d`) reserved for genuine urgency (warnings, arch
 
 ## Next up
 
-- [ ] Define models in `backend/api/models.py` (User, Asset, Accessory, TransactionLog)
-- [ ] Write serializers + views for each model
-- [ ] Implement Google OAuth on Django (`/api/auth/google/`) → issue JWT
-- [ ] Wire frontend auth handlers to real OAuth endpoint
-- [ ] Add protected-route wrapper (redirect to `/sign-in` if no valid JWT)
-- [ ] Replace dummy hotspots above with real `GET /api/...` calls + wire row-action endpoints
-- [ ] Build out Licenses, Settings, Archive pages per Figma
+- [ ] Wire frontend pages to real API endpoints (replace dummy-data hotspots listed above)
+- [ ] Set `GOOGLE_OAUTH_CLIENT_ID` env var + test Google OAuth end-to-end
+- [ ] Build out Licenses, Settings, Archive pages
+- [ ] Add protected-route role guard (admin-only sections)
+- [ ] Deploy to AWS (RDS + static hosting)
