@@ -18,7 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'first_name', 'last_name', 'email', 'password',
             'title', 'location', 'business_group', 'supervisor', 'supervisor_detail',
-            'badge_number', 'role', 'notes', 'is_active',
+            'badge_number', 'image_url', 'role', 'notes', 'is_active',
             'created_at', 'updated_at',
         )
         read_only_fields = ('id', 'created_at', 'updated_at')

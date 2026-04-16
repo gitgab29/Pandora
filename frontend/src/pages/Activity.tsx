@@ -87,7 +87,7 @@ export default function Activity() {
   const [logs, setLogs] = useState<TransactionLog[]>([]);
 
   useEffect(() => {
-    transactionsApi.list().then(data => setLogs(data.map(toActivityLogEntry)));
+    transactionsApi.list({ ordering: '-transaction_date' }).then(data => setLogs(data.map(toActivityLogEntry)));
   }, []);
 
   // Filters & search

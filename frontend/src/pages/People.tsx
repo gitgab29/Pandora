@@ -386,26 +386,41 @@ export default function People() {
                         >
                           {/* Avatar */}
                           <td style={{ ...TD, width: '2.75rem', padding: '0.5rem 0.75rem' }}>
-                            <div
-                              style={{
-                                width: '2rem', height: '2rem',
-                                borderRadius: radius.full,
-                                backgroundColor: palette.bg,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                flexShrink: 0,
-                              }}
-                            >
-                              <span
+                            {person.image_url ? (
+                              <img
+                                src={person.image_url}
+                                alt={initials}
                                 style={{
-                                  fontFamily: "'Roboto', sans-serif",
-                                  fontSize: '0.6875rem', fontWeight: 700,
-                                  color: palette.fg,
-                                  letterSpacing: '0.02em',
+                                  width: '2rem', height: '2rem',
+                                  borderRadius: radius.full,
+                                  objectFit: 'cover',
+                                  border: '1px solid rgba(70,98,145,0.1)',
+                                  display: 'block',
+                                  flexShrink: 0,
+                                }}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  width: '2rem', height: '2rem',
+                                  borderRadius: radius.full,
+                                  backgroundColor: palette.bg,
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  flexShrink: 0,
                                 }}
                               >
-                                {initials}
-                              </span>
-                            </div>
+                                <span
+                                  style={{
+                                    fontFamily: "'Roboto', sans-serif",
+                                    fontSize: '0.6875rem', fontWeight: 700,
+                                    color: palette.fg,
+                                    letterSpacing: '0.02em',
+                                  }}
+                                >
+                                  {initials}
+                                </span>
+                              </div>
+                            )}
                           </td>
 
                           {/* Name */}

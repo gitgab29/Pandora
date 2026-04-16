@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Trash2, Pencil, Copy, Plus, Download, Filter, Eye, EyeOff } from 'lucide-react';
 import StatisticCard from './StatisticCard';
 import SearchBar from './SearchBar';
@@ -11,6 +12,7 @@ import EditAssetModal from './EditAssetModal';
 import CopyAssetModal from './CopyAssetModal';
 import AssetCheckOutModal from './AssetCheckOutModal';
 import AssetCheckInModal from './AssetCheckInModal';
+import AssetDetailModal from './AssetDetailModal';
 import { colors, spacing, radius, statusColors } from '../theme';
 import type { Asset, AssetStatus } from '../types/asset';
 import { assetsApi, usersApi } from '../api';
@@ -59,6 +61,8 @@ const TD: React.CSSProperties = {
 };
 
 export default function AssetsTabContent() {
+  const [searchParams] = useSearchParams();
+  const statusFromUrl = searchParams.get('status') as AssetStatus | null;
   const [assets, setAssets] = useState<Asset[]>([]);
   const [users, setUsers] = useState<Person[]>([]);
 
@@ -74,7 +78,10 @@ export default function AssetsTabContent() {
     { title: 'To Audit',     value: assets.filter(a => a.status === 'TO_AUDIT').length },
   ], [assets]);
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<AssetStatus | 'All'>('All');
+  const validStatuses: Array<AssetStatus | 'All'> = ['All', 'AVAILABLE', 'DEPLOYED', 'IN_REPAIR', 'TO_AUDIT', 'LOST'];
+  const [activeTab, setActiveTab] = useState<AssetStatus | 'All'>(
+    statusFromUrl && validStatuses.includes(statusFromUrl) ? statusFromUrl : 'All'
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [featureModalOpen, setFeatureModalOpen] = useState(false);
@@ -87,6 +94,7 @@ export default function AssetsTabContent() {
 
   const [deleteTarget,   setDeleteTarget]   = useState<Asset | null>(null);
   const [editTarget,     setEditTarget]     = useState<Asset | null>(null);
+  const [detailTarget,   setDetailTarget]   = useState<Asset | null>(null);
   const [copyTarget,     setCopyTarget]     = useState<Asset | null>(null);
   const [checkOutTarget, setCheckOutTarget] = useState<Asset | null>(null);
   const [checkInTarget,  setCheckInTarget]  = useState<Asset | null>(null);
@@ -391,7 +399,7 @@ export default function AssetsTabContent() {
                   return (
                     <tr
                       key={asset.id}
-                      onClick={() => setEditTarget(asset)}
+                      onClick={() => setDetailTarget(asset)}
                       style={{
                         backgroundColor: idx % 2 === 0 ? colors.bgSurface : colors.bgStripe,
                         cursor: 'pointer',
@@ -560,6 +568,17 @@ export default function AssetsTabContent() {
         asset={checkInTarget}
         onClose={() => setCheckInTarget(null)}
         onConfirm={handleCheckIn}
+      />
+
+      <AssetDetailModal
+        isOpen={detailTarget !== null}
+        asset={detailTarget}
+        onClose={() => setDetailTarget(null)}
+        onEdit={() => {
+          const a = detailTarget;
+          setDetailTarget(null);
+          setEditTarget(a);
+        }}
       />
 
       {(filterOpen || sortOpen) && (

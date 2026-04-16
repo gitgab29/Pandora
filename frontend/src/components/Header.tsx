@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Bell, LayoutGrid, Package, ClipboardList, FileKey, Users, LayoutDashboard } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, LayoutGrid, Package, Wrench, FileKey, ShoppingBag, LayoutDashboard, Users } from 'lucide-react';
 import { colors, sizing, spacing, radius, typography } from '../theme';
+import { useAuth } from '../context/AuthContext';
 
 interface HeaderProps {
   title: string;
@@ -16,11 +18,12 @@ const NOTIFICATIONS = [
 ];
 
 const QUICK_LINKS = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/home'      },
-  { icon: Package,         label: 'Assets',    path: '/assets'    },
-  { icon: ClipboardList,   label: 'Inventory', path: '/inventory' },
-  { icon: FileKey,         label: 'Licenses',  path: '/licenses'  },
-  { icon: Users,           label: 'People',    path: '/people'    },
+  { icon: LayoutDashboard, label: 'Dashboard',   path: '/home' },
+  { icon: Package,         label: 'Assets',       path: '/inventory?tab=Assets' },
+  { icon: Wrench,          label: 'Accessories',  path: '/inventory?tab=Accessories' },
+  { icon: FileKey,         label: 'Licenses',     path: '/inventory?tab=Licenses' },
+  { icon: ShoppingBag,     label: 'Consumables',  path: '/inventory?tab=Consumables' },
+  { icon: Users,           label: 'People',       path: '/people' },
 ];
 
 const UNREAD_COUNT = NOTIFICATIONS.filter(n => n.unread).length;
@@ -28,10 +31,16 @@ const UNREAD_COUNT = NOTIFICATIONS.filter(n => n.unread).length;
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function Header({ title }: HeaderProps) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [notifOpen, setNotifOpen] = useState(false);
   const [gridOpen,  setGridOpen]  = useState(false);
 
   const closeAll = () => { setNotifOpen(false); setGridOpen(false); };
+
+  const userInitials = user
+    ? `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase()
+    : 'U';
 
   return (
     <>
@@ -77,19 +86,23 @@ export default function Header({ title }: HeaderProps) {
               <div style={dropdownBase('11.25rem')}>
                 <p style={dropdownTitle}>Quick Access</p>
                 {QUICK_LINKS.map(({ icon: Icon, label, path }) => (
-                  <a
-                    key={path}
-                    href={path}
+                  <button
+                    key={label}
+                    onClick={() => { navigate(path); setGridOpen(false); }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: spacing.md,
                       padding: `${spacing.sm} ${spacing.md}`,
                       borderRadius: radius.sm,
-                      textDecoration: 'none',
+                      border: 'none',
+                      background: 'transparent',
                       color: colors.textPrimary,
                       fontFamily: "'Archivo', sans-serif",
                       fontSize: '0.8125rem',
+                      cursor: 'pointer',
+                      width: '100%',
+                      textAlign: 'left',
                       transition: 'background-color 0.12s ease',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.bgSubtle)}
@@ -97,7 +110,7 @@ export default function Header({ title }: HeaderProps) {
                   >
                     <Icon size={15} color={colors.blueGrayMd} />
                     {label}
-                  </a>
+                  </button>
                 ))}
               </div>
             )}
@@ -229,18 +242,21 @@ export default function Header({ title }: HeaderProps) {
                     textAlign: 'center',
                   }}
                 >
-                  <a
-                    href="/activity"
+                  <button
+                    onClick={() => { navigate('/activity'); setNotifOpen(false); }}
                     style={{
                       fontFamily: "'Archivo', sans-serif",
                       fontSize: '0.781rem',
                       color: colors.primary,
                       fontWeight: 600,
-                      textDecoration: 'none',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
                     }}
                   >
                     View all activity →
-                  </a>
+                  </button>
                 </div>
               </div>
             )}
@@ -266,7 +282,7 @@ export default function Header({ title }: HeaderProps) {
               border: '2px solid rgba(46,124,253,0.3)',
             }}
           >
-            LJ
+            {userInitials}
           </div>
         </div>
       </header>

@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Trash2, Pencil, Plus, Download, AlertTriangle, Filter,
   Cable, Plug, Keyboard, Mouse, Headphones, Zap, HardDrive,
@@ -16,6 +17,7 @@ import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import EditInventoryModal from '../components/EditInventoryModal';
 import InventoryCheckInModal from '../components/InventoryCheckInModal';
 import InventoryCheckOutModal from '../components/InventoryCheckOutModal';
+import AccessoryDetailModal from '../components/AccessoryDetailModal';
 import AssetsTabContent from '../components/AssetsTabContent';
 import ComingSoonPanel from '../components/ComingSoonPanel';
 import { colors, spacing, radius } from '../theme';
@@ -105,10 +107,20 @@ const TD: React.CSSProperties = {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function Inventory() {
+  const [searchParams] = useSearchParams();
   const [inventory, setInventory] = useState<Accessory[]>([]);
   const [users, setUsers] = useState<Person[]>([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeInventoryTab, setActiveInventoryTab] = useState<InventoryTab>('Assets');
+  const tabFromUrl = searchParams.get('tab') as InventoryTab | null;
+  const [activeInventoryTab, setActiveInventoryTab] = useState<InventoryTab>(
+    tabFromUrl && INVENTORY_TABS.includes(tabFromUrl) ? tabFromUrl : 'Assets'
+  );
+
+  useEffect(() => {
+    if (tabFromUrl && INVENTORY_TABS.includes(tabFromUrl)) {
+      setActiveInventoryTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<FilterTab>('All');
   const [currentPage, setCurrentPage] = useState(1);
@@ -130,6 +142,7 @@ export default function Inventory() {
   // ── Modal targets ────────────────────────────────────────────────────────
   const [deleteTarget,   setDeleteTarget]   = useState<Accessory | null>(null);
   const [editTarget,     setEditTarget]     = useState<Accessory | null>(null);
+  const [detailTarget,   setDetailTarget]   = useState<Accessory | null>(null);
   const [checkInTarget,  setCheckInTarget]  = useState<Accessory | null>(null);
   const [checkOutTarget, setCheckOutTarget] = useState<Accessory | null>(null);
 
@@ -609,7 +622,7 @@ export default function Inventory() {
                       return (
                         <tr
                           key={item.id}
-                          onClick={() => setEditTarget(item)}
+                          onClick={() => setDetailTarget(item)}
                           style={{
                             backgroundColor: idx % 2 === 0 ? colors.bgSurface : colors.bgStripe,
                             cursor: 'pointer',
@@ -819,6 +832,17 @@ export default function Inventory() {
         users={users}
         onClose={() => setCheckOutTarget(null)}
         onConfirm={handleCheckOut}
+      />
+
+      <AccessoryDetailModal
+        isOpen={detailTarget !== null}
+        item={detailTarget}
+        onClose={() => setDetailTarget(null)}
+        onEdit={() => {
+          const item = detailTarget;
+          setDetailTarget(null);
+          setEditTarget(item);
+        }}
       />
 
       {/* Backdrop — closes open dropdowns on outside click */}

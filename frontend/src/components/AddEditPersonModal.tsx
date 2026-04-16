@@ -21,6 +21,7 @@ const EMPTY_FORM = {
   supervisor: '' as string,
   location: '',
   badge_number: '',
+  image_url: '',
   role: 'STAFF' as PersonRole,
   notes: '',
 };
@@ -141,6 +142,7 @@ export default function AddEditPersonModal({
           supervisor:     person.supervisor ?? '',
           location:       person.location,
           badge_number:   person.badge_number,
+          image_url:      person.image_url ?? '',
           role:           person.role,
           notes:          person.notes,
         });
@@ -181,6 +183,7 @@ export default function AddEditPersonModal({
       supervisor:     form.supervisor !== '' ? form.supervisor : null,
       location:       form.location.trim(),
       badge_number:   form.badge_number.trim(),
+      image_url:      form.image_url.trim(),
       role:           form.role,
       is_active:      true,
       notes:          form.notes.trim(),
@@ -259,6 +262,9 @@ export default function AddEditPersonModal({
             </div>
             <TextInput label="Badge Number" value={form.badge_number} onChange={set('badge_number')} placeholder="e.g. ES-B-001" />
             <TextInput label="Location"     value={form.location}     onChange={set('location')}     placeholder="e.g. HQ - Lab A" />
+            <div style={{ gridColumn: '1 / -1' }}>
+              <TextInput label="Profile Image URL" value={form.image_url} onChange={set('image_url')} placeholder="https://example.com/photo.jpg" />
+            </div>
           </div>
 
           {/* Role & Organisation */}

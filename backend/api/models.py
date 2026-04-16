@@ -49,6 +49,7 @@ class User(AbstractUser, TimeStampedModel):
     )
     notes = models.TextField(blank=True)
     badge_number = models.CharField(max_length=50, blank=True)
+    image_url = models.CharField(max_length=500, blank=True)
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.STAFF)
 
     USERNAME_FIELD = 'email'

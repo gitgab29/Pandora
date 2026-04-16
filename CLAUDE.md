@@ -115,14 +115,14 @@ Filter params: `?category=`, `?status=`, `?business_group=`, `?transaction_type=
 - ✅ Auth pages: `/sign-in` wired to real `POST /api/auth/login/` + `AuthContext`; `/sign-up` wired to real `POST /api/auth/register/`; Google OAuth endpoint exists on backend but requires `GOOGLE_OAUTH_CLIENT_ID` env var
 - ✅ Protected routes: `ProtectedRoute` component wraps all authenticated pages; redirects to `/sign-in` if no valid JWT
 - ✅ `AuthContext` (`context/AuthContext.tsx`) — stores `user`, `access`/`refresh` tokens, `isAuthenticated`, `loading`; exposes `login()`, `logout()`, `register()`
-- ✅ `/home` dashboard — 5 stat cards computed from real assets + real `ActivityLogTable`
+- ✅ `/home` dashboard — 9 pressable stat cards (Asset Status + Overview) + 3 charts (recharts: donut, bar, horizontal bar); no activity log table
 - ✅ `/inventory` — **tabbed catalog page**. Four tabs: `Assets` · `Accessories` · `Licenses` · `Consumables`
   - **Assets tab** = full CRUD (add/edit/copy/delete), lives in `components/AssetsTabContent.tsx`. Stat cards compute real stats (Total, Available, Deployed, To Audit). **Fully wired to APIs** — all CRUD + check-in/out call real endpoints.
   - **Accessories tab** = full CRUD with real API calls. Stat cards computed. Check-in/out wired to API endpoints. **Clickable rows** open edit modal.
   - **Licenses / Consumables tabs** = `ComingSoonPanel` placeholder; schemas not yet defined
 - ✅ `/activity` — full activity log with real transaction data; clickable rows open detail modal with all transaction info
 - ✅ Stub routes (`/settings`, `/archive`) → `ComingSoon`
-- ✅ Reusable modals: `Add/Edit/Copy` Asset, `Add/Edit` Accessory, `CheckIn/CheckOut` for both, `ChangeStatusModal`, `DeleteConfirm`, `ActivityDetail`, `FeatureNotAvailable`, **new: `AssignAssetToPersonModal`, `AssignAccessoryToPersonModal`**
+- ✅ Reusable modals: `Add/Edit/Copy` Asset, `Add/Edit` Accessory, `CheckIn/CheckOut` for both, `ChangeStatusModal`, `DeleteConfirm`, `ActivityDetail`, `FeatureNotAvailable`, `AssignAssetToPersonModal`, `AssignAccessoryToPersonModal`, **new: `AssetDetailModal` (read-only), `AccessoryDetailModal` (read-only)**
 - ✅ Sidebar logout button — clears `AuthContext` and navigates to `/sign-in`
 - ✅ `/people` — People directory. **Clickable rows** open PersonDetailModal. **Redesigned detail modal**:
   - **Assets subtab**: shows assets assigned to person; "Check In" action per row; "Assign Asset" button opens modal with available asset picker
@@ -178,16 +178,18 @@ Color restraint: Orange (`#fc9c2d`) reserved for genuine urgency (warnings, arch
 4. **Density without fatigue** — tight table rows, hierarchy through weight/color not size
 5. **Trustworthy at first glance** — consistent radii, exact alignment, required hover/focus states
 
-## Recently completed (commit 48bc386)
+## Recently completed
 
-- ✅ Wire all stat cards to real asset data (Home dashboard, Inventory Assets tab)
-- ✅ Fix PersonDetailModal: now correctly filters assets by `assigned_to` (was showing all assets due to missing backend filter)
-- ✅ Redesign PersonDetailModal with Assets/Accessories subtabs
-- ✅ Add AssignAssetToPersonModal — searchable picker for available assets
-- ✅ Add AssignAccessoryToPersonModal — picker with qty tracking + "After check-out" preview
-- ✅ Make all list rows clickable (Assets, Accessories, People tables)
-- ✅ Fix handleCheckIn/handleDelete in AssetsTabContent to call real API endpoints
-- ✅ Add backend filters: `assigned_to` on AssetViewSet, `to_user` on TransactionLogViewSet
+- ✅ Add `image_url` field to User model (backend + frontend) — People table and PersonDetailModal show profile images when available; AddEditPersonModal has image URL field
+- ✅ Header quick access dropdown now navigates to Assets, Accessories, Licenses, Consumables (via `/inventory?tab=<Tab>`)
+- ✅ Stat cards on Home are pressable — navigate to corresponding Inventory filtered view
+- ✅ Home page redesigned: activity log removed, replaced with charts (Asset Status donut, Activity Breakdown bar, Assets by Category horizontal bar) + Overview stat cards (People, Accessories, Low Stock, Recent Activity)
+- ✅ Activity page now fetches transactions with `ordering: '-transaction_date'` for most-recent-first
+- ✅ Asset and Accessory row clicks now open read-only detail modals (`AssetDetailModal`, `AccessoryDetailModal`) instead of edit modals; edit is accessible via Edit button inside detail modal
+- ✅ Inventory page reads `tab` URL param to support direct-linking to tabs
+- ✅ AssetsTabContent reads `status` URL param to pre-filter by status from Home stat cards
+- ✅ Header avatar shows real user initials from AuthContext (was hardcoded "LJ")
+- ✅ `recharts` added as dependency for Home dashboard charts
 
 ## Next up
 
