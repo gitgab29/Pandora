@@ -33,7 +33,7 @@ class AssetViewSet(viewsets.ModelViewSet):
     serializer_class = AssetSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['category', 'status', 'business_group', 'group']
+    filterset_fields = ['category', 'status', 'business_group', 'group', 'assigned_to']
     search_fields = ['asset_tag', 'serial_number', 'manufacturer', 'supplier', 'business_group']
     ordering_fields = ['asset_tag', 'category', 'status', 'purchase_date', 'created_at']
     ordering = ['asset_tag']
@@ -164,7 +164,7 @@ class TransactionLogViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = TransactionLogSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['transaction_type']
+    filterset_fields = ['transaction_type', 'to_user']
     search_fields = ['event_description', 'notes', 'performed_by__first_name', 'performed_by__last_name']
     ordering_fields = ['transaction_date', 'created_at']
     ordering = ['-transaction_date']

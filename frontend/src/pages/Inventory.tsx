@@ -609,10 +609,17 @@ export default function Inventory() {
                       return (
                         <tr
                           key={item.id}
-                          style={{ backgroundColor: idx % 2 === 0 ? 'colors.bgSurface' : 'colors.bgStripe' }}
+                          onClick={() => setEditTarget(item)}
+                          style={{
+                            backgroundColor: idx % 2 === 0 ? colors.bgSurface : colors.bgStripe,
+                            cursor: 'pointer',
+                            transition: 'background-color 0.1s',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(46,124,253,0.04)')}
+                          onMouseLeave={e => (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? colors.bgSurface : colors.bgStripe)}
                         >
                           {/* Checkbox */}
-                          <td style={{ ...TD, textAlign: 'center', width: '2.5rem' }}>
+                          <td style={{ ...TD, textAlign: 'center', width: '2.5rem' }} onClick={e => e.stopPropagation()}>
                             <input
                               type="checkbox"
                               checked={selectedIds.has(item.id)}
@@ -690,7 +697,7 @@ export default function Inventory() {
                           </td>
 
                           {/* Actions */}
-                          <td style={{ ...TD, textAlign: 'right' }}>
+                          <td style={{ ...TD, textAlign: 'right' }} onClick={e => e.stopPropagation()}>
                             <div style={{ display: 'inline-flex', alignItems: 'center', gap: spacing.xs }}>
                               {/* Delete */}
                               <button

@@ -375,7 +375,14 @@ export default function People() {
                       return (
                         <tr
                           key={person.id}
-                          style={{ backgroundColor: idx % 2 === 0 ? colors.bgSurface : colors.bgStripe }}
+                          onClick={() => setDetailPerson(person)}
+                          style={{
+                            backgroundColor: idx % 2 === 0 ? colors.bgSurface : colors.bgStripe,
+                            cursor: 'pointer',
+                            transition: 'background-color 0.1s',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(46,124,253,0.04)')}
+                          onMouseLeave={e => (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? colors.bgSurface : colors.bgStripe)}
                         >
                           {/* Avatar */}
                           <td style={{ ...TD, width: '2.75rem', padding: '0.5rem 0.75rem' }}>
@@ -440,7 +447,7 @@ export default function People() {
                           </td>
 
                           {/* Actions */}
-                          <td style={{ ...TD, textAlign: 'right' }}>
+                          <td style={{ ...TD, textAlign: 'right' }} onClick={e => e.stopPropagation()}>
                             <div style={{ display: 'inline-flex', alignItems: 'center', gap: spacing.xs }}>
                               <button
                                 onClick={() => setDeletePerson(person)}

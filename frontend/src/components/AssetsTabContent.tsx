@@ -17,11 +17,6 @@ import { assetsApi, usersApi } from '../api';
 import type { Person } from '../types/people';
 
 
-const STAT_CARDS = [
-  { title: 'Available', value: 56, trend: { value: 66, direction: 'up' as const } },
-  { title: 'Deployed',  value: 18, trend: { value: 66, direction: 'down' as const } },
-  { title: 'To Audit',  value: 4 },
-];
 
 const STATUS_CONFIG: Record<AssetStatus, { dot: string; label: string }> = {
   'AVAILABLE':      { dot: colors.success,      label: 'Available' },
@@ -71,6 +66,13 @@ export default function AssetsTabContent() {
     assetsApi.list().then(setAssets).catch(() => {});
     usersApi.list({ is_active: true }).then(setUsers).catch(() => {});
   }, []);
+
+  const statCards = useMemo(() => [
+    { title: 'Total Assets', value: assets.length },
+    { title: 'Available',    value: assets.filter(a => a.status === 'AVAILABLE').length },
+    { title: 'Deployed',     value: assets.filter(a => a.status === 'DEPLOYED').length },
+    { title: 'To Audit',     value: assets.filter(a => a.status === 'TO_AUDIT').length },
+  ], [assets]);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<AssetStatus | 'All'>('All');
   const [currentPage, setCurrentPage] = useState(1);
@@ -156,9 +158,14 @@ export default function AssetsTabContent() {
 
   const handleDelete = () => {
     if (!deleteTarget) return;
-    setAssets(prev => prev.filter(a => a.id !== deleteTarget.id));
-    setSelectedIds(prev => { const n = new Set(prev); n.delete(deleteTarget.id); return n; });
+    const id = deleteTarget.id;
     setDeleteTarget(null);
+    assetsApi.remove(id)
+      .then(() => {
+        setAssets(prev => prev.filter(a => a.id !== id));
+        setSelectedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
+      })
+      .catch(() => {});
   };
 
   const handleSaveEdit = (updated: Asset) => {
@@ -177,10 +184,10 @@ export default function AssetsTabContent() {
       .catch(() => {});
   };
 
-  const handleCheckIn = (assetId: string, _notes: string) => {
-    setAssets(prev => prev.map(a =>
-      a.id === assetId ? { ...a, status: 'AVAILABLE', assigned_to: null, updated_at: new Date().toISOString().split('T')[0] } : a,
-    ));
+  const handleCheckIn = (assetId: string, notes: string) => {
+    assetsApi.checkIn(assetId, notes)
+      .then(updated => setAssets(prev => prev.map(a => a.id === assetId ? updated : a)))
+      .catch(() => {});
   };
 
   return (
@@ -214,8 +221,8 @@ export default function AssetsTabContent() {
       </div>
       {showStats && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.lg, marginBottom: spacing.xl2 }}>
-          {STAT_CARDS.map(card => (
-            <StatisticCard key={card.title} title={card.title} value={card.value} trend={card.trend} />
+          {statCards.map(card => (
+            <StatisticCard key={card.title} title={card.title} value={card.value} />
           ))}
         </div>
       )}
@@ -384,9 +391,16 @@ export default function AssetsTabContent() {
                   return (
                     <tr
                       key={asset.id}
-                      style={{ backgroundColor: idx % 2 === 0 ? colors.bgSurface : colors.bgStripe }}
+                      onClick={() => setEditTarget(asset)}
+                      style={{
+                        backgroundColor: idx % 2 === 0 ? colors.bgSurface : colors.bgStripe,
+                        cursor: 'pointer',
+                        transition: 'background-color 0.1s',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(46,124,253,0.04)')}
+                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? colors.bgSurface : colors.bgStripe)}
                     >
-                      <td style={{ ...TD, textAlign: 'center', width: '2.5rem' }}>
+                      <td style={{ ...TD, textAlign: 'center', width: '2.5rem' }} onClick={e => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={selectedIds.has(asset.id)}
@@ -440,7 +454,7 @@ export default function AssetsTabContent() {
                         </span>
                       </td>
 
-                      <td style={{ ...TD, textAlign: 'right' }}>
+                      <td style={{ ...TD, textAlign: 'right' }} onClick={e => e.stopPropagation()}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: spacing.xs }}>
                           <button
                             onClick={() => setDeleteTarget(asset)}
