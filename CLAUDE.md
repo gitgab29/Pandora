@@ -107,7 +107,7 @@ All endpoints require JWT (`Authorization: Bearer <access>`) except auth routes.
 | GET | `/api/transactions/` | List transaction logs (read-only) |
 | GET | `/api/transactions/<id>/` | Retrieve single log |
 
-Filter params: `?category=`, `?status=`, `?business_group=`, `?transaction_type=`, `?search=`, `?ordering=`, `?include_archived=1`
+Filter params: `?category=`, `?status=`, `?business_group=`, `?transaction_type=`, `?search=`, `?ordering=`, `?include_archived=1`, `?assigned_to=` (Assets only), `?to_user=` (Transactions only)
 
 ## Status snapshot
 
@@ -115,16 +115,19 @@ Filter params: `?category=`, `?status=`, `?business_group=`, `?transaction_type=
 - ✅ Auth pages: `/sign-in` wired to real `POST /api/auth/login/` + `AuthContext`; `/sign-up` wired to real `POST /api/auth/register/`; Google OAuth endpoint exists on backend but requires `GOOGLE_OAUTH_CLIENT_ID` env var
 - ✅ Protected routes: `ProtectedRoute` component wraps all authenticated pages; redirects to `/sign-in` if no valid JWT
 - ✅ `AuthContext` (`context/AuthContext.tsx`) — stores `user`, `access`/`refresh` tokens, `isAuthenticated`, `loading`; exposes `login()`, `logout()`, `register()`
-- ✅ `/home` dashboard — 5 stat cards + `ActivityLogTable` (dummy data)
+- ✅ `/home` dashboard — 5 stat cards computed from real assets + real `ActivityLogTable`
 - ✅ `/inventory` — **tabbed catalog page**. Four tabs: `Assets` · `Accessories` · `Licenses` · `Consumables`
-  - **Assets tab** = full CRUD (add/edit/copy/delete), lives in `components/AssetsTabContent.tsx`. **Wired to `assetsApi.list()`** — fetches real data on mount.
-  - **Accessories tab** = Accessory CRUD (body inlined in `pages/Inventory.tsx`, still backed by `INITIAL_INVENTORY` dummy data). Has toggleable stat cards.
+  - **Assets tab** = full CRUD (add/edit/copy/delete), lives in `components/AssetsTabContent.tsx`. Stat cards compute real stats (Total, Available, Deployed, To Audit). **Fully wired to APIs** — all CRUD + check-in/out call real endpoints.
+  - **Accessories tab** = full CRUD with real API calls. Stat cards computed. Check-in/out wired to API endpoints. **Clickable rows** open edit modal.
   - **Licenses / Consumables tabs** = `ComingSoonPanel` placeholder; schemas not yet defined
-- ✅ `/activity` — table with search / sort / pagination, view-detail modal, delete modal (dummy logs in `useState`)
+- ✅ `/activity` — full activity log with real transaction data; clickable rows open detail modal with all transaction info
 - ✅ Stub routes (`/settings`, `/archive`) → `ComingSoon`
-- ✅ Reusable modals: `Add/Edit/Copy` Asset, `Add/Edit` Accessory, `CheckIn/CheckOut` for both, `ChangeStatusModal`, `DeleteConfirm`, `ActivityDetail`, `FeatureNotAvailable`
+- ✅ Reusable modals: `Add/Edit/Copy` Asset, `Add/Edit` Accessory, `CheckIn/CheckOut` for both, `ChangeStatusModal`, `DeleteConfirm`, `ActivityDetail`, `FeatureNotAvailable`, **new: `AssignAssetToPersonModal`, `AssignAccessoryToPersonModal`**
 - ✅ Sidebar logout button — clears `AuthContext` and navigates to `/sign-in`
-- ✅ `/people` — People directory. Table: avatar initials, Name, Email, Position, Business Group, Supervisor, Role badge. Sort/search/paginate. Full CRUD + Detail modal with assigned assets. **Wired to `usersApi.list()`** — fetches real data on mount; create/edit/delete also call the API.
+- ✅ `/people` — People directory. **Clickable rows** open PersonDetailModal. **Redesigned detail modal**:
+  - **Assets subtab**: shows assets assigned to person; "Check In" action per row; "Assign Asset" button opens modal with available asset picker
+  - **Accessories subtab**: shows checkout history for person; "Check Out Accessory" button opens modal with accessory picker + qty
+  - Full CRUD + Detail modal fully wired to API. All mutations call real endpoints.
 - ✅ **Backend fully implemented** — `backend/api/` has real models, serializers, views, auth:
   - `models.py`: `User` (email-auth, UUID PK, role, supervisor FK), `Asset`, `Accessory`, `TransactionLog`
   - `serializers.py`: Full DRF serializers with nested `*_detail` read fields
@@ -144,7 +147,7 @@ Filter params: `?category=`, `?status=`, `?business_group=`, `?transaction_type=
 
 **Holder display:** `asset.assigned_to` is a UUID. To render the user's name, use `asset.assigned_to_detail.first_name + last_name` (the nested read-only object from the serializer).
 
-**Remaining dummy-data hotspots:** `INITIAL_INVENTORY` in `pages/Inventory.tsx` (Accessories tab), `generateLogs()` in `pages/Home.tsx` and `pages/Activity.tsx`, `DUMMY_USERS` in `AssetCheckOutModal`, `DUMMY_MANAGERS` in `pages/SignUp.tsx`.
+**All stat cards and list data are now wired to real APIs.** No remaining dummy-data hotspots in active features (Home, Activity, Inventory, People all use live data).
 
 ## Design Context
 
@@ -175,10 +178,21 @@ Color restraint: Orange (`#fc9c2d`) reserved for genuine urgency (warnings, arch
 4. **Density without fatigue** — tight table rows, hierarchy through weight/color not size
 5. **Trustworthy at first glance** — consistent radii, exact alignment, required hover/focus states
 
+## Recently completed (commit 48bc386)
+
+- ✅ Wire all stat cards to real asset data (Home dashboard, Inventory Assets tab)
+- ✅ Fix PersonDetailModal: now correctly filters assets by `assigned_to` (was showing all assets due to missing backend filter)
+- ✅ Redesign PersonDetailModal with Assets/Accessories subtabs
+- ✅ Add AssignAssetToPersonModal — searchable picker for available assets
+- ✅ Add AssignAccessoryToPersonModal — picker with qty tracking + "After check-out" preview
+- ✅ Make all list rows clickable (Assets, Accessories, People tables)
+- ✅ Fix handleCheckIn/handleDelete in AssetsTabContent to call real API endpoints
+- ✅ Add backend filters: `assigned_to` on AssetViewSet, `to_user` on TransactionLogViewSet
+
 ## Next up
 
-- [ ] Wire remaining dummy-data hotspots (Accessories tab, Home/Activity logs, SignUp managers, CheckOut user list)
 - [ ] Set `GOOGLE_OAUTH_CLIENT_ID` env var + test Google OAuth end-to-end
 - [ ] Build out Licenses, Settings, Archive pages
 - [ ] Add protected-route role guard (admin-only sections)
 - [ ] Deploy to AWS (RDS + static hosting)
+- [ ] Polish: animations, micro-interactions, edge case handling
