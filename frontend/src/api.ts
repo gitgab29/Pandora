@@ -5,8 +5,10 @@ import type { Accessory } from './types/inventory';
 import type { TransactionLog } from './types/activity';
 import type { AuthTokens, AuthUser } from './types/auth';
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: `${BASE_URL}/api`,
 });
 
 api.interceptors.request.use((config) => {
@@ -25,7 +27,7 @@ api.interceptors.response.use(
       original._retry = true;
       try {
         const refresh = localStorage.getItem('refresh_token');
-        const { data } = await axios.post('/api/auth/refresh/', { refresh });
+        const { data } = await axios.post(`${BASE_URL}/api/auth/refresh/`, { refresh });
         localStorage.setItem('access_token', data.access);
         original.headers.Authorization = `Bearer ${data.access}`;
         return api(original);
