@@ -2,26 +2,15 @@ import { useState, useEffect } from 'react';
 import { X, LogOut } from 'lucide-react';
 import { colors, spacing, radius, fontSize } from '../theme';
 import type { Asset } from '../types/asset';
+import type { Person } from '../types/people';
 
 interface AssetCheckOutModalProps {
   isOpen: boolean;
   asset: Asset | null;
+  users?: Person[];
   onClose: () => void;
-  onConfirm: (assetId: string, assignedTo: string, notes: string) => void;
+  onConfirm: (assetId: string, userId: string, notes: string) => void;
 }
-
-const DUMMY_USERS = [
-  'Maria Chen',
-  'Lebron Jeymz',
-  'Stephen Carry',
-  'Ronald MacDonald',
-  'Tyler Brooks',
-  'Priya Nair',
-  'Sam Okafor',
-  'Alex Johnson',
-  'Jamie Lee',
-  'Chris Park',
-];
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "'Archivo', sans-serif",
@@ -51,6 +40,7 @@ const inputStyle: React.CSSProperties = {
 export default function AssetCheckOutModal({
   isOpen,
   asset,
+  users = [],
   onClose,
   onConfirm,
 }: AssetCheckOutModalProps) {
@@ -169,7 +159,9 @@ export default function AssetCheckOutModal({
               }}
             >
               <option value="">Select a user…</option>
-              {DUMMY_USERS.map(u => <option key={u} value={u}>{u}</option>)}
+              {users.map(u => (
+                <option key={u.id} value={u.id}>{u.first_name} {u.last_name}</option>
+              ))}
             </select>
             {submitted && !assignedTo && (
               <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.error, marginTop: '0.15rem', display: 'block' }}>

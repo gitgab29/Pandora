@@ -4,12 +4,8 @@ import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import type { GoogleUser, SignUpFormData } from '../types/auth';
-
-const DUMMY_MANAGERS = [
-  'Alice Thompson', 'Bob Martinez',   'Carol Williams', 'David Chen',
-  'Emma Rodriguez', 'Frank Johnson',  'Grace Kim',      'Henry Brown',
-  'Isabella Davis', 'James Wilson',
-];
+import type { Person } from '../types/people';
+import { usersApi } from '../api';
 
 type Step = 'google' | 'profile';
 
@@ -17,12 +13,17 @@ export default function SignUp() {
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>('google');
   const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
+  const [managers, setManagers] = useState<Person[]>([]);
   const [form, setForm] = useState<SignUpFormData>({
     firstName: '', lastName: '', title: '', location: '',
     department: '', badgeNumber: '', manager: '',
   });
   const [errors, setErrors] = useState<Partial<SignUpFormData>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    usersApi.list().then(setManagers).catch(() => {});
+  }, []);
 
   const handleGoogleSignUp = () => {
     // TODO: Replace with actual Google OAuth redirect
@@ -290,6 +291,7 @@ export default function SignUp() {
               form={form}
               errors={errors}
               isSubmitting={isSubmitting}
+              managers={managers}
               setField={setField}
               onSubmit={handleSubmit}
             />
@@ -387,11 +389,12 @@ interface ProfileStepProps {
   form: SignUpFormData;
   errors: Partial<SignUpFormData>;
   isSubmitting: boolean;
+  managers: Person[];
   setField: (key: keyof SignUpFormData, value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
 }
 
-function ProfileStep({ form, errors, isSubmitting, setField, onSubmit }: ProfileStepProps) {
+function ProfileStep({ form, errors, isSubmitting, managers, setField, onSubmit }: ProfileStepProps) {
   return (
     <form
       onSubmit={onSubmit}
@@ -446,6 +449,7 @@ function ProfileStep({ form, errors, isSubmitting, setField, onSubmit }: Profile
         <ManagerCombobox
           value={form.manager}
           error={errors.manager}
+          managers={managers}
           onChange={v => setField('manager', v)}
         />
       </div>
@@ -464,19 +468,22 @@ function ProfileStep({ form, errors, isSubmitting, setField, onSubmit }: Profile
 function ManagerCombobox({
   value,
   error,
+  managers,
   onChange,
 }: {
   value: string;
   error?: string;
+  managers: Person[];
   onChange: (v: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  const managerNames = managers.map(m => `${m.first_name} ${m.last_name}`);
   const filtered = value.trim()
-    ? DUMMY_MANAGERS.filter(m => m.toLowerCase().includes(value.toLowerCase()))
-    : DUMMY_MANAGERS;
+    ? managerNames.filter(m => m.toLowerCase().includes(value.toLowerCase()))
+    : managerNames;
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {

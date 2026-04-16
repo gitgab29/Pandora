@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Trash2, Pencil, Plus, Download, AlertTriangle, Filter,
   Cable, Plug, Keyboard, Mouse, Headphones, Zap, HardDrive,
@@ -20,34 +20,12 @@ import AssetsTabContent from '../components/AssetsTabContent';
 import ComingSoonPanel from '../components/ComingSoonPanel';
 import { colors, spacing, radius } from '../theme';
 import type { Accessory } from '../types/inventory';
+import type { Person } from '../types/people';
+import { accessoriesApi, usersApi } from '../api';
 
 type InventoryTab = 'Assets' | 'Accessories' | 'Licenses' | 'Consumables';
 const INVENTORY_TABS: InventoryTab[] = ['Assets', 'Accessories', 'Licenses', 'Consumables'];
 
-// ── Initial dummy data ─────────────────────────────────────────────────────────
-
-const INITIAL_INVENTORY: Accessory[] = [
-  { id:  1, item_name: 'USB-C Cable 2m',       category: 'Cable',        quantity_available: 24, min_quantity: 10, model_number: 'ANK-USB2M',   manufacturer: 'Anker',    supplier: 'Amazon Business', location: 'Storeroom A, Shelf 1', department: 'IT',       unit_cost: 12.99,  total_cost: 311.76, purchase_date: '2024-01-10', created_at: '2024-01-10', updated_at: '2024-01-10' },
-  { id:  2, item_name: 'HDMI Cable 1.5m',      category: 'Cable',        quantity_available: 3,  min_quantity: 8,  model_number: 'HDMI-1M5-BK', manufacturer: 'Belkin',   supplier: 'CDW',             location: 'Storeroom A, Shelf 1', department: 'IT',       unit_cost: 9.99,   total_cost: 29.97,  purchase_date: '2024-01-12', created_at: '2024-01-12', updated_at: '2024-01-12' },
-  { id:  3, item_name: 'USB-C to HDMI Adapter',category: 'Adapter',      quantity_available: 0,  min_quantity: 5,  model_number: 'UCA-HDMI-4K', manufacturer: 'Anker',    supplier: 'Amazon Business', location: 'Storeroom A, Shelf 2', department: 'IT',       unit_cost: 18.99,  total_cost: 0,      purchase_date: '2024-01-15', created_at: '2024-01-15', updated_at: '2024-01-15' },
-  { id:  4, item_name: 'Wireless Keyboard',    category: 'Keyboard',     quantity_available: 9,  min_quantity: 4,  model_number: 'MX-KEYS-BLK', manufacturer: 'Logitech', supplier: 'Insight',         location: 'Storeroom B, Shelf 1', department: 'IT',       unit_cost: 89.99,  total_cost: 809.91, purchase_date: '2024-02-01', created_at: '2024-02-01', updated_at: '2024-02-01' },
-  { id:  5, item_name: 'Wireless Mouse',       category: 'Mouse',        quantity_available: 11, min_quantity: 4,  model_number: 'MX-MASTER-3S',manufacturer: 'Logitech', supplier: 'Insight',         location: 'Storeroom B, Shelf 1', department: 'IT',       unit_cost: 74.99,  total_cost: 824.89, purchase_date: '2024-02-01', created_at: '2024-02-01', updated_at: '2024-02-01' },
-  { id:  6, item_name: 'USB-A Hub 7-Port',     category: 'Adapter',      quantity_available: 2,  min_quantity: 3,  model_number: 'ANK-HUB7-A', manufacturer: 'Anker',    supplier: 'Amazon Business', location: 'Storeroom A, Shelf 2', department: 'IT',       unit_cost: 29.99,  total_cost: 59.98,  purchase_date: '2024-02-05', created_at: '2024-02-05', updated_at: '2024-02-05' },
-  { id:  7, item_name: 'Laptop Stand',         category: 'Other',        quantity_available: 15, min_quantity: 5,  model_number: 'BSTAND-ALU',  manufacturer: 'Brydge',   supplier: 'B&H Photo',       location: 'Storeroom B, Shelf 2', department: 'Operations', unit_cost: 39.99, total_cost: 599.85, purchase_date: '2024-02-10', created_at: '2024-02-10', updated_at: '2024-02-10' },
-  { id:  8, item_name: 'Noise-Cancel Headset', category: 'Headset',      quantity_available: 7,  min_quantity: 3,  model_number: 'BOSE-700-BLK',manufacturer: 'Bose',     supplier: 'CDW',             location: 'Storeroom C, Shelf 1', department: 'IT',       unit_cost: 299.99, total_cost: 2099.93,purchase_date: '2024-02-15', created_at: '2024-02-15', updated_at: '2024-02-15' },
-  { id:  9, item_name: '65W USB-C Charger',    category: 'Power Supply', quantity_available: 0,  min_quantity: 6,  model_number: 'ANK-65W-GAN', manufacturer: 'Anker',    supplier: 'Amazon Business', location: 'Storeroom A, Shelf 3', department: 'IT',       unit_cost: 22.99,  total_cost: 0,      purchase_date: '2024-02-20', created_at: '2024-02-20', updated_at: '2024-02-20' },
-  { id: 10, item_name: 'Thunderbolt 4 Dock',   category: 'Adapter',      quantity_available: 4,  min_quantity: 2,  model_number: 'CAL-TB4-DOCK',manufacturer: 'CalDigit', supplier: 'B&H Photo',       location: 'Storeroom A, Shelf 2', department: 'IT',       unit_cost: 249.99, total_cost: 999.96, purchase_date: '2024-03-01', created_at: '2024-03-01', updated_at: '2024-03-01' },
-  { id: 11, item_name: '512 GB SSD',           category: 'Storage',      quantity_available: 6,  min_quantity: 4,  model_number: 'SAM-870-512', manufacturer: 'Samsung',  supplier: 'CDW',             location: 'Storeroom C, Shelf 2', department: 'IT',       unit_cost: 54.99,  total_cost: 329.94, purchase_date: '2024-03-05', created_at: '2024-03-05', updated_at: '2024-03-05' },
-  { id: 12, item_name: '16 GB DDR5 RAM',       category: 'RAM',          quantity_available: 8,  min_quantity: 4,  model_number: 'COR-16G-DDR5',manufacturer: 'Corsair',  supplier: 'Newegg',          location: 'Storeroom C, Shelf 2', department: 'IT',       unit_cost: 44.99,  total_cost: 359.92, purchase_date: '2024-03-08', created_at: '2024-03-08', updated_at: '2024-03-08' },
-  { id: 13, item_name: '27" Monitor',          category: 'Monitor',      quantity_available: 2,  min_quantity: 2,  model_number: 'LG-27-4K-UHD',manufacturer: 'LG',       supplier: 'Insight',         location: 'Storeroom B, Shelf 3', department: 'IT',       unit_cost: 349.99, total_cost: 699.98, purchase_date: '2024-03-10', created_at: '2024-03-10', updated_at: '2024-03-10' },
-  { id: 14, item_name: 'USB-C Cable 1m',       category: 'Cable',        quantity_available: 30, min_quantity: 10, model_number: 'ANK-USB1M',   manufacturer: 'Anker',    supplier: 'Amazon Business', location: 'Storeroom A, Shelf 1', department: 'IT',       unit_cost: 8.99,   total_cost: 269.70, purchase_date: '2024-03-12', created_at: '2024-03-12', updated_at: '2024-03-12' },
-  { id: 15, item_name: 'VESA Monitor Mount',   category: 'Other',        quantity_available: 1,  min_quantity: 2,  model_number: 'ERG-MNT-V1',  manufacturer: 'Ergotron', supplier: 'CDW',             location: 'Storeroom B, Shelf 3', department: 'Operations', unit_cost: 79.99, total_cost: 79.99,  purchase_date: '2024-03-15', created_at: '2024-03-15', updated_at: '2024-03-15' },
-  { id: 16, item_name: 'Ethernet Cable 5m',    category: 'Cable',        quantity_available: 18, min_quantity: 5,  model_number: 'PATCH-5M-BLU',manufacturer: 'Tripp Lite',supplier: 'CDW',            location: 'Storeroom A, Shelf 1', department: 'IT',       unit_cost: 6.99,   total_cost: 125.82, purchase_date: '2024-03-18', created_at: '2024-03-18', updated_at: '2024-03-18' },
-  { id: 17, item_name: 'Surge Protector 6-Way',category: 'Power Supply', quantity_available: 5,  min_quantity: 3,  model_number: 'APC-6W-SURGE',manufacturer: 'APC',      supplier: 'Insight',         location: 'Storeroom A, Shelf 3', department: 'Operations', unit_cost: 34.99, total_cost: 174.95, purchase_date: '2024-03-20', created_at: '2024-03-20', updated_at: '2024-03-20' },
-  { id: 18, item_name: 'Laptop Backpack',      category: 'Other',        quantity_available: 0,  min_quantity: 3,  model_number: 'TOMTOC-BP-15',manufacturer: 'Tomtoc',   supplier: 'Amazon Business', location: 'Storeroom B, Shelf 2', department: 'Operations', unit_cost: 49.99, total_cost: 0,      purchase_date: '2024-03-22', created_at: '2024-03-22', updated_at: '2024-03-22' },
-  { id: 19, item_name: 'Webcam 4K',            category: 'Other',        quantity_available: 4,  min_quantity: 2,  model_number: 'LOG-BRIO-4K', manufacturer: 'Logitech', supplier: 'B&H Photo',       location: 'Storeroom C, Shelf 1', department: 'IT',       unit_cost: 149.99, total_cost: 599.96, purchase_date: '2024-04-01', created_at: '2024-04-01', updated_at: '2024-04-01' },
-  { id: 20, item_name: 'Display Port Cable',   category: 'Cable',        quantity_available: 1,  min_quantity: 5,  model_number: 'DP-1M4-BLK',  manufacturer: 'Cable Matters', supplier: 'Amazon Business', location: 'Storeroom A, Shelf 1', department: 'IT', unit_cost: 11.99, total_cost: 11.99, purchase_date: '2024-04-05', created_at: '2024-04-05', updated_at: '2024-04-05' },
-];
 
 type FilterTab = 'All' | 'Low Stock' | 'Out of Stock';
 const FILTER_TABS: FilterTab[] = ['All', 'Low Stock', 'Out of Stock'];
@@ -127,13 +105,19 @@ const TD: React.CSSProperties = {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function Inventory() {
-  const [inventory, setInventory] = useState<Accessory[]>(INITIAL_INVENTORY);
+  const [inventory, setInventory] = useState<Accessory[]>([]);
+  const [users, setUsers] = useState<Person[]>([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeInventoryTab, setActiveInventoryTab] = useState<InventoryTab>('Assets');
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<FilterTab>('All');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    accessoriesApi.list().then(setInventory).catch(() => {});
+    usersApi.list({ is_active: true }).then(setUsers).catch(() => {});
+  }, []);
   const [featureModalOpen, setFeatureModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState('');
@@ -155,7 +139,7 @@ export default function Inventory() {
     [inventory],
   );
   const allDepartments = useMemo(
-    () => [...new Set(inventory.map(i => i.department ?? '').filter(Boolean))].sort(),
+    () => [...new Set(inventory.map(i => i.business_group ?? '').filter(Boolean))].sort(),
     [inventory],
   );
   const allLocations = useMemo(
@@ -184,7 +168,7 @@ export default function Inventory() {
     // Category tab
     if (activeCategory) items = items.filter(i => i.category === activeCategory);
     // Dept + Location filters
-    if (activeFilters.departments.length > 0) items = items.filter(i => activeFilters.departments.includes(i.department ?? ''));
+    if (activeFilters.departments.length > 0) items = items.filter(i => activeFilters.departments.includes(i.business_group ?? ''));
     if (activeFilters.locations.length > 0)   items = items.filter(i => activeFilters.locations.includes((i.location ?? '').split(',')[0].trim()));
     // Search
     const q = search.toLowerCase().trim();
@@ -195,7 +179,7 @@ export default function Inventory() {
         (i.category ?? '').toLowerCase().includes(q) ||
         (i.manufacturer ?? '').toLowerCase().includes(q) ||
         (i.location ?? '').toLowerCase().includes(q) ||
-        (i.department ?? '').toLowerCase().includes(q),
+        (i.business_group ?? '').toLowerCase().includes(q),
       );
     }
     // Sort
@@ -232,7 +216,7 @@ export default function Inventory() {
       return next;
     });
   };
-  const toggleRow = (id: number) => {
+  const toggleRow = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -246,33 +230,29 @@ export default function Inventory() {
 
   const handleDelete = () => {
     if (!deleteTarget) return;
-    // TODO: DELETE /api/inventory/:id/ + POST /api/transactions/ when backend is ready
-    setInventory(prev => prev.filter(i => i.id !== deleteTarget.id));
-    setSelectedIds(prev => { const n = new Set(prev); n.delete(deleteTarget.id); return n; });
-    setDeleteTarget(null);
+    accessoriesApi.remove(deleteTarget.id)
+      .then(() => {
+        setInventory(prev => prev.filter(i => i.id !== deleteTarget.id));
+        setSelectedIds(prev => { const n = new Set(prev); n.delete(deleteTarget.id); return n; });
+        setDeleteTarget(null);
+      })
+      .catch(() => {});
   };
 
   const handleSaveEdit = (updated: Accessory) => {
-    // TODO: PATCH /api/inventory/:id/ + POST /api/transactions/ when backend is ready
     setInventory(prev => prev.map(i => i.id === updated.id ? updated : i));
   };
 
-  const handleCheckIn = (itemId: number, quantity: number, _notes: string) => {
-    // TODO: POST /api/inventory/:id/checkin/ + POST /api/transactions/ when backend is ready
-    setInventory(prev => prev.map(i =>
-      i.id === itemId
-        ? { ...i, quantity_available: i.quantity_available + quantity, updated_at: new Date().toISOString().split('T')[0] }
-        : i,
-    ));
+  const handleCheckIn = (itemId: string, quantity: number, notes: string) => {
+    accessoriesApi.checkIn(itemId, quantity, notes)
+      .then(updated => setInventory(prev => prev.map(i => i.id === itemId ? updated : i)))
+      .catch(() => {});
   };
 
-  const handleCheckOut = (itemId: number, quantity: number, _assignedTo: string, _notes: string) => {
-    // TODO: POST /api/inventory/:id/checkout/ + POST /api/transactions/ when backend is ready
-    setInventory(prev => prev.map(i =>
-      i.id === itemId
-        ? { ...i, quantity_available: Math.max(0, i.quantity_available - quantity), updated_at: new Date().toISOString().split('T')[0] }
-        : i,
-    ));
+  const handleCheckOut = (itemId: string, quantity: number, userId: string, notes: string) => {
+    accessoriesApi.checkOut(itemId, quantity, userId || undefined, notes)
+      .then(updated => setInventory(prev => prev.map(i => i.id === itemId ? updated : i)))
+      .catch(() => {});
   };
 
   return (
@@ -706,7 +686,7 @@ export default function Inventory() {
 
                           {/* Department */}
                           <td style={{ ...TD, color: colors.blueGrayMd }}>
-                            {item.department ?? '—'}
+                            {item.business_group ?? '—'}
                           </td>
 
                           {/* Actions */}
@@ -798,7 +778,11 @@ export default function Inventory() {
 
       {/* ── Modals ── */}
       <FeatureNotAvailableModal isOpen={featureModalOpen} onClose={() => setFeatureModalOpen(false)} />
-      <AddInventoryModal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)} />
+      <AddInventoryModal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onSave={acc => setInventory(prev => [...prev, acc])}
+      />
 
       <DeleteConfirmModal
         isOpen={deleteTarget !== null}
@@ -825,6 +809,7 @@ export default function Inventory() {
       <InventoryCheckOutModal
         isOpen={checkOutTarget !== null}
         item={checkOutTarget}
+        users={users}
         onClose={() => setCheckOutTarget(null)}
         onConfirm={handleCheckOut}
       />

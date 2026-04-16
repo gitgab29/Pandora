@@ -2,26 +2,15 @@ import { useState, useEffect } from 'react';
 import { X, PackageMinus } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Accessory } from '../types/inventory';
+import type { Person } from '../types/people';
 
 interface InventoryCheckOutModalProps {
   isOpen: boolean;
   item: Accessory | null;
+  users?: Person[];
   onClose: () => void;
-  onConfirm: (itemId: number, quantity: number, assignedTo: string, notes: string) => void;
+  onConfirm: (itemId: string, quantity: number, userId: string, notes: string) => void;
 }
-
-const DUMMY_USERS = [
-  'Maria Chen',
-  'Lebron Jeymz',
-  'Stephen Carry',
-  'Ronald MacDonald',
-  'Tyler Brooks',
-  'Priya Nair',
-  'Sam Okafor',
-  'Alex Johnson',
-  'Jamie Lee',
-  'Chris Park',
-];
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "'Archivo', sans-serif",
@@ -51,6 +40,7 @@ const inputStyle: React.CSSProperties = {
 export default function InventoryCheckOutModal({
   isOpen,
   item,
+  users = [],
   onClose,
   onConfirm,
 }: InventoryCheckOutModalProps) {
@@ -241,7 +231,9 @@ export default function InventoryCheckOutModal({
               }}
             >
               <option value="">Select a user…</option>
-              {DUMMY_USERS.map(u => <option key={u} value={u}>{u}</option>)}
+              {users.map(u => (
+                <option key={u.id} value={u.id}>{u.first_name} {u.last_name}</option>
+              ))}
             </select>
             {userError && (
               <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.error, marginTop: '0.15rem', display: 'block' }}>

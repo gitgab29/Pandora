@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Accessory, AddInventoryFormData } from '../types/inventory';
+import { accessoriesApi } from '../api';
 
 interface EditInventoryModalProps {
   isOpen: boolean;
@@ -130,7 +131,7 @@ function itemToForm(i: Accessory): AddInventoryFormData {
     manufacturer: i.manufacturer ?? '',
     supplier: i.supplier ?? '',
     location: i.location ?? '',
-    department: i.department ?? '',
+    business_group: i.business_group ?? '',
     notes: i.notes ?? '',
   };
 }
@@ -153,8 +154,7 @@ export default function EditInventoryModal({ isOpen, item, onClose, onSave }: Ed
     if (!form.item_name.trim()) return;
     const qty = parseInt(form.quantity_available) || 0;
     const minQty = parseInt(form.min_quantity) || 0;
-    const updated: Accessory = {
-      ...item,
+    const patch: Partial<Accessory> = {
       item_name: form.item_name.trim(),
       category: form.category || undefined,
       quantity_available: qty,
@@ -162,17 +162,16 @@ export default function EditInventoryModal({ isOpen, item, onClose, onSave }: Ed
       model_number: form.model_number || undefined,
       purchase_date: form.purchase_date || undefined,
       unit_cost: form.unit_cost ? parseFloat(form.unit_cost) : undefined,
-      total_cost: form.unit_cost ? parseFloat(form.unit_cost) * qty : undefined,
       order_number: form.order_number || undefined,
       manufacturer: form.manufacturer || undefined,
       supplier: form.supplier || undefined,
       location: form.location || undefined,
-      department: form.department || undefined,
+      business_group: form.business_group || undefined,
       notes: form.notes || undefined,
-      updated_at: new Date().toISOString().split('T')[0],
     };
-    onSave(updated);
-    onClose();
+    accessoriesApi.update(item.id, patch)
+      .then(updated => { onSave(updated); onClose(); })
+      .catch(() => {});
   };
 
   return (
@@ -263,7 +262,7 @@ export default function EditInventoryModal({ isOpen, item, onClose, onSave }: Ed
           <p style={sectionHeadStyle}>Location</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
             <TextInput label="Location" value={form.location} onChange={set('location')} placeholder="e.g. Storeroom A, Shelf 1" />
-            <TextInput label="Department" value={form.department} onChange={set('department')} placeholder="e.g. IT" />
+            <TextInput label="Department" value={form.business_group} onChange={set('business_group')} placeholder="e.g. IT" />
           </div>
 
           {/* ── Notes ── */}

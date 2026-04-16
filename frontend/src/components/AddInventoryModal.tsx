@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
-import type { AddInventoryFormData } from '../types/inventory';
+import type { AddInventoryFormData, Accessory } from '../types/inventory';
+import { accessoriesApi } from '../api';
 
 interface AddInventoryModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSave?: (acc: Accessory) => void;
 }
 
 const EMPTY_FORM: AddInventoryFormData = {
   item_name: '', category: '', quantity_available: '',
   min_quantity: '', model_number: '', purchase_date: '',
   unit_cost: '', order_number: '', manufacturer: '',
-  supplier: '', location: '', department: '', notes: '',
+  supplier: '', location: '', business_group: '', notes: '',
 };
 
 const INVENTORY_CATEGORIES = [
@@ -114,8 +116,9 @@ function SelectInput({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function AddInventoryModal({ isOpen, onClose }: AddInventoryModalProps) {
+export default function AddInventoryModal({ isOpen, onClose, onSave }: AddInventoryModalProps) {
   const [form, setForm] = useState<AddInventoryFormData>(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
 
   if (!isOpen) return null;
 
@@ -123,9 +126,27 @@ export default function AddInventoryModal({ isOpen, onClose }: AddInventoryModal
     setForm(prev => ({ ...prev, [key]: v }));
 
   const handleSubmit = () => {
-    // TODO: POST /api/inventory/ when backend is ready
-    setForm(EMPTY_FORM);
-    onClose();
+    if (!form.item_name.trim()) return;
+    setSaving(true);
+    accessoriesApi.create({
+      item_name: form.item_name.trim(),
+      category: form.category || undefined,
+      quantity_available: parseInt(form.quantity_available) || 0,
+      min_quantity: parseInt(form.min_quantity) || 0,
+      model_number: form.model_number || undefined,
+      purchase_date: form.purchase_date || undefined,
+      unit_cost: form.unit_cost ? parseFloat(form.unit_cost) : undefined,
+      order_number: form.order_number || undefined,
+      manufacturer: form.manufacturer || undefined,
+      supplier: form.supplier || undefined,
+      location: form.location || undefined,
+      business_group: form.business_group || undefined,
+      notes: form.notes || undefined,
+    }).then(created => {
+      onSave?.(created);
+      setForm(EMPTY_FORM);
+      onClose();
+    }).catch(() => {}).finally(() => setSaving(false));
   };
 
   const handleClose = () => {
@@ -223,7 +244,7 @@ export default function AddInventoryModal({ isOpen, onClose }: AddInventoryModal
           <p style={sectionHeadStyle}>Location</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
             <TextInput label="Location" value={form.location} onChange={set('location')} placeholder="e.g. Storeroom A, Shelf 3" />
-            <TextInput label="Department" value={form.department} onChange={set('department')} placeholder="e.g. IT" />
+            <TextInput label="Department" value={form.business_group} onChange={set('business_group')} placeholder="e.g. IT" />
           </div>
 
           {/* ── Notes ── */}
@@ -269,16 +290,17 @@ export default function AddInventoryModal({ isOpen, onClose }: AddInventoryModal
           </button>
           <button
             onClick={handleSubmit}
+            disabled={saving}
             style={{
               padding: `${spacing.sm} ${spacing.xl}`,
               borderRadius: radius.full,
               border: 'none',
-              backgroundColor: colors.primary,
+              backgroundColor: saving ? colors.bgDisabled : colors.primary,
               fontFamily: "'Archivo', sans-serif",
               fontSize: fontSize.sm,
               fontWeight: 600,
-              color: colors.white,
-              cursor: 'pointer',
+              color: saving ? colors.textDisabled : colors.white,
+              cursor: saving ? 'not-allowed' : 'pointer',
             }}
           >
             Add Item

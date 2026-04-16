@@ -19,7 +19,8 @@ export default function Home() {
 
   useEffect(() => {
     assetsApi.list().then(setAssets);
-    transactionsApi.list().then(data => setLogs(data.map(toActivityLogEntry)));
+    transactionsApi.list({ ordering: '-created_at' })
+      .then(data => setLogs(data.slice(0, 10).map(toActivityLogEntry)));
   }, []);
 
   const statCards = [

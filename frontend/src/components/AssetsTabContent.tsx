@@ -13,7 +13,8 @@ import AssetCheckOutModal from './AssetCheckOutModal';
 import AssetCheckInModal from './AssetCheckInModal';
 import { colors, spacing, radius, statusColors } from '../theme';
 import type { Asset, AssetStatus } from '../types/asset';
-import { assetsApi } from '../api';
+import { assetsApi, usersApi } from '../api';
+import type { Person } from '../types/people';
 
 
 const STAT_CARDS = [
@@ -64,9 +65,11 @@ const TD: React.CSSProperties = {
 
 export default function AssetsTabContent() {
   const [assets, setAssets] = useState<Asset[]>([]);
+  const [users, setUsers] = useState<Person[]>([]);
 
   useEffect(() => {
     assetsApi.list().then(setAssets).catch(() => {});
+    usersApi.list({ is_active: true }).then(setUsers).catch(() => {});
   }, []);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<AssetStatus | 'All'>('All');
@@ -168,10 +171,10 @@ export default function AssetsTabContent() {
     setAssets(prev => [...prev, { ...data, id: newId, created_at: today, updated_at: today }]);
   };
 
-  const handleCheckOut = (assetId: string, assignedTo: string, _notes: string) => {
-    setAssets(prev => prev.map(a =>
-      a.id === assetId ? { ...a, status: 'DEPLOYED', assigned_to: assignedTo, updated_at: new Date().toISOString().split('T')[0] } : a,
-    ));
+  const handleCheckOut = (assetId: string, userId: string, notes: string) => {
+    assetsApi.checkOut(assetId, userId, notes)
+      .then(updated => setAssets(prev => prev.map(a => a.id === assetId ? updated : a)))
+      .catch(() => {});
   };
 
   const handleCheckIn = (assetId: string, _notes: string) => {
@@ -533,6 +536,7 @@ export default function AssetsTabContent() {
       <AssetCheckOutModal
         isOpen={checkOutTarget !== null}
         asset={checkOutTarget}
+        users={users}
         onClose={() => setCheckOutTarget(null)}
         onConfirm={handleCheckOut}
       />

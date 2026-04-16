@@ -7,7 +7,7 @@ interface InventoryCheckInModalProps {
   isOpen: boolean;
   item: Accessory | null;
   onClose: () => void;
-  onConfirm: (itemId: number, quantity: number, notes: string) => void;
+  onConfirm: (itemId: string, quantity: number, notes: string) => void;
 }
 
 const labelStyle: React.CSSProperties = {
