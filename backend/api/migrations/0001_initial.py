@@ -62,6 +62,7 @@ class Migration(migrations.Migration):
                 ('business_group', models.CharField(blank=True, max_length=100)),
                 ('notes', models.TextField(blank=True)),
                 ('badge_number', models.CharField(blank=True, max_length=50)),
+                ('image_url', models.CharField(blank=True, max_length=500)),
                 ('role', models.CharField(choices=[('ADMIN', 'Admin'), ('STAFF', 'Staff')], default='STAFF', max_length=20)),
                 ('groups', models.ManyToManyField(blank=True, help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.', related_name='user_set', related_query_name='user', to='auth.group', verbose_name='groups')),
                 ('supervisor', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='reports', to=settings.AUTH_USER_MODEL)),
