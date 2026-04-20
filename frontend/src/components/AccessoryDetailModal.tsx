@@ -43,7 +43,7 @@ export default function AccessoryDetailModal({ isOpen, item, onClose, onEdit }: 
 
   const formatCurrency = (v?: number) => {
     if (v == null) return null;
-    return `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `₱${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const totalCost = (item.unit_cost != null && item.quantity_available != null)

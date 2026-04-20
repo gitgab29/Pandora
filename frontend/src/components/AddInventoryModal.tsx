@@ -234,7 +234,7 @@ export default function AddInventoryModal({ isOpen, onClose, onSave }: AddInvent
             <TextInput label="Manufacturer" value={form.manufacturer} onChange={set('manufacturer')} placeholder="e.g. Anker" />
             <TextInput label="Supplier" value={form.supplier} onChange={set('supplier')} placeholder="e.g. Amazon Business" />
             <TextInput label="Purchase Date" value={form.purchase_date} onChange={set('purchase_date')} type="date" />
-            <TextInput label="Unit Cost ($)" value={form.unit_cost} onChange={set('unit_cost')} placeholder="e.g. 12.99" type="number" />
+            <TextInput label="Unit Cost (₱)" value={form.unit_cost} onChange={set('unit_cost')} placeholder="e.g. 12.99" type="number" />
             <div style={{ gridColumn: '1 / -1' }}>
               <TextInput label="Order Number" value={form.order_number} onChange={set('order_number')} placeholder="e.g. PO-2024-00456" />
             </div>
