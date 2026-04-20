@@ -61,18 +61,10 @@ export default function AccessoryDetailModal({ isOpen, item, onClose, onEdit }: 
       >
         {/* ── Header ── */}
         <div style={{ padding: `${spacing.xl} ${spacing.xl} ${spacing.lg}`, borderBottom: '1px solid rgba(70,98,145,0.1)', display: 'flex', alignItems: 'flex-start', gap: spacing.lg, flexShrink: 0 }}>
-          {/* Thumbnail */}
-          {item.image_url ? (
-            <img
-              src={item.image_url}
-              alt={item.item_name}
-              style={{ width: '3.5rem', height: '3.5rem', borderRadius: radius.lg, objectFit: 'cover', border: '2px solid rgba(70,98,145,0.1)', flexShrink: 0 }}
-            />
-          ) : (
-            <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: radius.lg, backgroundColor: 'rgba(46,124,253,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: "'Roboto', sans-serif", fontSize: '1.25rem', fontWeight: 700, color: colors.primary }}>
-              {item.item_name[0]?.toUpperCase() ?? 'A'}
-            </div>
-          )}
+          {/* Icon */}
+          <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: radius.lg, backgroundColor: 'rgba(46,124,253,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: "'Roboto', sans-serif", fontSize: '1.25rem', fontWeight: 700, color: colors.primary }}>
+            {item.item_name[0]?.toUpperCase() ?? 'A'}
+          </div>
 
           {/* Title + badges */}
           <div style={{ flex: 1, minWidth: 0 }}>

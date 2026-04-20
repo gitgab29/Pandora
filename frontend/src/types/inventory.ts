@@ -1,7 +1,6 @@
 export interface Accessory {
   id: string;
   item_name: string;
-  image_url?: string;
   quantity_available: number;
   model_number?: string;
   purchase_date?: string;

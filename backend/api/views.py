@@ -33,8 +33,8 @@ class AssetViewSet(viewsets.ModelViewSet):
     serializer_class = AssetSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['category', 'status', 'business_group', 'group', 'assigned_to']
-    search_fields = ['asset_tag', 'serial_number', 'manufacturer', 'supplier', 'business_group']
+    filterset_fields = ['category', 'status', 'group', 'assigned_to']
+    search_fields = ['asset_tag', 'serial_number', 'manufacturer', 'supplier']
     ordering_fields = ['asset_tag', 'category', 'status', 'purchase_date', 'created_at']
     ordering = ['asset_tag']
 

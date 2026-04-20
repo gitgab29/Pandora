@@ -14,7 +14,6 @@ export interface Person {
   supervisor_detail?: { id: string; first_name: string; last_name: string; email: string } | null;
   location: string;
   badge_number: string;
-  image_url?: string;
   role: PersonRole;
   is_active: boolean;
   notes: string;

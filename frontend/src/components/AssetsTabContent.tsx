@@ -366,7 +366,6 @@ export default function AssetsTabContent() {
                     style={{ cursor: 'pointer', accentColor: colors.primary }}
                   />
                 </th>
-                <th style={{ ...TH, width: '3.25rem', padding: '0.625rem 0.5rem' }} />
                 <th style={TH}>Asset Tag</th>
                 <th style={TH}>Serial Number</th>
                 <th style={TH}>Category</th>
@@ -379,7 +378,7 @@ export default function AssetsTabContent() {
               {pageItems.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={7}
                     style={{
                       ...TD,
                       textAlign: 'center',
@@ -414,20 +413,6 @@ export default function AssetsTabContent() {
                           checked={selectedIds.has(asset.id)}
                           onChange={() => toggleRow(asset.id)}
                           style={{ cursor: 'pointer', accentColor: colors.primary }}
-                        />
-                      </td>
-
-                      <td style={{ ...TD, width: '3.25rem', padding: '0.5rem 0.5rem' }}>
-                        <img
-                          src={`https://picsum.photos/seed/asset-${asset.id}/32/32`}
-                          alt=""
-                          style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: radius.sm,
-                            border: '1px solid rgba(70,98,145,0.1)',
-                            display: 'block',
-                          }}
                         />
                       </td>
 

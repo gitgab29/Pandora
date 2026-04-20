@@ -21,15 +21,6 @@ type SortDir   = 'asc'  | 'desc';
 
 // ── Style helpers ──────────────────────────────────────────────────────────────
 
-const AVATAR_PALETTE = [
-  { bg: 'rgba(46,124,253,0.15)',  fg: '#1a5bbf' },
-  { bg: 'rgba(139,92,246,0.15)', fg: '#6d28d9' },
-  { bg: 'rgba(34,197,94,0.15)',  fg: '#15803d' },
-  { bg: 'rgba(252,156,45,0.15)', fg: '#b45309' },
-  { bg: 'rgba(45,252,249,0.15)', fg: '#0891b2' },
-  { bg: 'rgba(239,68,68,0.15)',  fg: '#b91c1c' },
-];
-
 const ROLE_BADGE = {
   ADMIN: { bg: 'rgba(46,124,253,0.12)', text: colors.primary,    label: 'Admin' },
   STAFF: { bg: 'rgba(70,98,145,0.10)',  text: colors.blueGrayMd, label: 'Staff' },
@@ -340,7 +331,6 @@ export default function People() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
-                    <th style={{ ...TH, width: '2.75rem', padding: '0.625rem 0.5rem' }} />
                     <th style={TH}>Name</th>
                     <th style={TH}>Email</th>
                     <th style={TH}>Position</th>
@@ -354,7 +344,7 @@ export default function People() {
                   {pageItems.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={8}
+                        colSpan={7}
                         style={{
                           ...TD, textAlign: 'center',
                           color: colors.blueGrayMd,
@@ -366,9 +356,6 @@ export default function People() {
                     </tr>
                   ) : (
                     pageItems.map((person, idx) => {
-                      const hash = Array.from(person.id).reduce((acc, c) => acc + c.charCodeAt(0), 0);
-                      const palette  = AVATAR_PALETTE[hash % AVATAR_PALETTE.length];
-                      const initials = `${person.first_name[0] ?? ''}${person.last_name[0] ?? ''}`.toUpperCase();
                       const role     = ROLE_BADGE[person.role] ?? ROLE_BADGE.STAFF;
                       const displayName = `${person.last_name}, ${person.first_name}`;
 
@@ -384,45 +371,6 @@ export default function People() {
                           onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(46,124,253,0.04)')}
                           onMouseLeave={e => (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? colors.bgSurface : colors.bgStripe)}
                         >
-                          {/* Avatar */}
-                          <td style={{ ...TD, width: '2.75rem', padding: '0.5rem 0.75rem' }}>
-                            {person.image_url ? (
-                              <img
-                                src={person.image_url}
-                                alt={initials}
-                                style={{
-                                  width: '2rem', height: '2rem',
-                                  borderRadius: radius.full,
-                                  objectFit: 'cover',
-                                  border: '1px solid rgba(70,98,145,0.1)',
-                                  display: 'block',
-                                  flexShrink: 0,
-                                }}
-                              />
-                            ) : (
-                              <div
-                                style={{
-                                  width: '2rem', height: '2rem',
-                                  borderRadius: radius.full,
-                                  backgroundColor: palette.bg,
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  flexShrink: 0,
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    fontFamily: "'Roboto', sans-serif",
-                                    fontSize: '0.6875rem', fontWeight: 700,
-                                    color: palette.fg,
-                                    letterSpacing: '0.02em',
-                                  }}
-                                >
-                                  {initials}
-                                </span>
-                              </div>
-                            )}
-                          </td>
-
                           {/* Name */}
                           <td style={{ ...TD, fontWeight: 500 }}>{displayName}</td>
 

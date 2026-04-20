@@ -141,17 +141,9 @@ export default function PersonDetailModal({ isOpen, person, allPeople, onClose, 
           {/* ── Hero header ── */}
           <div style={{ padding: `${spacing.xl} ${spacing.xl} ${spacing.lg}`, borderBottom: '1px solid rgba(70,98,145,0.1)', display: 'flex', alignItems: 'flex-start', gap: spacing.lg, flexShrink: 0 }}>
             {/* Avatar */}
-            {person.image_url ? (
-              <img
-                src={person.image_url}
-                alt={initials}
-                style={{ width: '3.5rem', height: '3.5rem', borderRadius: radius.full, objectFit: 'cover', border: '2px solid rgba(70,98,145,0.1)', flexShrink: 0 }}
-              />
-            ) : (
-              <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: radius.full, backgroundColor: avatarColor.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: '1.125rem', fontWeight: 700, color: avatarColor.fg, letterSpacing: '0.02em' }}>{initials}</span>
-              </div>
-            )}
+            <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: radius.full, backgroundColor: avatarColor.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <span style={{ fontFamily: "'Roboto', sans-serif", fontSize: '1.125rem', fontWeight: 700, color: avatarColor.fg, letterSpacing: '0.02em' }}>{initials}</span>
+            </div>
 
             {/* Name + badges */}
             <div style={{ flex: 1, minWidth: 0 }}>

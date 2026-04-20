@@ -49,7 +49,6 @@ class User(AbstractUser, TimeStampedModel):
     )
     notes = models.TextField(blank=True)
     badge_number = models.CharField(max_length=50, blank=True)
-    image_url = models.CharField(max_length=500, blank=True)
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.STAFF)
 
     USERNAME_FIELD = 'email'
@@ -126,7 +125,6 @@ class Asset(TimeStampedModel):
 class Accessory(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     item_name = models.CharField(max_length=255)
-    image_url = models.CharField(max_length=255, blank=True)
     quantity_available = models.IntegerField(default=0)
     model_number = models.CharField(max_length=100, blank=True)
     purchase_date = models.DateField(null=True, blank=True)

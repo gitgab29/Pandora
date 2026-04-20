@@ -18,7 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'first_name', 'last_name', 'email', 'password',
             'title', 'location', 'business_group', 'supervisor', 'supervisor_detail',
-            'badge_number', 'image_url', 'role', 'notes', 'is_active',
+            'badge_number', 'role', 'notes', 'is_active',
             'created_at', 'updated_at',
         )
         read_only_fields = ('id', 'created_at', 'updated_at')
@@ -68,7 +68,7 @@ class AccessorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Accessory
         fields = (
-            'id', 'item_name', 'image_url', 'quantity_available', 'model_number',
+            'id', 'item_name', 'quantity_available', 'model_number',
             'purchase_date', 'unit_cost', 'total_cost', 'order_number',
             'min_quantity', 'category', 'manufacturer', 'supplier',
             'location', 'business_group', 'notes',
