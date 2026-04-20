@@ -8,6 +8,7 @@ import Inventory from './pages/Inventory';
 import Activity from './pages/Activity';
 import ComingSoon from './pages/ComingSoon';
 import People from './pages/People';
+import Archive from './pages/Archive';
 
 export default function App() {
   return (
@@ -21,7 +22,7 @@ export default function App() {
           <Route path="/activity" element={<ProtectedRoute><Activity /></ProtectedRoute>} />
           <Route path="/people" element={<ProtectedRoute><People /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><ComingSoon title="Settings" /></ProtectedRoute>} />
-          <Route path="/archive" element={<ProtectedRoute><ComingSoon title="Archive" /></ProtectedRoute>} />
+          <Route path="/archive" element={<ProtectedRoute><Archive /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
       </BrowserRouter>

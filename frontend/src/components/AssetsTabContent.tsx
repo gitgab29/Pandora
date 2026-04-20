@@ -571,6 +571,12 @@ export default function AssetsTabContent() {
           setDetailTarget(null);
           setEditTarget(a);
         }}
+        onRetire={notes => {
+          if (!detailTarget) return;
+          assetsApi.retire(detailTarget.id, notes)
+            .then(() => setAssets(prev => prev.filter(a => a.id !== detailTarget.id)))
+            .catch(() => {});
+        }}
       />
 
       {(filterOpen || sortOpen) && (

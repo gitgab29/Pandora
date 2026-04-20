@@ -5,8 +5,8 @@ from .models import User, Asset, Accessory, TransactionLog
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ('email', 'first_name', 'last_name', 'role', 'business_group', 'is_active')
-    list_filter = ('role', 'is_active', 'business_group')
+    list_display = ('email', 'first_name', 'last_name', 'role', 'business_group', 'is_active', 'is_archived', 'archive_reason')
+    list_filter = ('role', 'is_active', 'business_group', 'is_archived', 'archive_reason')
     search_fields = ('email', 'first_name', 'last_name', 'badge_number')
     ordering = ('last_name', 'first_name')
     fieldsets = (
@@ -27,15 +27,15 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(Asset)
 class AssetAdmin(admin.ModelAdmin):
-    list_display = ('asset_tag', 'category', 'status', 'assigned_to', 'model')
-    list_filter = ('category', 'status')
+    list_display = ('asset_tag', 'category', 'status', 'assigned_to', 'model', 'is_archived', 'archive_reason')
+    list_filter = ('category', 'status', 'is_archived', 'archive_reason')
     search_fields = ('asset_tag', 'serial_number', 'manufacturer', 'model')
 
 
 @admin.register(Accessory)
 class AccessoryAdmin(admin.ModelAdmin):
-    list_display = ('item_name', 'category', 'quantity_available', 'min_quantity', 'location')
-    list_filter = ('category',)
+    list_display = ('item_name', 'category', 'quantity_available', 'min_quantity', 'location', 'is_archived', 'archive_reason')
+    list_filter = ('category', 'is_archived', 'archive_reason')
     search_fields = ('item_name', 'model_number')
 
 

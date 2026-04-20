@@ -10,7 +10,8 @@ class UserMinimalSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    supervisor_detail = UserMinimalSerializer(source='supervisor', read_only=True)
+    supervisor_detail  = UserMinimalSerializer(source='supervisor',   read_only=True)
+    archived_by_detail = UserMinimalSerializer(source='archived_by',  read_only=True)
     password = serializers.CharField(write_only=True, required=False)
 
     class Meta:
@@ -19,9 +20,14 @@ class UserSerializer(serializers.ModelSerializer):
             'id', 'first_name', 'last_name', 'email', 'password',
             'title', 'location', 'business_group', 'supervisor', 'supervisor_detail',
             'badge_number', 'role', 'notes', 'is_active',
+            'is_archived', 'archive_reason', 'archived_at', 'archived_by',
+            'archived_by_detail', 'archive_notes',
             'created_at', 'updated_at',
         )
-        read_only_fields = ('id', 'created_at', 'updated_at')
+        read_only_fields = (
+            'id', 'created_at', 'updated_at',
+            'is_archived', 'archive_reason', 'archived_at', 'archived_by', 'archived_by_detail',
+        )
 
     def create(self, validated_data):
         password = validated_data.pop('password', None)
@@ -45,6 +51,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class AssetSerializer(serializers.ModelSerializer):
     assigned_to_detail = UserMinimalSerializer(source='assigned_to', read_only=True)
+    archived_by_detail = UserMinimalSerializer(source='archived_by', read_only=True)
 
     class Meta:
         model = Asset
@@ -57,13 +64,19 @@ class AssetSerializer(serializers.ModelSerializer):
             'notes', 'group', 'imei_number',
             'cpu', 'gpu', 'operating_system',
             'ram', 'screen_size', 'storage_size', 'metadata',
+            'is_archived', 'archive_reason', 'archived_at', 'archived_by',
+            'archived_by_detail', 'archive_notes',
             'created_at', 'updated_at',
         )
-        read_only_fields = ('id', 'created_at', 'updated_at')
+        read_only_fields = (
+            'id', 'created_at', 'updated_at',
+            'is_archived', 'archive_reason', 'archived_at', 'archived_by', 'archived_by_detail',
+        )
 
 
 class AccessorySerializer(serializers.ModelSerializer):
-    total_cost = serializers.SerializerMethodField()
+    total_cost         = serializers.SerializerMethodField()
+    archived_by_detail = UserMinimalSerializer(source='archived_by', read_only=True)
 
     class Meta:
         model = Accessory
@@ -72,9 +85,14 @@ class AccessorySerializer(serializers.ModelSerializer):
             'purchase_date', 'unit_cost', 'total_cost', 'order_number',
             'min_quantity', 'category', 'manufacturer', 'supplier',
             'location', 'notes',
+            'is_archived', 'archive_reason', 'archived_at', 'archived_by',
+            'archived_by_detail', 'archive_notes',
             'created_at', 'updated_at',
         )
-        read_only_fields = ('id', 'created_at', 'updated_at')
+        read_only_fields = (
+            'id', 'created_at', 'updated_at',
+            'is_archived', 'archive_reason', 'archived_at', 'archived_by', 'archived_by_detail',
+        )
 
     def get_total_cost(self, obj):
         if obj.unit_cost is not None and obj.quantity_available is not None:
@@ -84,10 +102,10 @@ class AccessorySerializer(serializers.ModelSerializer):
 
 class TransactionLogSerializer(serializers.ModelSerializer):
     performed_by_detail = UserMinimalSerializer(source='performed_by', read_only=True)
-    to_user_detail = UserMinimalSerializer(source='to_user', read_only=True)
-    from_user_detail = UserMinimalSerializer(source='from_user', read_only=True)
-    asset_detail = serializers.SerializerMethodField()
-    accessory_detail = serializers.SerializerMethodField()
+    to_user_detail      = UserMinimalSerializer(source='to_user',       read_only=True)
+    from_user_detail    = UserMinimalSerializer(source='from_user',     read_only=True)
+    asset_detail        = serializers.SerializerMethodField()
+    accessory_detail    = serializers.SerializerMethodField()
 
     class Meta:
         model = TransactionLog

@@ -91,6 +91,15 @@ export const usersApi = {
 
   remove: (id: string) =>
     api.delete(`/users/${id}/`),
+
+  retire: (id: string, notes?: string) =>
+    api.post<Person>(`/users/${id}/retire/`, { archive_notes: notes }).then(r => r.data),
+
+  restore: (id: string) =>
+    api.post<Person>(`/users/${id}/restore/`).then(r => r.data),
+
+  hardDelete: (id: string) =>
+    api.delete(`/users/${id}/hard_delete/`),
 };
 
 // ── Assets ────────────────────────────────────────────────────────────────────
@@ -110,6 +119,15 @@ export const assetsApi = {
 
   remove: (id: string) =>
     api.delete(`/assets/${id}/`),
+
+  retire: (id: string, notes?: string) =>
+    api.post<Asset>(`/assets/${id}/retire/`, { archive_notes: notes }).then(r => r.data),
+
+  restore: (id: string) =>
+    api.post<Asset>(`/assets/${id}/restore/`).then(r => r.data),
+
+  hardDelete: (id: string) =>
+    api.delete(`/assets/${id}/hard_delete/`),
 
   checkOut: (id: string, userId: string, notes?: string) =>
     api.post<Asset>(`/assets/${id}/check_out/`, { user_id: userId, notes }).then(r => r.data),
@@ -138,6 +156,15 @@ export const accessoriesApi = {
 
   remove: (id: string) =>
     api.delete(`/accessories/${id}/`),
+
+  retire: (id: string, notes?: string) =>
+    api.post<Accessory>(`/accessories/${id}/retire/`, { archive_notes: notes }).then(r => r.data),
+
+  restore: (id: string) =>
+    api.post<Accessory>(`/accessories/${id}/restore/`).then(r => r.data),
+
+  hardDelete: (id: string) =>
+    api.delete(`/accessories/${id}/hard_delete/`),
 
   checkOut: (id: string, quantity: number, userId?: string, notes?: string) =>
     api.post<Accessory>(`/accessories/${id}/check_out/`, { quantity, user_id: userId, notes }).then(r => r.data),

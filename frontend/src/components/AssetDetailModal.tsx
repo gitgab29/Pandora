@@ -1,13 +1,16 @@
+import { useState } from 'react';
 import { X, Pencil, Monitor, Laptop, Smartphone, Tablet, Cpu, Package } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Asset, AssetStatus } from '../types/asset';
 import { ASSET_STATUS_LABELS } from '../types/asset';
+import RetireModal from './RetireModal';
 
 interface AssetDetailModalProps {
   isOpen: boolean;
   asset: Asset | null;
   onClose: () => void;
   onEdit: () => void;
+  onRetire?: (notes?: string) => void;
 }
 
 const STATUS_COLORS: Record<AssetStatus, string> = {
@@ -48,7 +51,8 @@ function SectionLabel({ children, style }: { children: React.ReactNode; style?: 
   );
 }
 
-export default function AssetDetailModal({ isOpen, asset, onClose, onEdit }: AssetDetailModalProps) {
+export default function AssetDetailModal({ isOpen, asset, onClose, onEdit, onRetire }: AssetDetailModalProps) {
+  const [retireOpen, setRetireOpen] = useState(false);
   if (!isOpen || !asset) return null;
 
   const statusColor = STATUS_COLORS[asset.status] ?? colors.blueGrayMd;
@@ -70,6 +74,7 @@ export default function AssetDetailModal({ isOpen, asset, onClose, onEdit }: Ass
   };
 
   return (
+    <>
     <div
       onClick={onClose}
       style={{ position: 'fixed', inset: 0, backgroundColor: colors.overlay, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: spacing.xl }}
@@ -127,6 +132,16 @@ export default function AssetDetailModal({ isOpen, asset, onClose, onEdit }: Ass
               <Pencil size={12} />
               Edit
             </button>
+            {onRetire && (
+              <button
+                onClick={() => setRetireOpen(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: `1px solid rgba(252,156,45,0.35)`, backgroundColor: 'rgba(252,156,45,0.08)', fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: colors.orangeAccent, cursor: 'pointer', transition: 'background-color 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(252,156,45,0.15)')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(252,156,45,0.08)')}
+              >
+                Retire
+              </button>
+            )}
             <button
               onClick={onClose}
               style={{ width: '1.75rem', height: '1.75rem', borderRadius: radius.full, backgroundColor: colors.closeBtn, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.white, padding: 0 }}
@@ -207,5 +222,15 @@ export default function AssetDetailModal({ isOpen, asset, onClose, onEdit }: Ass
         </div>
       </div>
     </div>
+    {onRetire && (
+      <RetireModal
+        isOpen={retireOpen}
+        itemName={asset.asset_tag}
+        itemType="Asset"
+        onClose={() => setRetireOpen(false)}
+        onConfirm={notes => { onRetire(notes); onClose(); }}
+      />
+    )}
+    </>
   );
 }

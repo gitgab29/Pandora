@@ -1,4 +1,5 @@
 import uuid
+from datetime import timedelta
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils import timezone
@@ -29,7 +30,25 @@ class TimeStampedModel(models.Model):
         abstract = True
 
 
-class User(AbstractUser, TimeStampedModel):
+class ArchivableMixin(models.Model):
+    class ArchiveReason(models.TextChoices):
+        DELETED = 'DELETED', 'Deleted'
+        RETIRED = 'RETIRED', 'Retired'
+
+    is_archived    = models.BooleanField(default=False, db_index=True)
+    archive_reason = models.CharField(max_length=20, choices=ArchiveReason.choices, blank=True)
+    archived_at    = models.DateTimeField(null=True, blank=True)
+    archived_by    = models.ForeignKey(
+        'User', null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='+',
+    )
+    archive_notes  = models.TextField(blank=True)
+
+    class Meta:
+        abstract = True
+
+
+class User(AbstractUser, TimeStampedModel, ArchivableMixin):
     class Role(models.TextChoices):
         ADMIN = 'ADMIN', 'Admin'
         STAFF = 'STAFF', 'Staff'
@@ -63,7 +82,7 @@ class User(AbstractUser, TimeStampedModel):
         return f'{self.first_name} {self.last_name} <{self.email}>'
 
 
-class Asset(TimeStampedModel):
+class Asset(TimeStampedModel, ArchivableMixin):
     class Status(models.TextChoices):
         AVAILABLE = 'AVAILABLE', 'Available'
         DEPLOYED = 'DEPLOYED', 'Deployed'
@@ -122,7 +141,7 @@ class Asset(TimeStampedModel):
         return self.asset_tag
 
 
-class Accessory(TimeStampedModel):
+class Accessory(TimeStampedModel, ArchivableMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     item_name = models.CharField(max_length=255)
     quantity_available = models.IntegerField(default=0)
@@ -147,10 +166,12 @@ class Accessory(TimeStampedModel):
 
 class TransactionLog(models.Model):
     class TransactionType(models.TextChoices):
-        CHECK_OUT = 'CHECK_OUT', 'Check Out'
-        CHECK_IN = 'CHECK_IN', 'Check In'
-        TRANSFER = 'TRANSFER', 'Transfer'
+        CHECK_OUT  = 'CHECK_OUT',  'Check Out'
+        CHECK_IN   = 'CHECK_IN',   'Check In'
+        TRANSFER   = 'TRANSFER',   'Transfer'
         ADJUSTMENT = 'ADJUSTMENT', 'Adjustment'
+        ARCHIVE    = 'ARCHIVE',    'Archive'
+        RESTORE    = 'RESTORE',    'Restore'
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     transaction_date = models.DateTimeField(default=timezone.now)

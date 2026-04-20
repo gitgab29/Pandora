@@ -1,7 +1,8 @@
-import { X, ArchiveIcon } from 'lucide-react';
+import { useState } from 'react';
+import { X, Trash2 } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 
-interface DeleteConfirmModalProps {
+interface HardDeleteConfirmModalProps {
   isOpen: boolean;
   itemName: string;
   itemType: string;
@@ -9,23 +10,33 @@ interface DeleteConfirmModalProps {
   onConfirm: () => void;
 }
 
-export default function DeleteConfirmModal({
+export default function HardDeleteConfirmModal({
   isOpen,
   itemName,
   itemType,
   onClose,
   onConfirm,
-}: DeleteConfirmModalProps) {
+}: HardDeleteConfirmModalProps) {
+  const [typed, setTyped] = useState('');
+
   if (!isOpen) return null;
 
-  const handleConfirm = () => {
-    onConfirm();
+  const canConfirm = typed === itemName;
+
+  const handleClose = () => {
+    setTyped('');
     onClose();
+  };
+
+  const handleConfirm = () => {
+    if (!canConfirm) return;
+    setTyped('');
+    onConfirm();
   };
 
   return (
     <div
-      onClick={onClose}
+      onClick={handleClose}
       style={{
         position: 'fixed',
         inset: 0,
@@ -48,9 +59,8 @@ export default function DeleteConfirmModal({
           boxShadow: shadows.modal,
         }}
       >
-        {/* Close button */}
         <button
-          onClick={onClose}
+          onClick={handleClose}
           style={{
             position: 'absolute',
             top: spacing.md,
@@ -71,20 +81,19 @@ export default function DeleteConfirmModal({
           <X size={14} />
         </button>
 
-        {/* Archive icon circle */}
         <div
           style={{
             width: '3.75rem',
             height: '3.75rem',
             borderRadius: radius.full,
-            backgroundColor: 'rgba(252,156,45,0.12)',
+            backgroundColor: colors.error,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: `0 auto ${spacing.lg}`,
           }}
         >
-          <ArchiveIcon size={22} color={colors.orangeAccent} />
+          <Trash2 size={22} color={colors.white} />
         </div>
 
         <h3
@@ -96,7 +105,7 @@ export default function DeleteConfirmModal({
             margin: `0 0 ${spacing.sm}`,
           }}
         >
-          Move to Archive
+          Delete Permanently
         </h3>
 
         <p
@@ -108,13 +117,35 @@ export default function DeleteConfirmModal({
             lineHeight: 1.5,
           }}
         >
-          <strong style={{ color: colors.textPrimary }}>{itemName}</strong> will be moved to
-          the Archive. You can restore it at any time from the Archive page.
+          This <strong style={{ color: colors.error }}>cannot be undone</strong>. Type{' '}
+          <strong style={{ color: colors.textPrimary }}>{itemName}</strong> to permanently
+          delete this {itemType.toLowerCase()}.
         </p>
+
+        <input
+          type="text"
+          value={typed}
+          onChange={e => setTyped(e.target.value)}
+          placeholder={`Type "${itemName}"`}
+          autoFocus
+          style={{
+            width: '100%',
+            padding: '0.4375rem 0.625rem',
+            borderRadius: radius.md,
+            border: `1.5px solid ${typed.length > 0 && !canConfirm ? colors.error : colors.border}`,
+            fontFamily: "'Archivo', sans-serif",
+            fontSize: fontSize.sm,
+            color: colors.textPrimary,
+            outline: 'none',
+            boxSizing: 'border-box',
+            marginBottom: spacing.lg,
+            transition: 'border-color 0.15s',
+          }}
+        />
 
         <div style={{ display: 'flex', gap: spacing.md }}>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             style={{
               flex: 1,
               padding: `${spacing.sm} ${spacing.lg}`,
@@ -132,21 +163,22 @@ export default function DeleteConfirmModal({
           </button>
           <button
             onClick={handleConfirm}
+            disabled={!canConfirm}
             style={{
               flex: 1,
               padding: `${spacing.sm} ${spacing.lg}`,
               borderRadius: radius.full,
               border: 'none',
-              backgroundColor: colors.orangeAccent,
+              backgroundColor: canConfirm ? colors.error : colors.bgDisabled,
               fontFamily: "'Archivo', sans-serif",
               fontSize: fontSize.md,
               fontWeight: 600,
-              color: colors.white,
-              cursor: 'pointer',
+              color: canConfirm ? colors.white : colors.textDisabled,
+              cursor: canConfirm ? 'pointer' : 'not-allowed',
               transition: 'background-color 0.15s',
             }}
           >
-            Move to Archive
+            Delete Forever
           </button>
         </div>
       </div>

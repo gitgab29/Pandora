@@ -9,6 +9,7 @@ import { assetsApi, transactionsApi } from '../api';
 import AssetCheckInModal from './AssetCheckInModal';
 import AssignAssetToPersonModal from './AssignAssetToPersonModal';
 import AssignAccessoryToPersonModal from './AssignAccessoryToPersonModal';
+import RetireModal from './RetireModal';
 
 interface PersonDetailModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface PersonDetailModalProps {
   allPeople: Person[];
   onClose: () => void;
   onEdit: () => void;
+  onRetire?: (notes?: string) => void;
 }
 
 // ── Avatar palette ─────────────────────────────────────────────────────────────
@@ -81,8 +83,9 @@ function actionPillStyle(bg: string): React.CSSProperties {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export default function PersonDetailModal({ isOpen, person, allPeople, onClose, onEdit }: PersonDetailModalProps) {
+export default function PersonDetailModal({ isOpen, person, allPeople, onClose, onEdit, onRetire }: PersonDetailModalProps) {
   const [activeTab, setActiveTab] = useState<'Assets' | 'Accessories'>('Assets');
+  const [retireOpen, setRetireOpen] = useState(false);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [accessoryTxns, setAccessoryTxns] = useState<TransactionLog[]>([]);
   const [checkInTarget, setCheckInTarget] = useState<Asset | null>(null);
@@ -181,6 +184,16 @@ export default function PersonDetailModal({ isOpen, person, allPeople, onClose, 
                 <Pencil size={12} />
                 Edit
               </button>
+              {onRetire && (
+                <button
+                  onClick={() => setRetireOpen(true)}
+                  style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: `1px solid rgba(252,156,45,0.35)`, backgroundColor: 'rgba(252,156,45,0.08)', fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: colors.orangeAccent, cursor: 'pointer', transition: 'background-color 0.15s' }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(252,156,45,0.15)')}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(252,156,45,0.08)')}
+                >
+                  Retire
+                </button>
+              )}
               <button
                 onClick={onClose}
                 style={{ width: '1.75rem', height: '1.75rem', borderRadius: radius.full, backgroundColor: colors.closeBtn, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.white, padding: 0 }}
@@ -386,6 +399,15 @@ export default function PersonDetailModal({ isOpen, person, allPeople, onClose, 
         onClose={() => setAssignAccessoryOpen(false)}
         onAssigned={handleAccessoryAssigned}
       />
+      {onRetire && (
+        <RetireModal
+          isOpen={retireOpen}
+          itemName={`${person.first_name} ${person.last_name}`}
+          itemType="User"
+          onClose={() => setRetireOpen(false)}
+          onConfirm={notes => { onRetire(notes); onClose(); }}
+        />
+      )}
     </>
   );
 }

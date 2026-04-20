@@ -63,6 +63,12 @@ export interface Asset {
   screen_size?: string;
   storage_size?: string;
   metadata?: Record<string, unknown>;
+  is_archived?: boolean;
+  archive_reason?: 'DELETED' | 'RETIRED' | '';
+  archived_at?: string | null;
+  archived_by?: string | null;
+  archived_by_detail?: UserMinimal | null;
+  archive_notes?: string;
   created_at: string;
   updated_at: string;
 }

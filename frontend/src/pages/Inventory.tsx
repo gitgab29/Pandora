@@ -775,6 +775,12 @@ export default function Inventory() {
           setDetailTarget(null);
           setEditTarget(item);
         }}
+        onRetire={notes => {
+          if (!detailTarget) return;
+          accessoriesApi.retire(detailTarget.id, notes)
+            .then(() => { setInventory(prev => prev.filter(i => i.id !== detailTarget.id)); setDetailTarget(null); })
+            .catch(() => {});
+        }}
       />
 
       {/* Backdrop — closes open dropdowns on outside click */}

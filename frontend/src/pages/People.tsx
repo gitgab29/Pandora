@@ -487,6 +487,12 @@ export default function People() {
           setDetailPerson(null);
           setEditPerson(p);
         }}
+        onRetire={notes => {
+          if (!detailPerson) return;
+          usersApi.retire(detailPerson.id, notes)
+            .then(() => { setPeople(prev => prev.filter(p => p.id !== detailPerson.id)); setDetailPerson(null); })
+            .catch(() => {});
+        }}
       />
 
       {/* Delete */}

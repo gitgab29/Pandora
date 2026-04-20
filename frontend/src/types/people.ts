@@ -17,6 +17,11 @@ export interface Person {
   role: PersonRole;
   is_active: boolean;
   notes: string;
+  is_archived?: boolean;
+  archive_reason?: 'DELETED' | 'RETIRED' | '';
+  archived_at?: string | null;
+  archived_by?: string | null;
+  archive_notes?: string;
   created_at: string;
   updated_at: string;
 }

@@ -1,21 +1,23 @@
-import { X, ArchiveIcon } from 'lucide-react';
+import { X, RotateCcw } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 
-interface DeleteConfirmModalProps {
+interface RestoreConfirmModalProps {
   isOpen: boolean;
   itemName: string;
   itemType: string;
+  destination: string;
   onClose: () => void;
   onConfirm: () => void;
 }
 
-export default function DeleteConfirmModal({
+export default function RestoreConfirmModal({
   isOpen,
   itemName,
   itemType,
+  destination,
   onClose,
   onConfirm,
-}: DeleteConfirmModalProps) {
+}: RestoreConfirmModalProps) {
   if (!isOpen) return null;
 
   const handleConfirm = () => {
@@ -48,7 +50,6 @@ export default function DeleteConfirmModal({
           boxShadow: shadows.modal,
         }}
       >
-        {/* Close button */}
         <button
           onClick={onClose}
           style={{
@@ -71,20 +72,19 @@ export default function DeleteConfirmModal({
           <X size={14} />
         </button>
 
-        {/* Archive icon circle */}
         <div
           style={{
             width: '3.75rem',
             height: '3.75rem',
             borderRadius: radius.full,
-            backgroundColor: 'rgba(252,156,45,0.12)',
+            backgroundColor: 'rgba(34,197,94,0.12)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: `0 auto ${spacing.lg}`,
           }}
         >
-          <ArchiveIcon size={22} color={colors.orangeAccent} />
+          <RotateCcw size={22} color={colors.success} />
         </div>
 
         <h3
@@ -96,7 +96,7 @@ export default function DeleteConfirmModal({
             margin: `0 0 ${spacing.sm}`,
           }}
         >
-          Move to Archive
+          Restore {itemType}
         </h3>
 
         <p
@@ -108,8 +108,8 @@ export default function DeleteConfirmModal({
             lineHeight: 1.5,
           }}
         >
-          <strong style={{ color: colors.textPrimary }}>{itemName}</strong> will be moved to
-          the Archive. You can restore it at any time from the Archive page.
+          <strong style={{ color: colors.textPrimary }}>{itemName}</strong> will be restored
+          and will reappear in <strong style={{ color: colors.textPrimary }}>{destination}</strong>.
         </p>
 
         <div style={{ display: 'flex', gap: spacing.md }}>
@@ -137,7 +137,7 @@ export default function DeleteConfirmModal({
               padding: `${spacing.sm} ${spacing.lg}`,
               borderRadius: radius.full,
               border: 'none',
-              backgroundColor: colors.orangeAccent,
+              backgroundColor: colors.success,
               fontFamily: "'Archivo', sans-serif",
               fontSize: fontSize.md,
               fontWeight: 600,
@@ -146,7 +146,7 @@ export default function DeleteConfirmModal({
               transition: 'background-color 0.15s',
             }}
           >
-            Move to Archive
+            Restore
           </button>
         </div>
       </div>

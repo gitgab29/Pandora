@@ -26,7 +26,7 @@ const NAV_ITEMS: NavItem[] = [
   { icon: Activity,      label: 'Activity',  path: '/activity' },
   { icon: Users,         label: 'People',    path: '/people' },
   { icon: Settings,      label: 'Settings',  path: '/settings' },
-  { icon: Archive,       label: 'Archive',   path: '/archive', badge: true },
+  { icon: Archive,       label: 'Archive',   path: '/archive' },
 ];
 
 // Semi-transparent primary so bg-auth.jpg shows through

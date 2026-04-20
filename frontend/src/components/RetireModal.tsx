@@ -1,31 +1,34 @@
-import { X, ArchiveIcon } from 'lucide-react';
+import { useState } from 'react';
+import { X, Archive } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 
-interface DeleteConfirmModalProps {
+interface RetireModalProps {
   isOpen: boolean;
   itemName: string;
   itemType: string;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (notes?: string) => void;
 }
 
-export default function DeleteConfirmModal({
-  isOpen,
-  itemName,
-  itemType,
-  onClose,
-  onConfirm,
-}: DeleteConfirmModalProps) {
+export default function RetireModal({ isOpen, itemName, itemType, onClose, onConfirm }: RetireModalProps) {
+  const [notes, setNotes] = useState('');
+
   if (!isOpen) return null;
 
   const handleConfirm = () => {
-    onConfirm();
+    onConfirm(notes.trim() || undefined);
+    setNotes('');
+    onClose();
+  };
+
+  const handleClose = () => {
+    setNotes('');
     onClose();
   };
 
   return (
     <div
-      onClick={onClose}
+      onClick={handleClose}
       style={{
         position: 'fixed',
         inset: 0,
@@ -33,7 +36,7 @@ export default function DeleteConfirmModal({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1000,
+        zIndex: 1100,
       }}
     >
       <div
@@ -48,9 +51,8 @@ export default function DeleteConfirmModal({
           boxShadow: shadows.modal,
         }}
       >
-        {/* Close button */}
         <button
-          onClick={onClose}
+          onClick={handleClose}
           style={{
             position: 'absolute',
             top: spacing.md,
@@ -71,7 +73,6 @@ export default function DeleteConfirmModal({
           <X size={14} />
         </button>
 
-        {/* Archive icon circle */}
         <div
           style={{
             width: '3.75rem',
@@ -84,7 +85,7 @@ export default function DeleteConfirmModal({
             margin: `0 auto ${spacing.lg}`,
           }}
         >
-          <ArchiveIcon size={22} color={colors.orangeAccent} />
+          <Archive size={22} color={colors.orangeAccent} />
         </div>
 
         <h3
@@ -96,7 +97,7 @@ export default function DeleteConfirmModal({
             margin: `0 0 ${spacing.sm}`,
           }}
         >
-          Move to Archive
+          Retire {itemType}
         </h3>
 
         <p
@@ -109,12 +110,32 @@ export default function DeleteConfirmModal({
           }}
         >
           <strong style={{ color: colors.textPrimary }}>{itemName}</strong> will be moved to
-          the Archive. You can restore it at any time from the Archive page.
+          the Archive as <strong style={{ color: colors.orangeAccent }}>Retired</strong>.
         </p>
+
+        <textarea
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          placeholder="Reason for retirement (optional)"
+          rows={3}
+          style={{
+            width: '100%',
+            padding: '0.4375rem 0.625rem',
+            borderRadius: radius.md,
+            border: `1.5px solid ${colors.border}`,
+            fontFamily: "'Archivo', sans-serif",
+            fontSize: fontSize.sm,
+            color: colors.textPrimary,
+            outline: 'none',
+            resize: 'none',
+            boxSizing: 'border-box',
+            marginBottom: spacing.lg,
+          }}
+        />
 
         <div style={{ display: 'flex', gap: spacing.md }}>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             style={{
               flex: 1,
               padding: `${spacing.sm} ${spacing.lg}`,
@@ -146,7 +167,7 @@ export default function DeleteConfirmModal({
               transition: 'background-color 0.15s',
             }}
           >
-            Move to Archive
+            Retire
           </button>
         </div>
       </div>
