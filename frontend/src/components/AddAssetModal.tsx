@@ -10,19 +10,18 @@ interface AddAssetModalProps {
 }
 
 const EMPTY_FORM: AddAssetFormData = {
-  asset_tag: '', category: '', status: '',
+  asset_tag: '', model: '', category: '', status: '',
   serial_number: '', warranty_expiry: '', end_of_life: '',
   order_number: '', purchase_date: '', purchase_cost: '',
   depreciation_value: '', manufacturer: '', supplier: '',
-  department: '', assigned_to: '', notes: '',
-  group: '', imei_number: '', ssd_encryption_status: '',
-  connectivity: '', cpu: '', gpu: '', operating_system: '',
+  assigned_to: '', notes: '',
+  group: '', imei_number: '',
+  cpu: '', gpu: '', operating_system: '',
   ram: '', screen_size: '', storage_size: '',
 };
 
 const ASSET_STATUSES: AssetStatus[] = ['AVAILABLE', 'DEPLOYED', 'IN_REPAIR', 'IN_MAINTENANCE', 'TO_AUDIT', 'LOST'];
 const ASSET_CATEGORIES = ['Laptop', 'Phone', 'Tablet', 'PC', 'Monitor', 'Accessory', 'Other'];
-const SSD_OPTIONS = ['Enabled', 'Disabled', 'N/A'];
 
 // ── Shared field styles ───────────────────────────────────────────────────────
 
@@ -215,6 +214,7 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
             <TextInput label="Serial Number *" value={form.serial_number} onChange={set('serial_number')} placeholder="e.g. C02X12ABCDEF" />
             <SelectInput label="Category *" value={form.category} options={ASSET_CATEGORIES} onChange={set('category')} />
             <SelectInput label="Status *" value={form.status} options={ASSET_STATUSES} onChange={set('status')} />
+            <TextInput label="Model" value={form.model} onChange={set('model')} placeholder="e.g. MacBook Pro 14" />
           </div>
 
           {/* ── Assignment ── */}
@@ -222,7 +222,6 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
             <TextInput label="Assigned To" value={form.assigned_to} onChange={set('assigned_to')} placeholder="e.g. Jane Smith" />
             <TextInput label="Group" value={form.group} onChange={set('group')} placeholder="e.g. Engineering" />
-            <TextInput label="Department" value={form.department} onChange={set('department')} placeholder="e.g. IT" />
           </div>
 
           {/* ── Hardware Specifications ── */}
@@ -234,9 +233,7 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
             <TextInput label="Storage Size" value={form.storage_size} onChange={set('storage_size')} placeholder="e.g. 512 GB SSD" />
             <TextInput label="Screen Size" value={form.screen_size} onChange={set('screen_size')} placeholder="e.g. 14 inch" />
             <TextInput label="Operating System" value={form.operating_system} onChange={set('operating_system')} placeholder="e.g. macOS 14" />
-            <TextInput label="Connectivity" value={form.connectivity} onChange={set('connectivity')} placeholder="e.g. Wi-Fi 6E, Bluetooth 5.3" />
             <TextInput label="IMEI Number" value={form.imei_number} onChange={set('imei_number')} placeholder="For phones/tablets" />
-            <SelectInput label="SSD Encryption" value={form.ssd_encryption_status} options={SSD_OPTIONS} onChange={set('ssd_encryption_status')} placeholder="Select status" />
           </div>
 
           {/* ── Purchase Information ── */}
@@ -245,8 +242,8 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
             <TextInput label="Manufacturer" value={form.manufacturer} onChange={set('manufacturer')} placeholder="e.g. Apple" />
             <TextInput label="Supplier" value={form.supplier} onChange={set('supplier')} placeholder="e.g. CDW" />
             <TextInput label="Purchase Date" value={form.purchase_date} onChange={set('purchase_date')} type="date" />
-            <TextInput label="Purchase Cost ($)" value={form.purchase_cost} onChange={set('purchase_cost')} placeholder="e.g. 1299.00" type="number" />
-            <TextInput label="Depreciation Value ($)" value={form.depreciation_value} onChange={set('depreciation_value')} placeholder="e.g. 900.00" type="number" />
+            <TextInput label="Purchase Cost (₱)" value={form.purchase_cost} onChange={set('purchase_cost')} placeholder="e.g. 1299.00" type="number" />
+            <TextInput label="Depreciation Value (₱)" value={form.depreciation_value} onChange={set('depreciation_value')} placeholder="e.g. 900.00" type="number" />
             <TextInput label="Order Number" value={form.order_number} onChange={set('order_number')} placeholder="e.g. PO-2024-00123" />
             <TextInput label="Warranty Expiry" value={form.warranty_expiry} onChange={set('warranty_expiry')} type="date" />
             <TextInput label="End of Life" value={form.end_of_life} onChange={set('end_of_life')} type="date" />

@@ -66,7 +66,7 @@ export default function AssetDetailModal({ isOpen, asset, onClose, onEdit }: Ass
 
   const formatCurrency = (v?: number) => {
     if (v == null) return null;
-    return `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `₱${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   return (
@@ -80,18 +80,10 @@ export default function AssetDetailModal({ isOpen, asset, onClose, onEdit }: Ass
       >
         {/* ── Header ── */}
         <div style={{ padding: `${spacing.xl} ${spacing.xl} ${spacing.lg}`, borderBottom: '1px solid rgba(70,98,145,0.1)', display: 'flex', alignItems: 'flex-start', gap: spacing.lg, flexShrink: 0 }}>
-          {/* Thumbnail */}
-          {asset.image_url ? (
-            <img
-              src={asset.image_url}
-              alt={asset.asset_tag}
-              style={{ width: '3.5rem', height: '3.5rem', borderRadius: radius.lg, objectFit: 'cover', border: '2px solid rgba(70,98,145,0.1)', flexShrink: 0 }}
-            />
-          ) : (
-            <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: radius.lg, backgroundColor: 'rgba(46,124,253,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <CategoryIcon size={22} color={colors.primary} />
-            </div>
-          )}
+          {/* Category icon */}
+          <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: radius.lg, backgroundColor: 'rgba(46,124,253,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <CategoryIcon size={22} color={colors.primary} />
+          </div>
 
           {/* Title + badges */}
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -150,7 +142,7 @@ export default function AssetDetailModal({ isOpen, asset, onClose, onEdit }: Ass
             <InfoField label="Category" value={asset.category} />
             <InfoField label="Status" value={statusLabel} />
             <InfoField label="Current Holder" value={holder} />
-            <InfoField label="Business Group" value={asset.business_group} />
+            <InfoField label="Model" value={asset.model} />
           </div>
 
           {/* Procurement */}
@@ -173,7 +165,7 @@ export default function AssetDetailModal({ isOpen, asset, onClose, onEdit }: Ass
           </div>
 
           {/* Specs */}
-          {(asset.cpu || asset.ram || asset.storage_size || asset.gpu || asset.operating_system || asset.screen_size || asset.connectivity || asset.ssd_encryption_status || asset.imei_number) && (
+          {(asset.cpu || asset.ram || asset.storage_size || asset.gpu || asset.operating_system || asset.screen_size || asset.imei_number) && (
             <>
               <SectionLabel style={{ marginTop: spacing.xl }}>Specifications</SectionLabel>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: `${spacing.lg} ${spacing.xl2}`, marginTop: spacing.md }}>
@@ -183,8 +175,6 @@ export default function AssetDetailModal({ isOpen, asset, onClose, onEdit }: Ass
                 <InfoField label="GPU" value={asset.gpu} />
                 <InfoField label="OS" value={asset.operating_system} />
                 <InfoField label="Screen Size" value={asset.screen_size} />
-                <InfoField label="Connectivity" value={asset.connectivity} />
-                <InfoField label="SSD Encryption" value={asset.ssd_encryption_status} />
                 <InfoField label="IMEI" value={asset.imei_number} />
               </div>
             </>

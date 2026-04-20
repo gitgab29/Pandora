@@ -27,9 +27,9 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(Asset)
 class AssetAdmin(admin.ModelAdmin):
-    list_display = ('asset_tag', 'category', 'status', 'assigned_to', 'business_group')
-    list_filter = ('category', 'status', 'business_group')
-    search_fields = ('asset_tag', 'serial_number', 'manufacturer')
+    list_display = ('asset_tag', 'category', 'status', 'assigned_to', 'model')
+    list_filter = ('category', 'status')
+    search_fields = ('asset_tag', 'serial_number', 'manufacturer', 'model')
 
 
 @admin.register(Accessory)

@@ -13,7 +13,6 @@ interface EditAssetModalProps {
 
 const ASSET_STATUSES: AssetStatus[] = ['AVAILABLE', 'DEPLOYED', 'IN_REPAIR', 'IN_MAINTENANCE', 'TO_AUDIT', 'LOST'];
 const ASSET_CATEGORIES = ['Laptop', 'Phone', 'Tablet', 'PC', 'Monitor', 'Accessory', 'Other'];
-const SSD_OPTIONS = ['Enabled', 'Disabled', 'N/A'];
 
 // ── Shared field styles ───────────────────────────────────────────────────────
 
@@ -120,6 +119,7 @@ function SelectInput({
 function assetToForm(a: Asset): AddAssetFormData {
   return {
     asset_tag: a.asset_tag,
+    model: a.model ?? '',
     category: a.category,
     status: a.status,
     serial_number: a.serial_number,
@@ -131,13 +131,10 @@ function assetToForm(a: Asset): AddAssetFormData {
     depreciation_value: a.depreciation_value?.toString() ?? '',
     manufacturer: a.manufacturer ?? '',
     supplier: a.supplier ?? '',
-    department: a.department ?? '',
     assigned_to: a.assigned_to ?? '',
     notes: a.notes ?? '',
     group: a.group ?? '',
     imei_number: a.imei_number ?? '',
-    ssd_encryption_status: a.ssd_encryption_status ?? '',
-    connectivity: a.connectivity ?? '',
     cpu: a.cpu ?? '',
     gpu: a.gpu ?? '',
     operating_system: a.operating_system ?? '',
@@ -166,6 +163,7 @@ export default function EditAssetModal({ isOpen, asset, onClose, onSave }: EditA
     const updated: Asset = {
       ...asset,
       asset_tag: form.asset_tag.trim(),
+      model: form.model || undefined,
       category: form.category || asset.category,
       status: (form.status as AssetStatus) || asset.status,
       serial_number: form.serial_number.trim(),
@@ -177,13 +175,10 @@ export default function EditAssetModal({ isOpen, asset, onClose, onSave }: EditA
       depreciation_value: form.depreciation_value ? parseFloat(form.depreciation_value) : undefined,
       manufacturer: form.manufacturer || undefined,
       supplier: form.supplier || undefined,
-      department: form.department || undefined,
       assigned_to: form.assigned_to || undefined,
       notes: form.notes || undefined,
       group: form.group || undefined,
       imei_number: form.imei_number || undefined,
-      ssd_encryption_status: (form.ssd_encryption_status as Asset['ssd_encryption_status']) || undefined,
-      connectivity: form.connectivity || undefined,
       cpu: form.cpu || undefined,
       gpu: form.gpu || undefined,
       operating_system: form.operating_system || undefined,
@@ -265,6 +260,7 @@ export default function EditAssetModal({ isOpen, asset, onClose, onSave }: EditA
             <TextInput label="Serial Number *" value={form.serial_number} onChange={set('serial_number')} placeholder="e.g. C02X12ABCDEF" />
             <SelectInput label="Category *" value={form.category} options={ASSET_CATEGORIES} onChange={set('category')} />
             <SelectInput label="Status *" value={form.status} options={ASSET_STATUSES} onChange={set('status')} />
+            <TextInput label="Model" value={form.model} onChange={set('model')} placeholder="e.g. MacBook Pro 14" />
           </div>
 
           {/* ── Assignment ── */}
@@ -272,7 +268,6 @@ export default function EditAssetModal({ isOpen, asset, onClose, onSave }: EditA
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
             <TextInput label="Assigned To" value={form.assigned_to} onChange={set('assigned_to')} placeholder="e.g. Jane Smith" />
             <TextInput label="Group" value={form.group} onChange={set('group')} placeholder="e.g. Engineering" />
-            <TextInput label="Department" value={form.department} onChange={set('department')} placeholder="e.g. IT" />
           </div>
 
           {/* ── Hardware Specifications ── */}
@@ -284,9 +279,7 @@ export default function EditAssetModal({ isOpen, asset, onClose, onSave }: EditA
             <TextInput label="Storage Size" value={form.storage_size} onChange={set('storage_size')} placeholder="e.g. 512 GB SSD" />
             <TextInput label="Screen Size" value={form.screen_size} onChange={set('screen_size')} placeholder="e.g. 14 inch" />
             <TextInput label="Operating System" value={form.operating_system} onChange={set('operating_system')} placeholder="e.g. macOS 14" />
-            <TextInput label="Connectivity" value={form.connectivity} onChange={set('connectivity')} placeholder="e.g. Wi-Fi 6E, Bluetooth 5.3" />
             <TextInput label="IMEI Number" value={form.imei_number} onChange={set('imei_number')} placeholder="For phones/tablets" />
-            <SelectInput label="SSD Encryption" value={form.ssd_encryption_status} options={SSD_OPTIONS} onChange={set('ssd_encryption_status')} placeholder="Select status" />
           </div>
 
           {/* ── Purchase Information ── */}
@@ -295,8 +288,8 @@ export default function EditAssetModal({ isOpen, asset, onClose, onSave }: EditA
             <TextInput label="Manufacturer" value={form.manufacturer} onChange={set('manufacturer')} placeholder="e.g. Apple" />
             <TextInput label="Supplier" value={form.supplier} onChange={set('supplier')} placeholder="e.g. CDW" />
             <TextInput label="Purchase Date" value={form.purchase_date} onChange={set('purchase_date')} type="date" />
-            <TextInput label="Purchase Cost ($)" value={form.purchase_cost} onChange={set('purchase_cost')} placeholder="e.g. 1299.00" type="number" />
-            <TextInput label="Depreciation Value ($)" value={form.depreciation_value} onChange={set('depreciation_value')} placeholder="e.g. 900.00" type="number" />
+            <TextInput label="Purchase Cost (₱)" value={form.purchase_cost} onChange={set('purchase_cost')} placeholder="e.g. 1299.00" type="number" />
+            <TextInput label="Depreciation Value (₱)" value={form.depreciation_value} onChange={set('depreciation_value')} placeholder="e.g. 900.00" type="number" />
             <TextInput label="Order Number" value={form.order_number} onChange={set('order_number')} placeholder="e.g. PO-2024-00123" />
             <TextInput label="Warranty Expiry" value={form.warranty_expiry} onChange={set('warranty_expiry')} type="date" />
             <TextInput label="End of Life" value={form.end_of_life} onChange={set('end_of_life')} type="date" />

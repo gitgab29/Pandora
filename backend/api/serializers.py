@@ -49,13 +49,13 @@ class AssetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Asset
         fields = (
-            'id', 'image_url', 'asset_tag', 'category', 'status',
+            'id', 'asset_tag', 'model', 'category', 'status',
             'serial_number', 'warranty_expiry', 'end_of_life',
             'order_number', 'purchase_date', 'purchase_cost', 'depreciation_value',
-            'manufacturer', 'supplier', 'business_group',
+            'manufacturer', 'supplier',
             'assigned_to', 'assigned_to_detail',
-            'notes', 'group', 'imei_number', 'ssd_encryption_status',
-            'connectivity', 'cpu', 'gpu', 'operating_system',
+            'notes', 'group', 'imei_number',
+            'cpu', 'gpu', 'operating_system',
             'ram', 'screen_size', 'storage_size', 'metadata',
             'created_at', 'updated_at',
         )

@@ -86,14 +86,9 @@ class Asset(TimeStampedModel):
         PRODUCT = 'PRODUCT', 'Product'
         PARTS = 'PARTS', 'Parts'
 
-    class SSDEncryption(models.TextChoices):
-        ENABLED = 'ENABLED', 'Enabled'
-        DISABLED = 'DISABLED', 'Disabled'
-        NA = 'N/A', 'N/A'
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    image_url = models.CharField(max_length=255, blank=True)
     asset_tag = models.CharField(max_length=100, unique=True)
+    model = models.CharField(max_length=100, blank=True)
     category = models.CharField(max_length=50, choices=Category.choices, default=Category.OTHER)
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.AVAILABLE)
     serial_number = models.CharField(max_length=255, blank=True)
@@ -105,7 +100,6 @@ class Asset(TimeStampedModel):
     depreciation_value = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     manufacturer = models.CharField(max_length=100, blank=True)
     supplier = models.CharField(max_length=100, blank=True)
-    business_group = models.CharField(max_length=100, blank=True)
     assigned_to = models.ForeignKey(
         User, null=True, blank=True,
         on_delete=models.SET_NULL,
@@ -114,10 +108,6 @@ class Asset(TimeStampedModel):
     notes = models.TextField(blank=True)
     group = models.CharField(max_length=20, choices=Group.choices, blank=True)
     imei_number = models.CharField(max_length=20, blank=True)
-    ssd_encryption_status = models.CharField(
-        max_length=20, choices=SSDEncryption.choices, blank=True
-    )
-    connectivity = models.CharField(max_length=100, blank=True)
     cpu = models.CharField(max_length=100, blank=True)
     gpu = models.CharField(max_length=100, blank=True)
     operating_system = models.CharField(max_length=100, blank=True)

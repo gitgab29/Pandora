@@ -38,8 +38,8 @@ export interface UserMinimal {
 
 export interface Asset {
   id: string;
-  image_url?: string;
   asset_tag: string;
+  model?: string;
   category: AssetCategory | string;
   status: AssetStatus;
   serial_number: string;
@@ -51,14 +51,11 @@ export interface Asset {
   depreciation_value?: number;
   manufacturer?: string;
   supplier?: string;
-  business_group?: string;
   assigned_to?: string | null;
   assigned_to_detail?: UserMinimal | null;
   notes?: string;
   group?: string;
   imei_number?: string;
-  ssd_encryption_status?: 'ENABLED' | 'DISABLED' | 'N/A';
-  connectivity?: string;
   cpu?: string;
   gpu?: string;
   operating_system?: string;
@@ -72,6 +69,7 @@ export interface Asset {
 
 export interface AddAssetFormData {
   asset_tag: string;
+  model: string;
   category: string;
   status: AssetStatus | '';
   serial_number: string;
@@ -83,13 +81,10 @@ export interface AddAssetFormData {
   depreciation_value: string;
   manufacturer: string;
   supplier: string;
-  business_group: string;
   assigned_to: string;
   notes: string;
   group: string;
   imei_number: string;
-  ssd_encryption_status: string;
-  connectivity: string;
   cpu: string;
   gpu: string;
   operating_system: string;
