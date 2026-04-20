@@ -139,7 +139,7 @@ Filter params: `?category=`, `?status=`, `?business_group=`, `?transaction_type=
   - Superuser: `admin@embeddedsilicon.com` (run `python manage.py changepassword` to reset)
 - ❌ Google OAuth: backend endpoint scaffolded but requires `GOOGLE_OAUTH_CLIENT_ID` env var to function
 
-**Asset schema note:** `Asset` has no `asset_name` or `location` field — the displayed identifier is `asset_tag`. Bind new asset UI to `asset_tag`.
+**Asset schema note:** `Asset` has no `asset_name` or `location` field — the displayed identifier is `asset_tag`. Bind new asset UI to `asset_tag`. Fields removed from Asset: `image_url`, `business_group`, `ssd_encryption_status`, `connectivity`. `model` field added (CharField, optional).
 
 **`AssetStatus` is the backend enum, not Title Case.** Frontend `AssetStatus` type uses `'AVAILABLE' | 'DEPLOYED' | 'IN_REPAIR' | 'IN_MAINTENANCE' | 'TO_AUDIT' | 'LOST'` — matching `Asset.Status` in `backend/api/models.py`. Use `ASSET_STATUS_LABELS` (exported from `types/asset.ts`) when rendering display text. Never compare `asset.status === 'Available'` — it will silently fail.
 
@@ -180,6 +180,7 @@ Color restraint: Orange (`#fc9c2d`) reserved for genuine urgency (warnings, arch
 
 ## Recently completed
 
+- ✅ Asset schema cleanup — removed `image_url`, `business_group` (Department), `ssd_encryption_status`, `connectivity` from Asset model; added `model` field; currency symbol changed to ₱ throughout Asset UI; migration `0003` applied
 - ✅ Add `image_url` field to User model (backend + frontend) — People table and PersonDetailModal show profile images when available; AddEditPersonModal has image URL field
 - ✅ Header quick access dropdown now navigates to Assets, Accessories, Licenses, Consumables (via `/inventory?tab=<Tab>`)
 - ✅ Stat cards on Home are pressable — navigate to corresponding Inventory filtered view
