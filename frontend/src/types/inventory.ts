@@ -12,7 +12,6 @@ export interface Accessory {
   manufacturer?: string;
   supplier?: string;
   location?: string;
-  business_group?: string;
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -30,6 +29,5 @@ export interface AddInventoryFormData {
   manufacturer: string;
   supplier: string;
   location: string;
-  business_group: string;
   notes: string;
 }

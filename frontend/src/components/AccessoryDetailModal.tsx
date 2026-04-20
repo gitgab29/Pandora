@@ -129,7 +129,6 @@ export default function AccessoryDetailModal({ isOpen, item, onClose, onEdit }: 
             <InfoField label="Qty Available" value={String(item.quantity_available)} />
             <InfoField label="Min Quantity" value={String(item.min_quantity)} />
             <InfoField label="Location" value={item.location} />
-            <InfoField label="Department" value={item.business_group} />
             <InfoField label="Purchase Date" value={formatDate(item.purchase_date)} />
             <InfoField label="Unit Cost" value={formatCurrency(item.unit_cost)} />
           </div>

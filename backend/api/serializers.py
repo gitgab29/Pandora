@@ -71,7 +71,7 @@ class AccessorySerializer(serializers.ModelSerializer):
             'id', 'item_name', 'quantity_available', 'model_number',
             'purchase_date', 'unit_cost', 'total_cost', 'order_number',
             'min_quantity', 'category', 'manufacturer', 'supplier',
-            'location', 'business_group', 'notes',
+            'location', 'notes',
             'created_at', 'updated_at',
         )
         read_only_fields = ('id', 'created_at', 'updated_at')

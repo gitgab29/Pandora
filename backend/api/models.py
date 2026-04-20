@@ -135,7 +135,6 @@ class Accessory(TimeStampedModel):
     manufacturer = models.CharField(max_length=100, blank=True)
     supplier = models.CharField(max_length=100, blank=True)
     location = models.CharField(max_length=255, blank=True)
-    business_group = models.CharField(max_length=100, blank=True)
     notes = models.TextField(blank=True)
 
     class Meta:

@@ -14,7 +14,7 @@ const EMPTY_FORM: AddInventoryFormData = {
   item_name: '', category: '', quantity_available: '',
   min_quantity: '', model_number: '', purchase_date: '',
   unit_cost: '', order_number: '', manufacturer: '',
-  supplier: '', location: '', business_group: '', notes: '',
+  supplier: '', location: '', notes: '',
 };
 
 const INVENTORY_CATEGORIES = [
@@ -140,7 +140,6 @@ export default function AddInventoryModal({ isOpen, onClose, onSave }: AddInvent
       manufacturer: form.manufacturer || undefined,
       supplier: form.supplier || undefined,
       location: form.location || undefined,
-      business_group: form.business_group || undefined,
       notes: form.notes || undefined,
     }).then(created => {
       onSave?.(created);
@@ -243,8 +242,9 @@ export default function AddInventoryModal({ isOpen, onClose, onSave }: AddInvent
           {/* ── Location ── */}
           <p style={sectionHeadStyle}>Location</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
-            <TextInput label="Location" value={form.location} onChange={set('location')} placeholder="e.g. Storeroom A, Shelf 3" />
-            <TextInput label="Department" value={form.business_group} onChange={set('business_group')} placeholder="e.g. IT" />
+            <div style={{ gridColumn: '1 / -1' }}>
+              <TextInput label="Location" value={form.location} onChange={set('location')} placeholder="e.g. Storeroom A, Shelf 3" />
+            </div>
           </div>
 
           {/* ── Notes ── */}

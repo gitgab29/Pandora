@@ -250,27 +250,27 @@ ASSETS_DATA = [
 
 # ── Accessories ──────────────────────────────────────────────────────────────
 ACCESSORIES_DATA = [
-    # (item_name, category, qty, min_qty, model_number, manufacturer, supplier, location, business_group, unit_cost)
-    ('USB-C Cable 2m',        'Cable',        24,  10, 'ANK-USB2M',    'Anker',         'Amazon Business', 'Storeroom A, Shelf 1', 'IT',          12.99),
-    ('HDMI Cable 1.5m',       'Cable',         3,   8, 'HDMI-1M5-BK', 'Belkin',         'CDW',             'Storeroom A, Shelf 1', 'IT',           9.99),
-    ('USB-C to HDMI Adapter', 'Adapter',       0,   5, 'UCA-HDMI-4K', 'Anker',          'Amazon Business', 'Storeroom A, Shelf 2', 'IT',          18.99),
-    ('Wireless Keyboard',     'Keyboard',      9,   4, 'MX-KEYS-BLK', 'Logitech',       'Insight',         'Storeroom B, Shelf 1', 'IT',          89.99),
-    ('Wireless Mouse',        'Mouse',        11,   4, 'MX-MASTER-3S','Logitech',        'Insight',         'Storeroom B, Shelf 1', 'IT',          74.99),
-    ('USB-A Hub 7-Port',      'Adapter',       2,   3, 'ANK-HUB7-A',  'Anker',          'Amazon Business', 'Storeroom A, Shelf 2', 'IT',          29.99),
-    ('Laptop Stand',          'Other',        15,   5, 'BSTAND-ALU',  'Brydge',         'B&H Photo',       'Storeroom B, Shelf 2', 'Operations',  39.99),
-    ('Noise-Cancel Headset',  'Headset',       7,   3, 'BOSE-700-BLK','Bose',            'CDW',             'Storeroom C, Shelf 1', 'IT',         299.99),
-    ('65W USB-C Charger',     'Power Supply',  0,   6, 'ANK-65W-GAN', 'Anker',          'Amazon Business', 'Storeroom A, Shelf 3', 'IT',          22.99),
-    ('Thunderbolt 4 Dock',    'Adapter',       4,   2, 'CAL-TB4-DOCK','CalDigit',        'B&H Photo',       'Storeroom A, Shelf 2', 'IT',         249.99),
-    ('512 GB SSD',            'Storage',       6,   4, 'SAM-870-512', 'Samsung',         'CDW',             'Storeroom C, Shelf 2', 'IT',          54.99),
-    ('16 GB DDR5 RAM',        'RAM',           8,   4, 'COR-16G-DDR5','Corsair',         'Newegg',          'Storeroom C, Shelf 2', 'IT',          44.99),
-    ('27" Monitor',           'Monitor',       2,   2, 'LG-27-4K-UHD','LG',              'Insight',         'Storeroom B, Shelf 3', 'IT',         349.99),
-    ('USB-C Cable 1m',        'Cable',        30,  10, 'ANK-USB1M',   'Anker',          'Amazon Business', 'Storeroom A, Shelf 1', 'IT',           8.99),
-    ('VESA Monitor Mount',    'Other',         1,   2, 'ERG-MNT-V1',  'Ergotron',       'CDW',             'Storeroom B, Shelf 3', 'Operations',  79.99),
-    ('Ethernet Cable 5m',     'Cable',        18,   5, 'PATCH-5M-BLU','Tripp Lite',      'CDW',             'Storeroom A, Shelf 1', 'IT',           6.99),
-    ('Surge Protector 6-Way', 'Power Supply',  5,   3, 'APC-6W-SURGE','APC',             'Insight',         'Storeroom A, Shelf 3', 'Operations',  34.99),
-    ('Laptop Backpack',       'Other',         0,   3, 'TOMTOC-BP-15','Tomtoc',          'Amazon Business', 'Storeroom B, Shelf 2', 'Operations',  49.99),
-    ('Webcam 4K',             'Other',         4,   2, 'LOG-BRIO-4K', 'Logitech',       'B&H Photo',       'Storeroom C, Shelf 1', 'IT',         149.99),
-    ('Display Port Cable',    'Cable',         1,   5, 'DP-1M4-BLK',  'Cable Matters',  'Amazon Business', 'Storeroom A, Shelf 1', 'IT',          11.99),
+    # (item_name, category, qty, min_qty, model_number, manufacturer, supplier, location, unit_cost)
+    ('USB-C Cable 2m',        'Cable',        24,  10, 'ANK-USB2M',    'Anker',         'Amazon Business', 'Storeroom A, Shelf 1',  12.99),
+    ('HDMI Cable 1.5m',       'Cable',         3,   8, 'HDMI-1M5-BK', 'Belkin',         'CDW',             'Storeroom A, Shelf 1',   9.99),
+    ('USB-C to HDMI Adapter', 'Adapter',       0,   5, 'UCA-HDMI-4K', 'Anker',          'Amazon Business', 'Storeroom A, Shelf 2',  18.99),
+    ('Wireless Keyboard',     'Keyboard',      9,   4, 'MX-KEYS-BLK', 'Logitech',       'Insight',         'Storeroom B, Shelf 1',  89.99),
+    ('Wireless Mouse',        'Mouse',        11,   4, 'MX-MASTER-3S','Logitech',        'Insight',         'Storeroom B, Shelf 1',  74.99),
+    ('USB-A Hub 7-Port',      'Adapter',       2,   3, 'ANK-HUB7-A',  'Anker',          'Amazon Business', 'Storeroom A, Shelf 2',  29.99),
+    ('Laptop Stand',          'Other',        15,   5, 'BSTAND-ALU',  'Brydge',         'B&H Photo',       'Storeroom B, Shelf 2',  39.99),
+    ('Noise-Cancel Headset',  'Headset',       7,   3, 'BOSE-700-BLK','Bose',            'CDW',             'Storeroom C, Shelf 1', 299.99),
+    ('65W USB-C Charger',     'Power Supply',  0,   6, 'ANK-65W-GAN', 'Anker',          'Amazon Business', 'Storeroom A, Shelf 3',  22.99),
+    ('Thunderbolt 4 Dock',    'Adapter',       4,   2, 'CAL-TB4-DOCK','CalDigit',        'B&H Photo',       'Storeroom A, Shelf 2', 249.99),
+    ('512 GB SSD',            'Storage',       6,   4, 'SAM-870-512', 'Samsung',         'CDW',             'Storeroom C, Shelf 2',  54.99),
+    ('16 GB DDR5 RAM',        'RAM',           8,   4, 'COR-16G-DDR5','Corsair',         'Newegg',          'Storeroom C, Shelf 2',  44.99),
+    ('27" Monitor',           'Monitor',       2,   2, 'LG-27-4K-UHD','LG',              'Insight',         'Storeroom B, Shelf 3', 349.99),
+    ('USB-C Cable 1m',        'Cable',        30,  10, 'ANK-USB1M',   'Anker',          'Amazon Business', 'Storeroom A, Shelf 1',   8.99),
+    ('VESA Monitor Mount',    'Other',         1,   2, 'ERG-MNT-V1',  'Ergotron',       'CDW',             'Storeroom B, Shelf 3',  79.99),
+    ('Ethernet Cable 5m',     'Cable',        18,   5, 'PATCH-5M-BLU','Tripp Lite',      'CDW',             'Storeroom A, Shelf 1',   6.99),
+    ('Surge Protector 6-Way', 'Power Supply',  5,   3, 'APC-6W-SURGE','APC',             'Insight',         'Storeroom A, Shelf 3',  34.99),
+    ('Laptop Backpack',       'Other',         0,   3, 'TOMTOC-BP-15','Tomtoc',          'Amazon Business', 'Storeroom B, Shelf 2',  49.99),
+    ('Webcam 4K',             'Other',         4,   2, 'LOG-BRIO-4K', 'Logitech',       'B&H Photo',       'Storeroom C, Shelf 1', 149.99),
+    ('Display Port Cable',    'Cable',         1,   5, 'DP-1M4-BLK',  'Cable Matters',  'Amazon Business', 'Storeroom A, Shelf 1',  11.99),
 ]
 
 
@@ -348,7 +348,7 @@ def _seed(stdout=None):
     # ── 3. Accessories ────────────────────────────────────────────────────────
     log('Seeding accessories...')
     accessories: list[Accessory] = []
-    for name, cat, qty, min_qty, model, mfr, supplier, location, bg, cost in ACCESSORIES_DATA:
+    for name, cat, qty, min_qty, model, mfr, supplier, location, cost in ACCESSORIES_DATA:
         acc = Accessory.objects.create(
             item_name=name,
             category=cat,
@@ -358,7 +358,6 @@ def _seed(stdout=None):
             manufacturer=mfr,
             supplier=supplier,
             location=location,
-            business_group=bg,
             unit_cost=cost,
         )
         accessories.append(acc)

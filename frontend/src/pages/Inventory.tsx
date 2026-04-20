@@ -93,7 +93,7 @@ export default function Inventory() {
   const [featureModalOpen, setFeatureModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState('');
-  const [activeFilters, setActiveFilters] = useState<{ departments: string[]; locations: string[] }>({ departments: [], locations: [] });
+  const [activeFilters, setActiveFilters] = useState<{ locations: string[] }>({ locations: [] });
   const [activeSort, setActiveSort] = useState('Name (A–Z)');
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
@@ -109,10 +109,6 @@ export default function Inventory() {
   // ── Derived data ─────────────────────────────────────────────────────────
   const allInvCategories = useMemo(
     () => [...new Set(inventory.map(i => i.category ?? '').filter(Boolean))].sort(),
-    [inventory],
-  );
-  const allDepartments = useMemo(
-    () => [...new Set(inventory.map(i => i.business_group ?? '').filter(Boolean))].sort(),
     [inventory],
   );
   const allLocations = useMemo(
@@ -141,7 +137,6 @@ export default function Inventory() {
     // Category tab
     if (activeCategory) items = items.filter(i => i.category === activeCategory);
     // Dept + Location filters
-    if (activeFilters.departments.length > 0) items = items.filter(i => activeFilters.departments.includes(i.business_group ?? ''));
     if (activeFilters.locations.length > 0)   items = items.filter(i => activeFilters.locations.includes((i.location ?? '').split(',')[0].trim()));
     // Search
     const q = search.toLowerCase().trim();
@@ -151,8 +146,7 @@ export default function Inventory() {
         (i.model_number ?? '').toLowerCase().includes(q) ||
         (i.category ?? '').toLowerCase().includes(q) ||
         (i.manufacturer ?? '').toLowerCase().includes(q) ||
-        (i.location ?? '').toLowerCase().includes(q) ||
-        (i.business_group ?? '').toLowerCase().includes(q),
+        (i.location ?? '').toLowerCase().includes(q),
       );
     }
     // Sort
@@ -413,18 +407,8 @@ export default function Inventory() {
                 <InventoryFilterDropdown
                   open={filterOpen}
                   onToggle={() => { setFilterOpen(o => !o); setSortOpen(false); }}
-                  departments={allDepartments}
                   locations={allLocations}
                   active={activeFilters}
-                  onToggleDept={(d) => {
-                    setActiveFilters(prev => ({
-                      ...prev,
-                      departments: prev.departments.includes(d)
-                        ? prev.departments.filter(x => x !== d)
-                        : [...prev.departments, d],
-                    }));
-                    setCurrentPage(1);
-                  }}
                   onToggleLoc={(l) => {
                     setActiveFilters(prev => ({
                       ...prev,
@@ -554,7 +538,6 @@ export default function Inventory() {
                     <th style={{ ...TH, textAlign: 'center' }}>Qty Available</th>
                     <th style={{ ...TH, textAlign: 'center' }}>Min Qty</th>
                     <th style={TH}>Location</th>
-                    <th style={TH}>Department</th>
                     <th style={{ ...TH, textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
@@ -562,7 +545,7 @@ export default function Inventory() {
                   {pageItems.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={9}
+                        colSpan={8}
                         style={{
                           ...TD,
                           textAlign: 'center',
@@ -656,11 +639,6 @@ export default function Inventory() {
                           {/* Location */}
                           <td style={{ ...TD, color: colors.blueGrayMd, maxWidth: '12rem', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {item.location ?? '—'}
-                          </td>
-
-                          {/* Department */}
-                          <td style={{ ...TD, color: colors.blueGrayMd }}>
-                            {item.business_group ?? '—'}
                           </td>
 
                           {/* Actions */}
@@ -834,26 +812,22 @@ function iconBtnStyle(bg: string): React.CSSProperties {
 function InventoryFilterDropdown({
   open,
   onToggle,
-  departments,
   locations,
   active,
-  onToggleDept,
   onToggleLoc,
 }: {
   open: boolean;
   onToggle: () => void;
-  departments: string[];
   locations: string[];
-  active: { departments: string[]; locations: string[] };
-  onToggleDept: (d: string) => void;
+  active: { locations: string[] };
   onToggleLoc: (l: string) => void;
 }) {
-  const hasActive = active.departments.length > 0 || active.locations.length > 0;
+  const hasActive = active.locations.length > 0;
   return (
     <div style={{ position: 'relative', zIndex: 100 }}>
       <button
         onClick={onToggle}
-        title="Filter by department or location"
+        title="Filter by location"
         style={{
           width: '2.125rem',
           height: '2.125rem',
@@ -901,46 +875,6 @@ function InventoryFilterDropdown({
             zIndex: 100,
           }}
         >
-          <p
-            style={{
-              margin: `0 0 ${spacing.sm}`,
-              fontFamily: "'Roboto', sans-serif",
-              fontSize: '0.719rem',
-              fontWeight: 700,
-              color: colors.blueGrayMd,
-              letterSpacing: '0.05em',
-              textTransform: 'uppercase' as const,
-            }}
-          >
-            Department
-          </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.xs, marginBottom: spacing.md }}>
-            {departments.map(d => {
-              const isActive = active.departments.includes(d);
-              return (
-                <button
-                  key={d}
-                  onClick={() => onToggleDept(d)}
-                  style={{
-                    padding: `0.2rem ${spacing.sm}`,
-                    borderRadius: radius.full,
-                    border: `1px solid ${isActive ? colors.primary : 'rgba(70,98,145,0.25)'}`,
-                    backgroundColor: isActive ? colors.primary : 'transparent',
-                    color: isActive ? colors.white : colors.blueGrayMd,
-                    fontFamily: "'Archivo', sans-serif",
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    transition: 'background-color 0.15s, color 0.15s',
-                  }}
-                >
-                  {d}
-                </button>
-              );
-            })}
-          </div>
-
           <p
             style={{
               margin: `0 0 ${spacing.sm}`,

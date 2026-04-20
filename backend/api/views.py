@@ -109,7 +109,7 @@ class AccessoryViewSet(viewsets.ModelViewSet):
     serializer_class = AccessorySerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['category', 'business_group']
+    filterset_fields = ['category']
     search_fields = ['item_name', 'model_number', 'manufacturer', 'supplier']
     ordering_fields = ['item_name', 'quantity_available', 'created_at']
     ordering = ['item_name']

@@ -131,7 +131,6 @@ function itemToForm(i: Accessory): AddInventoryFormData {
     manufacturer: i.manufacturer ?? '',
     supplier: i.supplier ?? '',
     location: i.location ?? '',
-    business_group: i.business_group ?? '',
     notes: i.notes ?? '',
   };
 }
@@ -166,7 +165,6 @@ export default function EditInventoryModal({ isOpen, item, onClose, onSave }: Ed
       manufacturer: form.manufacturer || undefined,
       supplier: form.supplier || undefined,
       location: form.location || undefined,
-      business_group: form.business_group || undefined,
       notes: form.notes || undefined,
     };
     accessoriesApi.update(item.id, patch)
@@ -261,8 +259,9 @@ export default function EditInventoryModal({ isOpen, item, onClose, onSave }: Ed
           {/* ── Location ── */}
           <p style={sectionHeadStyle}>Location</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
-            <TextInput label="Location" value={form.location} onChange={set('location')} placeholder="e.g. Storeroom A, Shelf 1" />
-            <TextInput label="Department" value={form.business_group} onChange={set('business_group')} placeholder="e.g. IT" />
+            <div style={{ gridColumn: '1 / -1' }}>
+              <TextInput label="Location" value={form.location} onChange={set('location')} placeholder="e.g. Storeroom A, Shelf 1" />
+            </div>
           </div>
 
           {/* ── Notes ── */}

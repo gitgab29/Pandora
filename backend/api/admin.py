@@ -34,8 +34,8 @@ class AssetAdmin(admin.ModelAdmin):
 
 @admin.register(Accessory)
 class AccessoryAdmin(admin.ModelAdmin):
-    list_display = ('item_name', 'category', 'quantity_available', 'min_quantity', 'business_group')
-    list_filter = ('category', 'business_group')
+    list_display = ('item_name', 'category', 'quantity_available', 'min_quantity', 'location')
+    list_filter = ('category',)
     search_fields = ('item_name', 'model_number')
 
 
