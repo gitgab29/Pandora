@@ -118,7 +118,9 @@ export default function AssetsTabContent() {
           a.asset_tag.toLowerCase().includes(q) ||
           a.serial_number.toLowerCase().includes(q) ||
           a.category.toLowerCase().includes(q) ||
-          holder.toLowerCase().includes(q)
+          holder.toLowerCase().includes(q) ||
+          (a.manufacturer ?? '').toLowerCase().includes(q) ||
+          (a.model ?? '').toLowerCase().includes(q)
         );
       });
     }
@@ -367,6 +369,7 @@ export default function AssetsTabContent() {
                   />
                 </th>
                 <th style={TH}>Asset Tag</th>
+                <th style={TH}>Item Name</th>
                 <th style={TH}>Serial Number</th>
                 <th style={TH}>Category</th>
                 <th style={TH}>Current Holder</th>
@@ -378,7 +381,7 @@ export default function AssetsTabContent() {
               {pageItems.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     style={{
                       ...TD,
                       textAlign: 'center',
@@ -417,6 +420,10 @@ export default function AssetsTabContent() {
                       </td>
 
                       <td style={{ ...TD, fontWeight: 500 }}>{asset.asset_tag}</td>
+
+                      <td style={{ ...TD, color: colors.textPrimary }}>
+                        {[asset.manufacturer, asset.model].filter(Boolean).join(' ') || '—'}
+                      </td>
 
                       <td style={{ ...TD, color: colors.blueGrayMd, fontSize: '0.75rem', fontFamily: "'Roboto Mono', monospace" }}>
                         {asset.serial_number}

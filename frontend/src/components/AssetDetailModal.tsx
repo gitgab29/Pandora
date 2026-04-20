@@ -87,9 +87,14 @@ export default function AssetDetailModal({ isOpen, asset, onClose, onEdit }: Ass
 
           {/* Title + badges */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h2 style={{ fontFamily: "'Roboto', sans-serif", fontSize: fontSize.h6, fontWeight: 700, color: colors.textPrimary, margin: `0 0 ${spacing.xs}` }}>
+            <h2 style={{ fontFamily: "'Roboto', sans-serif", fontSize: fontSize.h6, fontWeight: 700, color: colors.textPrimary, margin: `0 0 0.1rem` }}>
               {asset.asset_tag}
             </h2>
+            {(asset.manufacturer || asset.model) && (
+              <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.sm, fontWeight: 600, color: colors.textPrimary, margin: `0 0 0.15rem`, opacity: 0.75 }}>
+                {[asset.manufacturer, asset.model].filter(Boolean).join(' ')}
+              </p>
+            )}
             <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.sm, color: colors.blueGrayMd, margin: `0 0 ${spacing.sm}` }}>
               {asset.category} {asset.serial_number ? `· ${asset.serial_number}` : ''}
             </p>
