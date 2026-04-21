@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
-import type { AddAssetFormData, AssetStatus } from '../types/asset';
+import type { AddAssetFormData, Asset, AssetStatus } from '../types/asset';
 import { ASSET_STATUS_LABELS } from '../types/asset';
 import { isBlank } from '../utils/validation';
+import { assetsApi } from '../api';
+import { useToast } from '../context/ToastContext';
 
 interface AddAssetModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSave?: (asset: Asset) => void;
 }
 
 const EMPTY_FORM: AddAssetFormData = {
@@ -142,9 +145,11 @@ function SelectInput({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
+export default function AddAssetModal({ isOpen, onClose, onSave }: AddAssetModalProps) {
   const [form, setForm] = useState<AddAssetFormData>(EMPTY_FORM);
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const toast = useToast();
 
   if (!isOpen) return null;
 
@@ -160,12 +165,42 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
 
   const handleSubmit = () => {
     setSubmitted(true);
-    if (Object.values(errors).some(Boolean)) return;
     if (isBlank(form.asset_tag) || isBlank(form.serial_number) || isBlank(form.category) || isBlank(form.status)) return;
-    // TODO: POST /api/assets/ when backend is ready
-    setForm(EMPTY_FORM);
-    setSubmitted(false);
-    onClose();
+
+    setSaving(true);
+    assetsApi.create({
+      asset_tag:          form.asset_tag.trim(),
+      serial_number:      form.serial_number.trim(),
+      category:           form.category,
+      status:             form.status as AssetStatus,
+      model:              form.model || undefined,
+      manufacturer:       form.manufacturer || undefined,
+      supplier:           form.supplier || undefined,
+      purchase_date:      form.purchase_date || undefined,
+      purchase_cost:      form.purchase_cost ? parseFloat(form.purchase_cost) : undefined,
+      depreciation_value: form.depreciation_value ? parseFloat(form.depreciation_value) : undefined,
+      order_number:       form.order_number || undefined,
+      warranty_expiry:    form.warranty_expiry || undefined,
+      end_of_life:        form.end_of_life || undefined,
+      assigned_to:        form.assigned_to || undefined,
+      group:              form.group || undefined,
+      imei_number:        form.imei_number || undefined,
+      cpu:                form.cpu || undefined,
+      gpu:                form.gpu || undefined,
+      operating_system:   form.operating_system || undefined,
+      ram:                form.ram || undefined,
+      screen_size:        form.screen_size || undefined,
+      storage_size:       form.storage_size || undefined,
+      notes:              form.notes || undefined,
+    }).then(created => {
+      onSave?.(created);
+      toast.success(`Added asset ${created.asset_tag}`);
+      setForm(EMPTY_FORM);
+      setSubmitted(false);
+      onClose();
+    }).catch(() => {
+      toast.error('Could not add asset. Please try again.');
+    }).finally(() => setSaving(false));
   };
 
   const handleClose = () => {
@@ -325,19 +360,20 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
           </button>
           <button
             onClick={handleSubmit}
+            disabled={saving}
             style={{
               padding: `${spacing.sm} ${spacing.xl}`,
               borderRadius: radius.full,
               border: 'none',
-              backgroundColor: colors.primary,
+              backgroundColor: saving ? colors.bgDisabled : colors.primary,
               fontFamily: "'Archivo', sans-serif",
               fontSize: fontSize.sm,
               fontWeight: 600,
-              color: colors.white,
-              cursor: 'pointer',
+              color: saving ? colors.textDisabled : colors.white,
+              cursor: saving ? 'not-allowed' : 'pointer',
             }}
           >
-            Add Asset
+            {saving ? 'Adding…' : 'Add Asset'}
           </button>
         </div>
       </div>

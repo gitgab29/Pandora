@@ -555,7 +555,11 @@ export default function AssetsTabContent() {
       </div>
 
       <FeatureNotAvailableModal isOpen={featureModalOpen} onClose={() => setFeatureModalOpen(false)} />
-      <AddAssetModal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)} />
+      <AddAssetModal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onSave={created => setAssets(prev => [created, ...prev])}
+      />
 
       <DeleteConfirmModal
         isOpen={deleteTarget !== null}
