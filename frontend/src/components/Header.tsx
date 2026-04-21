@@ -61,7 +61,7 @@ export default function Header({ title }: HeaderProps) {
           padding: `0 ${spacing.xl2}`,
           flexShrink: 0,
           position: 'relative',
-          zIndex: 10,
+          zIndex: 200,
         }}
       >
         <h1
