@@ -91,7 +91,7 @@ export default function AssetsTabContent() {
   const [featureModalOpen, setFeatureModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [activeCategories, setActiveCategories] = useState<string[]>([]);
-  const [activeSort, setActiveSort] = useState('Tag (A–Z)');
+  const [activeSort, setActiveSort] = useState('Date Added (Newest)');
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
   const [showStats, setShowStats] = useState(true);

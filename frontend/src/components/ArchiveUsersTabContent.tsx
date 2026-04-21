@@ -86,7 +86,7 @@ export default function ArchiveUsersTabContent() {
       u.email.toLowerCase().includes(q) ||
       (u.title ?? '').toLowerCase().includes(q),
     );
-    return list;
+    return [...list].sort((a, b) => b.created_at.localeCompare(a.created_at));
   }, [users, activeTab, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));

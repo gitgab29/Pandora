@@ -102,7 +102,7 @@ export default function ArchiveAssetsTabContent() {
       (a.manufacturer ?? '').toLowerCase().includes(q) ||
       a.category.toLowerCase().includes(q),
     );
-    return items;
+    return [...items].sort((a, b) => b.created_at.localeCompare(a.created_at));
   }, [assets, activeTab, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));

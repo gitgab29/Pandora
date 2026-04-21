@@ -87,7 +87,7 @@ export default function ArchiveAccessoriesTabContent() {
       (i.manufacturer ?? '').toLowerCase().includes(q) ||
       (i.category ?? '').toLowerCase().includes(q),
     );
-    return list;
+    return [...list].sort((a, b) => b.created_at.localeCompare(a.created_at));
   }, [items, activeTab, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));

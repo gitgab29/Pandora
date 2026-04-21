@@ -96,7 +96,7 @@ export default function Inventory() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState('');
   const [activeFilters, setActiveFilters] = useState<{ locations: string[] }>({ locations: [] });
-  const [activeSort, setActiveSort] = useState('Name (A–Z)');
+  const [activeSort, setActiveSort] = useState('Date Added (Newest)');
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
   const [showStats, setShowStats] = useState(true);

@@ -19,7 +19,7 @@ import { useToast } from '../context/ToastContext';
 
 const ROWS_PER_PAGE = 10;
 
-type SortField = 'name' | 'department';
+type SortField = 'name' | 'department' | 'created_at';
 type SortDir   = 'asc'  | 'desc';
 
 // ── Style helpers ──────────────────────────────────────────────────────────────
@@ -87,8 +87,8 @@ export default function People() {
     usersApi.list().then(setPeople).catch(() => {});
   }, []);
   const [search, setSearch]     = useState('');
-  const [sortField, setSortField] = useState<SortField>('name');
-  const [sortDir, setSortDir]   = useState<SortDir>('asc');
+  const [sortField, setSortField] = useState<SortField>('created_at');
+  const [sortDir, setSortDir]   = useState<SortDir>('desc');
   const [currentPage, setCurrentPage] = useState(1);
 
   const [detailPerson, setDetailPerson] = useState<Person | null>(null);
@@ -111,6 +111,11 @@ export default function People() {
       );
     }
     return [...items].sort((a, b) => {
+      if (sortField === 'created_at') {
+        return sortDir === 'desc'
+          ? b.created_at.localeCompare(a.created_at)
+          : a.created_at.localeCompare(b.created_at);
+      }
       const valA = sortField === 'name'
         ? `${a.last_name} ${a.first_name}`.toLowerCase()
         : a.business_group.toLowerCase();
