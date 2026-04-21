@@ -135,11 +135,11 @@ export default function Activity() {
 
     return [...result].sort((a, b) => {
       switch (activeSort) {
-        case 'Date (Oldest first)': return a.date.localeCompare(b.date);
+        case 'Date (Oldest first)': return a.rawDate.localeCompare(b.rawDate);
         case 'User (A–Z)':          return a.user.localeCompare(b.user);
         case 'Item (A–Z)':          return a.item.localeCompare(b.item);
         case 'Event (A–Z)':         return a.event.localeCompare(b.event);
-        default:                    return b.date.localeCompare(a.date);
+        default:                    return b.rawDate.localeCompare(a.rawDate);
       }
     });
   }, [logs, eventTab, activeType, activeDept, search, activeSort]);
