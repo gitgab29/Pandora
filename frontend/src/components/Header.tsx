@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, LayoutGrid, Package, Wrench, FileKey, ShoppingBag, LayoutDashboard, Users } from 'lucide-react';
+import { Bell, LayoutGrid, Package, Wrench, FileKey, ShoppingBag, LayoutDashboard, Users, UserCircle2, Settings, LogOut } from 'lucide-react';
 import { colors, sizing, spacing, radius, typography } from '../theme';
 import { useAuth } from '../context/AuthContext';
 
@@ -32,11 +32,12 @@ const UNREAD_COUNT = NOTIFICATIONS.filter(n => n.unread).length;
 
 export default function Header({ title }: HeaderProps) {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [gridOpen,  setGridOpen]  = useState(false);
+  const { user, logout } = useAuth();
+  const [notifOpen,   setNotifOpen]   = useState(false);
+  const [gridOpen,    setGridOpen]    = useState(false);
+  const [avatarOpen,  setAvatarOpen]  = useState(false);
 
-  const closeAll = () => { setNotifOpen(false); setGridOpen(false); };
+  const closeAll = () => { setNotifOpen(false); setGridOpen(false); setAvatarOpen(false); };
 
   const userInitials = user
     ? `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase()
@@ -45,7 +46,7 @@ export default function Header({ title }: HeaderProps) {
   return (
     <>
       {/* Backdrop */}
-      {(notifOpen || gridOpen) && (
+      {(notifOpen || gridOpen || avatarOpen) && (
         <div onClick={closeAll} style={{ position: 'fixed', inset: 0, zIndex: 149 }} />
       )}
 
@@ -262,27 +263,155 @@ export default function Header({ title }: HeaderProps) {
             )}
           </div>
 
-          {/* ── Avatar ── */}
-          <div
-            style={{
-              width: '2.125rem',
-              height: '2.125rem',
-              borderRadius: radius.full,
-              backgroundColor: colors.primary,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: colors.white,
-              fontFamily: "'Archivo', sans-serif",
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              marginLeft: spacing.xs,
-              flexShrink: 0,
-              border: '2px solid rgba(46,124,253,0.3)',
-            }}
-          >
-            {userInitials}
+          {/* ── Avatar / Profile ── */}
+          <div style={{ position: 'relative', zIndex: 150, marginLeft: spacing.xs }}>
+            <div
+              onClick={() => { setAvatarOpen(v => !v); setNotifOpen(false); setGridOpen(false); }}
+              style={{
+                width: '2.125rem',
+                height: '2.125rem',
+                borderRadius: radius.full,
+                backgroundColor: avatarOpen ? colors.primaryDark : colors.primary,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: colors.white,
+                fontFamily: "'Archivo', sans-serif",
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                flexShrink: 0,
+                border: avatarOpen ? '2px solid rgba(46,124,253,0.6)' : '2px solid rgba(46,124,253,0.3)',
+                transition: 'background-color 0.15s ease, border-color 0.15s ease',
+                userSelect: 'none',
+              }}
+            >
+              {userInitials}
+            </div>
+
+            {avatarOpen && (
+              <div style={{ ...dropdownBase('13rem'), right: 0 }}>
+                {/* User info header */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing.md,
+                    paddingBottom: spacing.md,
+                    marginBottom: spacing.xs,
+                    borderBottom: '1px solid rgba(70,98,145,0.1)',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '2rem',
+                      height: '2rem',
+                      borderRadius: radius.full,
+                      backgroundColor: colors.primary,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: colors.white,
+                      fontFamily: "'Archivo', sans-serif",
+                      fontSize: '0.6875rem',
+                      fontWeight: 700,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {userInitials}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontFamily: "'Roboto', sans-serif",
+                        fontSize: '0.8125rem',
+                        fontWeight: 700,
+                        color: colors.textPrimary,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {user ? `${user.first_name} ${user.last_name}` : 'User'}
+                    </p>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontFamily: "'Archivo', sans-serif",
+                        fontSize: '0.6875rem',
+                        color: colors.blueGrayMd,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {user?.role === 'ADMIN' ? 'Administrator' : 'Staff'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Menu items */}
+                {[
+                  { icon: UserCircle2, label: 'View Profile',  action: () => { navigate('/people?profile=me'); closeAll(); } },
+                  { icon: Settings,    label: 'Settings',      action: () => { navigate('/settings');          closeAll(); } },
+                ].map(({ icon: Icon, label, action }) => (
+                  <button
+                    key={label}
+                    onClick={action}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing.md,
+                      padding: `${spacing.sm} ${spacing.md}`,
+                      borderRadius: radius.sm,
+                      border: 'none',
+                      background: 'transparent',
+                      color: colors.textPrimary,
+                      fontFamily: "'Archivo', sans-serif",
+                      fontSize: '0.8125rem',
+                      cursor: 'pointer',
+                      width: '100%',
+                      textAlign: 'left',
+                      transition: 'background-color 0.12s ease',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.bgSubtle)}
+                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <Icon size={14} color={colors.blueGrayMd} />
+                    {label}
+                  </button>
+                ))}
+
+                {/* Logout — separated */}
+                <div style={{ borderTop: '1px solid rgba(70,98,145,0.1)', marginTop: spacing.xs, paddingTop: spacing.xs }}>
+                  <button
+                    onClick={() => { logout(); navigate('/sign-in'); closeAll(); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: spacing.md,
+                      padding: `${spacing.sm} ${spacing.md}`,
+                      borderRadius: radius.sm,
+                      border: 'none',
+                      background: 'transparent',
+                      color: colors.error,
+                      fontFamily: "'Archivo', sans-serif",
+                      fontSize: '0.8125rem',
+                      cursor: 'pointer',
+                      width: '100%',
+                      textAlign: 'left',
+                      transition: 'background-color 0.12s ease',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.06)')}
+                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <LogOut size={14} color={colors.error} />
+                    Log Out
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </header>

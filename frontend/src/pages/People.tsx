@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Trash2, Pencil, Eye, Plus, ArrowUpAZ, ArrowDownAZ, Check } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Trash2, Pencil, Eye, Plus, ArrowUpAZ, ArrowDownAZ, Check, ChevronDown, ChevronUp, Shield, Mail, Briefcase, Building2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
@@ -10,6 +11,7 @@ import PersonDetailModal from '../components/PersonDetailModal';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Person } from '../types/people';
 import { usersApi } from '../api';
+import { useAuth } from '../context/AuthContext';
 
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -48,6 +50,16 @@ const TD: React.CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
+const metaItem: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.3rem',
+  fontFamily: "'Archivo', sans-serif",
+  fontSize: fontSize.xs,
+  color: colors.blueGrayMd,
+  whiteSpace: 'nowrap',
+};
+
 function iconBtnStyle(bg: string): React.CSSProperties {
   return {
     width: '1.625rem', height: '1.625rem',
@@ -61,6 +73,11 @@ function iconBtnStyle(bg: string): React.CSSProperties {
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export default function People() {
+  const { user: authUser } = useAuth();
+  const [searchParams]  = useSearchParams();
+  const showProfileCard = searchParams.get('profile') === 'me';
+  const [profileExpanded, setProfileExpanded] = useState(true);
+
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [people, setPeople]     = useState<Person[]>([]);
 
@@ -168,6 +185,171 @@ export default function People() {
         <Header title="People" />
 
         <main style={{ flex: 1, overflowY: 'auto', padding: spacing.xl2 }}>
+
+          {/* ── My Profile card ── */}
+          {showProfileCard && authUser && (
+            <div
+              style={{
+                backgroundColor: colors.bgSurface,
+                borderRadius: radius.lg,
+                border: authUser.role === 'ADMIN'
+                  ? `1px solid rgba(46,124,253,0.3)`
+                  : `1px solid rgba(70,98,145,0.1)`,
+                boxShadow: authUser.role === 'ADMIN'
+                  ? '0 1px 8px rgba(46,124,253,0.1)'
+                  : shadows.card,
+                marginBottom: spacing.xl2,
+                overflow: 'hidden',
+              }}
+            >
+              {/* Card header row */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: `${spacing.md} ${spacing.xl}`,
+                  borderBottom: profileExpanded ? '1px solid rgba(70,98,145,0.08)' : 'none',
+                  backgroundColor: authUser.role === 'ADMIN'
+                    ? 'rgba(46,124,253,0.04)'
+                    : colors.bgStripe,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+                  {authUser.role === 'ADMIN' && (
+                    <Shield size={13} color={colors.primary} strokeWidth={2.5} />
+                  )}
+                  <span
+                    style={{
+                      fontFamily: "'Roboto', sans-serif",
+                      fontSize: '0.8125rem',
+                      fontWeight: 700,
+                      color: authUser.role === 'ADMIN' ? colors.primary : colors.blueGrayMd,
+                      letterSpacing: '0.03em',
+                    }}
+                  >
+                    My Profile
+                  </span>
+                </div>
+                <button
+                  onClick={() => setProfileExpanded(v => !v)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    padding: `0.2rem ${spacing.sm}`,
+                    borderRadius: radius.sm,
+                    border: '1px solid rgba(70,98,145,0.2)',
+                    backgroundColor: 'transparent',
+                    color: colors.blueGrayMd,
+                    fontFamily: "'Archivo', sans-serif",
+                    fontSize: fontSize.micro,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'background-color 0.12s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.bgSubtle)}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  {profileExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                  {profileExpanded ? 'Hide' : 'Show'}
+                </button>
+              </div>
+
+              {/* Card body */}
+              {profileExpanded && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing.xl2,
+                    padding: `${spacing.xl} ${spacing.xl}`,
+                  }}
+                >
+                  {/* Avatar */}
+                  <div
+                    style={{
+                      width: '3.5rem',
+                      height: '3.5rem',
+                      borderRadius: radius.full,
+                      backgroundColor: authUser.role === 'ADMIN' ? colors.primary : colors.blueGrayMd,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: colors.white,
+                      fontFamily: "'Roboto', sans-serif",
+                      fontSize: '1.125rem',
+                      fontWeight: 700,
+                      flexShrink: 0,
+                      border: authUser.role === 'ADMIN'
+                        ? '2.5px solid rgba(46,124,253,0.3)'
+                        : '2.5px solid rgba(70,98,145,0.2)',
+                    }}
+                  >
+                    {`${authUser.first_name?.[0] ?? ''}${authUser.last_name?.[0] ?? ''}`.toUpperCase()}
+                  </div>
+
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {/* Name + role badge */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: spacing.md, marginBottom: '0.3rem', flexWrap: 'wrap' }}>
+                      <span
+                        style={{
+                          fontFamily: "'Roboto', sans-serif",
+                          fontSize: '1.0625rem',
+                          fontWeight: 700,
+                          color: colors.textPrimary,
+                        }}
+                      >
+                        {authUser.first_name} {authUser.last_name}
+                      </span>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.2rem',
+                          padding: `0.15rem ${spacing.sm}`,
+                          borderRadius: radius.full,
+                          backgroundColor: authUser.role === 'ADMIN'
+                            ? 'rgba(46,124,253,0.12)'
+                            : 'rgba(70,98,145,0.1)',
+                          fontFamily: "'Archivo', sans-serif",
+                          fontSize: '0.6875rem',
+                          fontWeight: 700,
+                          color: authUser.role === 'ADMIN' ? colors.primary : colors.blueGrayMd,
+                          letterSpacing: '0.03em',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        {authUser.role === 'ADMIN' && <Shield size={8} strokeWidth={2.5} />}
+                        {authUser.role === 'ADMIN' ? 'Admin' : 'Staff'}
+                      </span>
+                    </div>
+
+                    {/* Meta row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xl, flexWrap: 'wrap' }}>
+                      <span style={metaItem}>
+                        <Mail size={11} color={colors.blueGrayMd} />
+                        {authUser.email}
+                      </span>
+                      {authUser.title && (
+                        <span style={metaItem}>
+                          <Briefcase size={11} color={colors.blueGrayMd} />
+                          {authUser.title}
+                        </span>
+                      )}
+                      {authUser.business_group && (
+                        <span style={metaItem}>
+                          <Building2 size={11} color={colors.blueGrayMd} />
+                          {authUser.business_group}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ── Table card ── */}
           <div
