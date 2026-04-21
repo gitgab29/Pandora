@@ -26,6 +26,8 @@ const EMPTY_FORM: AddAssetFormData = {
 
 const ASSET_STATUSES: AssetStatus[] = ['AVAILABLE', 'DEPLOYED', 'IN_REPAIR', 'IN_MAINTENANCE', 'TO_AUDIT', 'LOST'];
 const ASSET_CATEGORIES = ['Laptop', 'Phone', 'Tablet', 'PC', 'Monitor', 'Accessory', 'Other'];
+const ASSET_GROUPS = ['PRODUCT', 'PARTS'];
+const ASSET_GROUP_LABELS: Record<string, string> = { PRODUCT: 'Product', PARTS: 'Parts' };
 
 // ── Shared field styles ───────────────────────────────────────────────────────
 
@@ -108,12 +110,12 @@ function TextInput({
 }
 
 function SelectInput({
-  label, value, options, onChange, placeholder, error = false,
+  label, value, options, onChange, placeholder, error = false, labelMap,
 }: {
   label: string; value: string; options: string[]; onChange: (v: string) => void;
-  placeholder?: string; error?: boolean;
+  placeholder?: string; error?: boolean; labelMap?: Record<string, string>;
 }) {
-  const optionLabel = (o: string) => (ASSET_STATUS_LABELS as Record<string, string>)[o] ?? o;
+  const optionLabel = (o: string) => labelMap?.[o] ?? (ASSET_STATUS_LABELS as Record<string, string>)[o] ?? o;
   const [focused, setFocused] = useState(false);
   return (
     <Field label={label}>
@@ -161,11 +163,13 @@ export default function AddAssetModal({ isOpen, onClose, onSave }: AddAssetModal
     serial_number: submitted && isBlank(form.serial_number),
     category:      submitted && isBlank(form.category),
     status:        submitted && isBlank(form.status),
+    assigned_to:   submitted && form.status === 'DEPLOYED' && isBlank(form.assigned_to),
   };
 
   const handleSubmit = () => {
     setSubmitted(true);
-    if (isBlank(form.asset_tag) || isBlank(form.serial_number) || isBlank(form.category) || isBlank(form.status)) return;
+    const deployedWithoutUser = form.status === 'DEPLOYED' && isBlank(form.assigned_to);
+    if (isBlank(form.asset_tag) || isBlank(form.serial_number) || isBlank(form.category) || isBlank(form.status) || deployedWithoutUser) return;
 
     setSaving(true);
     assetsApi.create({
@@ -284,8 +288,8 @@ export default function AddAssetModal({ isOpen, onClose, onSave }: AddAssetModal
           {/* ── Assignment ── */}
           <p style={sectionHeadStyle}>Assignment</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
-            <TextInput label="Assigned To" value={form.assigned_to} onChange={set('assigned_to')} placeholder="e.g. Jane Smith" />
-            <TextInput label="Group" value={form.group} onChange={set('group')} placeholder="e.g. Engineering" />
+            <TextInput label={form.status === 'DEPLOYED' ? 'Assigned To *' : 'Assigned To'} value={form.assigned_to} onChange={set('assigned_to')} placeholder="User ID (UUID)" error={errors.assigned_to} />
+            <SelectInput label="Group" value={form.group} options={ASSET_GROUPS} onChange={set('group')} placeholder="Select Group" labelMap={ASSET_GROUP_LABELS} />
           </div>
 
           {/* ── Hardware Specifications ── */}

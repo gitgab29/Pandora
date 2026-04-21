@@ -14,6 +14,8 @@ interface EditAssetModalProps {
 
 const ASSET_STATUSES: AssetStatus[] = ['AVAILABLE', 'DEPLOYED', 'IN_REPAIR', 'IN_MAINTENANCE', 'TO_AUDIT', 'LOST'];
 const ASSET_CATEGORIES = ['Laptop', 'Phone', 'Tablet', 'PC', 'Monitor', 'Accessory', 'Other'];
+const ASSET_GROUPS = ['PRODUCT', 'PARTS'];
+const ASSET_GROUP_LABELS: Record<string, string> = { PRODUCT: 'Product', PARTS: 'Parts' };
 
 // ── Shared field styles ───────────────────────────────────────────────────────
 
@@ -96,11 +98,13 @@ function TextInput({
 }
 
 function SelectInput({
-  label, value, options, onChange, placeholder,
+  label, value, options, onChange, placeholder, labelMap,
 }: {
-  label: string; value: string; options: string[]; onChange: (v: string) => void; placeholder?: string;
+  label: string; value: string; options: string[]; onChange: (v: string) => void;
+  placeholder?: string; labelMap?: Record<string, string>;
 }) {
   const [focused, setFocused] = useState(false);
+  const optionLabel = (o: string) => labelMap?.[o] ?? (ASSET_STATUS_LABELS as Record<string, string>)[o] ?? o;
   return (
     <Field label={label}>
       <select
@@ -118,7 +122,7 @@ function SelectInput({
         }}
       >
         <option value="">{placeholder ?? `Select ${label}`}</option>
-        {options.map(o => <option key={o} value={o}>{(ASSET_STATUS_LABELS as Record<string, string>)[o] ?? o}</option>)}
+        {options.map(o => <option key={o} value={o}>{optionLabel(o)}</option>)}
       </select>
     </Field>
   );
@@ -175,11 +179,13 @@ export default function EditAssetModal({ isOpen, asset, onClose, onSave }: EditA
   const errors = {
     asset_tag:     submitted && isBlank(form.asset_tag),
     serial_number: submitted && isBlank(form.serial_number),
+    assigned_to:   submitted && form.status === 'DEPLOYED' && isBlank(form.assigned_to),
   };
 
   const handleSubmit = () => {
     setSubmitted(true);
-    if (isBlank(form.asset_tag) || isBlank(form.serial_number)) return;
+    const deployedWithoutUser = form.status === 'DEPLOYED' && isBlank(form.assigned_to);
+    if (isBlank(form.asset_tag) || isBlank(form.serial_number) || deployedWithoutUser) return;
     const updated: Asset = {
       ...asset,
       asset_tag: form.asset_tag.trim(),
@@ -286,8 +292,8 @@ export default function EditAssetModal({ isOpen, asset, onClose, onSave }: EditA
           {/* ── Assignment ── */}
           <p style={sectionHeadStyle}>Assignment</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
-            <TextInput label="Assigned To" value={form.assigned_to} onChange={set('assigned_to')} placeholder="e.g. Jane Smith" />
-            <TextInput label="Group" value={form.group} onChange={set('group')} placeholder="e.g. Engineering" />
+            <TextInput label={form.status === 'DEPLOYED' ? 'Assigned To *' : 'Assigned To'} value={form.assigned_to} onChange={set('assigned_to')} placeholder="User ID (UUID)" error={errors.assigned_to} />
+            <SelectInput label="Group" value={form.group} options={ASSET_GROUPS} onChange={set('group')} placeholder="Select Group" labelMap={ASSET_GROUP_LABELS} />
           </div>
 
           {/* ── Hardware Specifications ── */}
