@@ -169,11 +169,14 @@ export const accessoriesApi = {
   hardDelete: (id: string) =>
     api.delete(`/accessories/${id}/hard_delete/`),
 
+  holders: (id: string) =>
+    api.get<{ id: string; first_name: string; last_name: string; quantity: number }[]>(`/accessories/${id}/holders/`).then(r => r.data),
+
   checkOut: (id: string, quantity: number, userId?: string, notes?: string) =>
     api.post<Accessory>(`/accessories/${id}/check_out/`, { quantity, user_id: userId, notes }).then(r => r.data),
 
-  checkIn: (id: string, quantity: number, notes?: string) =>
-    api.post<Accessory>(`/accessories/${id}/check_in/`, { quantity, notes }).then(r => r.data),
+  checkIn: (id: string, quantity: number, userId: string, notes?: string) =>
+    api.post<Accessory>(`/accessories/${id}/check_in/`, { quantity, user_id: userId, notes }).then(r => r.data),
 };
 
 // ── Transaction logs ──────────────────────────────────────────────────────────

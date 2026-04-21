@@ -2,12 +2,20 @@ import { useState, useEffect } from 'react';
 import { X, PackagePlus } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Accessory } from '../types/inventory';
+import { accessoriesApi } from '../api';
+
+interface Holder {
+  id: string;
+  first_name: string;
+  last_name: string;
+  quantity: number;
+}
 
 interface InventoryCheckInModalProps {
   isOpen: boolean;
   item: Accessory | null;
   onClose: () => void;
-  onConfirm: (itemId: string, quantity: number, notes: string) => void;
+  onConfirm: (itemId: string, quantity: number, userId: string, notes: string) => void;
 }
 
 const labelStyle: React.CSSProperties = {
@@ -41,28 +49,40 @@ export default function InventoryCheckInModal({
   onClose,
   onConfirm,
 }: InventoryCheckInModalProps) {
+  const [holders, setHolders] = useState<Holder[]>([]);
+  const [loadingHolders, setLoadingHolders] = useState(false);
+  const [returnFrom, setReturnFrom] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [notes, setNotes] = useState('');
   const [focused, setFocused] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && item) {
+      setReturnFrom('');
       setQuantity('1');
       setNotes('');
       setSubmitted(false);
+      setLoadingHolders(true);
+      accessoriesApi.holders(item.id)
+        .then(setHolders)
+        .catch(() => setHolders([]))
+        .finally(() => setLoadingHolders(false));
     }
-  }, [isOpen]);
+  }, [isOpen, item]);
 
   if (!isOpen || !item) return null;
 
+  const selectedHolder = holders.find(h => h.id === returnFrom);
+  const maxQty = selectedHolder?.quantity ?? 0;
   const qty = parseInt(quantity) || 0;
-  const qtyError = submitted && qty < 1;
+  const userError = submitted && !returnFrom;
+  const qtyError = submitted && (qty < 1 || (returnFrom && qty > maxQty));
 
   const handleConfirm = () => {
     setSubmitted(true);
-    if (qty < 1) return;
-    onConfirm(item.id, qty, notes.trim());
+    if (!returnFrom || qty < 1 || qty > maxQty) return;
+    onConfirm(item.id, qty, returnFrom, notes.trim());
     onClose();
   };
 
@@ -90,7 +110,7 @@ export default function InventoryCheckInModal({
           overflow: 'hidden',
         }}
       >
-        {/* Coloured header bar */}
+        {/* Header */}
         <div
           style={{
             backgroundColor: colors.success,
@@ -138,10 +158,25 @@ export default function InventoryCheckInModal({
           </button>
         </div>
 
+        {/* No holders banner */}
+        {!loadingHolders && holders.length === 0 && (
+          <div
+            style={{
+              backgroundColor: 'rgba(239,68,68,0.08)',
+              borderBottom: '1px solid rgba(239,68,68,0.2)',
+              padding: `${spacing.sm} ${spacing.xl}`,
+            }}
+          >
+            <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.sm, color: colors.error, fontWeight: 600, margin: 0 }}>
+              No users currently hold this accessory.
+            </p>
+          </div>
+        )}
+
         {/* Body */}
         <div style={{ padding: spacing.xl, display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
 
-          {/* Current stock info */}
+          {/* Stock info */}
           <div
             style={{
               display: 'flex',
@@ -180,24 +215,66 @@ export default function InventoryCheckInModal({
             </div>
           </div>
 
-          {/* Quantity input */}
+          {/* Return From — required, only holders */}
           <div>
-            <label style={labelStyle}>Quantity to Add *</label>
+            <label style={labelStyle}>Return From *</label>
+            <select
+              value={returnFrom}
+              onChange={e => { setReturnFrom(e.target.value); setQuantity('1'); }}
+              disabled={loadingHolders || holders.length === 0}
+              onFocus={() => setFocused('user')}
+              onBlur={() => setFocused(null)}
+              style={{
+                ...inputStyle,
+                borderColor: userError ? colors.error : focused === 'user' ? colors.primary : colors.border,
+                appearance: 'none',
+                cursor: holders.length === 0 ? 'not-allowed' : 'pointer',
+                backgroundColor: returnFrom ? colors.bgSurface : colors.bgEmpty,
+                color: returnFrom ? colors.textPrimary : colors.textDisabled,
+                opacity: holders.length === 0 ? 0.6 : 1,
+              }}
+            >
+              <option value="">{loadingHolders ? 'Loading…' : 'Select who is returning…'}</option>
+              {holders.map(h => (
+                <option key={h.id} value={h.id}>
+                  {h.first_name} {h.last_name} ({h.quantity} held)
+                </option>
+              ))}
+            </select>
+            {userError && (
+              <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.error, marginTop: '0.15rem', display: 'block' }}>
+                Please select who is returning this accessory
+              </span>
+            )}
+          </div>
+
+          {/* Quantity */}
+          <div>
+            <label style={labelStyle}>Quantity to Return *</label>
             <input
               type="number"
               min="1"
+              max={maxQty || undefined}
               value={quantity}
               onChange={e => setQuantity(e.target.value)}
+              disabled={!returnFrom}
               onFocus={() => setFocused('qty')}
               onBlur={() => setFocused(null)}
               style={{
                 ...inputStyle,
                 borderColor: qtyError ? colors.error : focused === 'qty' ? colors.primary : colors.border,
+                opacity: !returnFrom ? 0.6 : 1,
+                cursor: !returnFrom ? 'not-allowed' : 'text',
               }}
             />
             {qtyError && (
               <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.error, marginTop: '0.15rem', display: 'block' }}>
-                Enter a quantity of at least 1
+                Enter a quantity between 1 and {maxQty}
+              </span>
+            )}
+            {returnFrom && maxQty > 0 && (
+              <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.blueGrayMd, marginTop: '0.15rem', display: 'block' }}>
+                Max returnable: {maxQty}
               </span>
             )}
           </div>
@@ -208,7 +285,7 @@ export default function InventoryCheckInModal({
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              placeholder="Optional notes about this stock addition…"
+              placeholder="Optional notes about this return…"
               rows={3}
               onFocus={() => setFocused('notes')}
               onBlur={() => setFocused(null)}
@@ -249,17 +326,18 @@ export default function InventoryCheckInModal({
           </button>
           <button
             onClick={handleConfirm}
+            disabled={holders.length === 0}
             style={{
               flex: 1,
               padding: `${spacing.sm} ${spacing.lg}`,
               borderRadius: radius.full,
               border: 'none',
-              backgroundColor: colors.success,
+              backgroundColor: holders.length === 0 ? colors.bgDisabled : colors.success,
               fontFamily: "'Archivo', sans-serif",
               fontSize: '0.875rem',
               fontWeight: 600,
-              color: colors.white,
-              cursor: 'pointer',
+              color: holders.length === 0 ? colors.textDisabled : colors.white,
+              cursor: holders.length === 0 ? 'not-allowed' : 'pointer',
             }}
           >
             Check In

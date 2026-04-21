@@ -214,8 +214,8 @@ export default function Inventory() {
     setInventory(prev => prev.map(i => i.id === updated.id ? updated : i));
   };
 
-  const handleCheckIn = (itemId: string, quantity: number, notes: string) => {
-    accessoriesApi.checkIn(itemId, quantity, notes)
+  const handleCheckIn = (itemId: string, quantity: number, userId: string, notes: string) => {
+    accessoriesApi.checkIn(itemId, quantity, userId, notes)
       .then(updated => {
         setInventory(prev => prev.map(i => i.id === itemId ? updated : i));
         toast.success(`Checked in ${quantity} × ${updated.item_name}`);

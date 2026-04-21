@@ -388,6 +388,31 @@ class AccessoryViewSet(viewsets.ModelViewSet):
         accessory.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @action(detail=True, methods=['get'])
+    def holders(self, request, pk=None):
+        accessory = self.get_object()
+        logs = TransactionLog.objects.filter(accessory=accessory).select_related('to_user', 'from_user')
+        qty_by_user = {}
+        for log in logs:
+            if log.transaction_type == TransactionLog.TransactionType.CHECK_OUT and log.to_user_id:
+                qty_by_user[log.to_user_id] = qty_by_user.get(log.to_user_id, 0) + (log.quantity or 0)
+            elif log.transaction_type == TransactionLog.TransactionType.CHECK_IN and log.from_user_id:
+                qty_by_user[log.from_user_id] = qty_by_user.get(log.from_user_id, 0) - (log.quantity or 0)
+        result = []
+        for uid, qty in qty_by_user.items():
+            if qty > 0:
+                try:
+                    user = User.objects.get(pk=uid)
+                    result.append({
+                        'id': str(user.id),
+                        'first_name': user.first_name,
+                        'last_name': user.last_name,
+                        'quantity': qty,
+                    })
+                except User.DoesNotExist:
+                    pass
+        return Response(result)
+
     @action(detail=True, methods=['post'])
     def check_out(self, request, pk=None):
         accessory = self.get_object()
@@ -419,14 +444,22 @@ class AccessoryViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def check_in(self, request, pk=None):
         accessory = self.get_object()
-        qty   = int(request.data.get('quantity', 1))
-        notes = request.data.get('notes', '')
+        qty     = int(request.data.get('quantity', 1))
+        notes   = request.data.get('notes', '')
+        user_id = request.data.get('user_id')
+        from_user = None
+        if user_id:
+            try:
+                from_user = User.objects.get(pk=user_id)
+            except User.DoesNotExist:
+                return Response({'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
         accessory.quantity_available += qty
         accessory.save()
         TransactionLog.objects.create(
             performed_by=request.user,
             transaction_type=TransactionLog.TransactionType.CHECK_IN,
             accessory=accessory,
+            from_user=from_user,
             quantity=qty,
             event_description=f'{qty}x {accessory.item_name} checked in',
             notes=notes,
