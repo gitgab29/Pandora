@@ -16,8 +16,10 @@ import AssetDetailModal from './AssetDetailModal';
 import ChangeStatusModal from './ChangeStatusModal';
 import { colors, spacing, radius, statusColors } from '../theme';
 import type { Asset, AssetStatus } from '../types/asset';
+import { ASSET_STATUS_LABELS } from '../types/asset';
 import { assetsApi, usersApi } from '../api';
 import type { Person } from '../types/people';
+import { useToast } from '../context/ToastContext';
 
 
 
@@ -66,6 +68,7 @@ export default function AssetsTabContent() {
   const statusFromUrl = searchParams.get('status') as AssetStatus | null;
   const [assets, setAssets] = useState<Asset[]>([]);
   const [users, setUsers] = useState<Person[]>([]);
+  const toast = useToast();
 
   useEffect(() => {
     assetsApi.list().then(setAssets).catch(() => {});
@@ -171,41 +174,57 @@ export default function AssetsTabContent() {
   const handleDelete = () => {
     if (!deleteTarget) return;
     const id = deleteTarget.id;
+    const tag = deleteTarget.asset_tag;
     setDeleteTarget(null);
     assetsApi.remove(id)
       .then(() => {
         setAssets(prev => prev.filter(a => a.id !== id));
         setSelectedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
+        toast.success(`Deleted asset ${tag}`);
       })
-      .catch(() => {});
+      .catch(() => toast.error('Could not delete asset. Please try again.'));
   };
 
   const handleSaveEdit = (updated: Asset) => {
     setAssets(prev => prev.map(a => a.id === updated.id ? updated : a));
+    toast.success(`Updated asset ${updated.asset_tag}`);
   };
 
   const handleSaveCopy = (data: Omit<Asset, 'id' | 'created_at' | 'updated_at'>) => {
     const newId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
     const today = new Date().toISOString().split('T')[0];
     setAssets(prev => [...prev, { ...data, id: newId, created_at: today, updated_at: today }]);
+    toast.success(`Copied asset as ${data.asset_tag}`);
   };
 
   const handleCheckOut = (assetId: string, userId: string, notes: string) => {
     assetsApi.checkOut(assetId, userId, notes)
-      .then(updated => setAssets(prev => prev.map(a => a.id === assetId ? updated : a)))
-      .catch(() => {});
+      .then(updated => {
+        setAssets(prev => prev.map(a => a.id === assetId ? updated : a));
+        const holder = updated.assigned_to_detail
+          ? `${updated.assigned_to_detail.first_name} ${updated.assigned_to_detail.last_name}`
+          : 'user';
+        toast.success(`Checked out ${updated.asset_tag} to ${holder}`);
+      })
+      .catch(() => toast.error('Could not check out asset. Please try again.'));
   };
 
   const handleCheckIn = (assetId: string, notes: string) => {
     assetsApi.checkIn(assetId, notes)
-      .then(updated => setAssets(prev => prev.map(a => a.id === assetId ? updated : a)))
-      .catch(() => {});
+      .then(updated => {
+        setAssets(prev => prev.map(a => a.id === assetId ? updated : a));
+        toast.success(`Checked in ${updated.asset_tag}`);
+      })
+      .catch(() => toast.error('Could not check in asset. Please try again.'));
   };
 
   const handleChangeStatus = (assetId: string, status: AssetStatus, notes: string) => {
     assetsApi.changeStatus(assetId, status, notes)
-      .then(updated => setAssets(prev => prev.map(a => a.id === assetId ? updated : a)))
-      .catch(() => {});
+      .then(updated => {
+        setAssets(prev => prev.map(a => a.id === assetId ? updated : a));
+        toast.success(`Status updated to ${ASSET_STATUS_LABELS[updated.status]}`);
+      })
+      .catch(() => toast.error('Could not update status. Please try again.'));
   };
 
   return (
@@ -586,9 +605,13 @@ export default function AssetsTabContent() {
         }}
         onRetire={notes => {
           if (!detailTarget) return;
+          const tag = detailTarget.asset_tag;
           assetsApi.retire(detailTarget.id, notes)
-            .then(() => setAssets(prev => prev.filter(a => a.id !== detailTarget.id)))
-            .catch(() => {});
+            .then(() => {
+              setAssets(prev => prev.filter(a => a.id !== detailTarget.id));
+              toast.success(`Archived asset ${tag}`);
+            })
+            .catch(() => toast.error('Could not archive asset. Please try again.'));
         }}
         onCheckOut={() => {
           const a = detailTarget;

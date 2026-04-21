@@ -4,6 +4,7 @@ import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Accessory } from '../types/inventory';
 import type { Person } from '../types/people';
 import { accessoriesApi } from '../api';
+import { useToast } from '../context/ToastContext';
 
 interface AssignAccessoryToPersonModalProps {
   isOpen: boolean;
@@ -46,6 +47,7 @@ export default function AssignAccessoryToPersonModal({ isOpen, person, onClose, 
   const [focused, setFocused] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     if (isOpen) {
@@ -81,12 +83,16 @@ export default function AssignAccessoryToPersonModal({ isOpen, person, onClose, 
     setSubmitted(true);
     if (!selectedId || qty < 1 || qty > maxQty) return;
     setLoading(true);
+    const itemName = selected?.item_name ?? 'accessory';
     accessoriesApi.checkOut(selectedId, qty, person.id, notes.trim())
       .then(() => {
+        toast.success(`Checked out ${qty} × ${itemName} to ${person.first_name} ${person.last_name}`);
         onAssigned();
         onClose();
       })
-      .catch(() => {})
+      .catch(() => {
+        toast.error('Could not check out accessory. Please try again.');
+      })
       .finally(() => setLoading(false));
   };
 

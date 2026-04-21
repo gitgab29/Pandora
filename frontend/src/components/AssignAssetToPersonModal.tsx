@@ -4,6 +4,7 @@ import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Asset } from '../types/asset';
 import type { Person } from '../types/people';
 import { assetsApi } from '../api';
+import { useToast } from '../context/ToastContext';
 
 interface AssignAssetToPersonModalProps {
   isOpen: boolean;
@@ -45,6 +46,7 @@ export default function AssignAssetToPersonModal({ isOpen, person, onClose, onAs
   const [focused, setFocused] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     if (isOpen) {
@@ -74,10 +76,13 @@ export default function AssignAssetToPersonModal({ isOpen, person, onClose, onAs
     setLoading(true);
     assetsApi.checkOut(selectedId, person.id, notes.trim())
       .then(updated => {
+        toast.success(`Assigned ${updated.asset_tag} to ${person.first_name} ${person.last_name}`);
         onAssigned(updated);
         onClose();
       })
-      .catch(() => {})
+      .catch(() => {
+        toast.error('Could not assign asset. Please try again.');
+      })
       .finally(() => setLoading(false));
   };
 

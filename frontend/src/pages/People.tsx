@@ -12,6 +12,7 @@ import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Person } from '../types/people';
 import { usersApi } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -74,6 +75,7 @@ function iconBtnStyle(bg: string): React.CSSProperties {
 
 export default function People() {
   const { user: authUser } = useAuth();
+  const toast = useToast();
   const [searchParams]  = useSearchParams();
   const showProfileCard = searchParams.get('profile') === 'me';
   const [profileExpanded, setProfileExpanded] = useState(true);
@@ -140,13 +142,21 @@ export default function People() {
     usersApi.create({
       ...person,
       password: 'password123',
-    }).then(created => setPeople(prev => [...prev, created]));
+    })
+      .then(created => {
+        setPeople(prev => [...prev, created]);
+        toast.success(`Added ${created.first_name} ${created.last_name}`);
+      })
+      .catch(() => toast.error('Could not add person. Please try again.'));
   };
 
   const handleEdit = (updated: Person) => {
-    usersApi.update(updated.id, updated).then(saved => {
-      setPeople(prev => prev.map(p => p.id === saved.id ? saved : p));
-    });
+    usersApi.update(updated.id, updated)
+      .then(saved => {
+        setPeople(prev => prev.map(p => p.id === saved.id ? saved : p));
+        toast.success(`Updated ${saved.first_name} ${saved.last_name}`);
+      })
+      .catch(() => toast.error('Could not update person. Please try again.'));
     setPeople(prev =>
       prev.map(p => p.id === updated.id
         ? { ...updated, updated_at: new Date().toISOString().split('T')[0] }
@@ -157,9 +167,13 @@ export default function People() {
 
   const handleDelete = () => {
     if (!deletePerson) return;
-    usersApi.remove(deletePerson.id).then(() => {
-      setPeople(prev => prev.filter(p => p.id !== deletePerson.id));
-    });
+    const name = `${deletePerson.first_name} ${deletePerson.last_name}`;
+    usersApi.remove(deletePerson.id)
+      .then(() => {
+        setPeople(prev => prev.filter(p => p.id !== deletePerson.id));
+        toast.success(`Deleted ${name}`);
+      })
+      .catch(() => toast.error('Could not delete person. Please try again.'));
     setDeletePerson(null);
   };
 
@@ -671,9 +685,14 @@ export default function People() {
         }}
         onRetire={notes => {
           if (!detailPerson) return;
+          const name = `${detailPerson.first_name} ${detailPerson.last_name}`;
           usersApi.retire(detailPerson.id, notes)
-            .then(() => { setPeople(prev => prev.filter(p => p.id !== detailPerson.id)); setDetailPerson(null); })
-            .catch(() => {});
+            .then(() => {
+              setPeople(prev => prev.filter(p => p.id !== detailPerson.id));
+              setDetailPerson(null);
+              toast.success(`Retired ${name}`);
+            })
+            .catch(() => toast.error('Could not retire person. Please try again.'));
         }}
       />
 

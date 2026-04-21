@@ -23,6 +23,7 @@ import { colors, spacing, radius } from '../theme';
 import type { Accessory } from '../types/inventory';
 import type { Person } from '../types/people';
 import { accessoriesApi, usersApi } from '../api';
+import { useToast } from '../context/ToastContext';
 
 type InventoryTab = 'Assets' | 'Accessories' | 'Licenses' | 'Consumables';
 const INVENTORY_TABS: InventoryTab[] = ['Assets', 'Accessories', 'Licenses', 'Consumables'];
@@ -70,6 +71,7 @@ export default function Inventory() {
   const [searchParams] = useSearchParams();
   const [inventory, setInventory] = useState<Accessory[]>([]);
   const [users, setUsers] = useState<Person[]>([]);
+  const toast = useToast();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const tabFromUrl = searchParams.get('tab') as InventoryTab | null;
   const [activeInventoryTab, setActiveInventoryTab] = useState<InventoryTab>(
@@ -197,13 +199,15 @@ export default function Inventory() {
 
   const handleDelete = () => {
     if (!deleteTarget) return;
+    const name = deleteTarget.item_name;
     accessoriesApi.remove(deleteTarget.id)
       .then(() => {
         setInventory(prev => prev.filter(i => i.id !== deleteTarget.id));
         setSelectedIds(prev => { const n = new Set(prev); n.delete(deleteTarget.id); return n; });
         setDeleteTarget(null);
+        toast.success(`Deleted "${name}"`);
       })
-      .catch(() => {});
+      .catch(() => toast.error('Could not delete item. Please try again.'));
   };
 
   const handleSaveEdit = (updated: Accessory) => {
@@ -212,14 +216,20 @@ export default function Inventory() {
 
   const handleCheckIn = (itemId: string, quantity: number, notes: string) => {
     accessoriesApi.checkIn(itemId, quantity, notes)
-      .then(updated => setInventory(prev => prev.map(i => i.id === itemId ? updated : i)))
-      .catch(() => {});
+      .then(updated => {
+        setInventory(prev => prev.map(i => i.id === itemId ? updated : i));
+        toast.success(`Checked in ${quantity} × ${updated.item_name}`);
+      })
+      .catch(() => toast.error('Could not check in item. Please try again.'));
   };
 
   const handleCheckOut = (itemId: string, quantity: number, userId: string, notes: string) => {
     accessoriesApi.checkOut(itemId, quantity, userId || undefined, notes)
-      .then(updated => setInventory(prev => prev.map(i => i.id === itemId ? updated : i)))
-      .catch(() => {});
+      .then(updated => {
+        setInventory(prev => prev.map(i => i.id === itemId ? updated : i));
+        toast.success(`Checked out ${quantity} × ${updated.item_name}`);
+      })
+      .catch(() => toast.error('Could not check out item. Please try again.'));
   };
 
   return (

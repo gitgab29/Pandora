@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Asset, AddAssetFormData, AssetStatus } from '../types/asset';
 import { ASSET_STATUS_LABELS } from '../types/asset';
+import { isBlank } from '../utils/validation';
 
 interface EditAssetModalProps {
   isOpen: boolean;
@@ -65,9 +66,10 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function TextInput({
-  label, value, onChange, placeholder, type = 'text',
+  label, value, onChange, placeholder, type = 'text', error = false,
 }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string;
+  label: string; value: string; onChange: (v: string) => void;
+  placeholder?: string; type?: string; error?: boolean;
 }) {
   const [focused, setFocused] = useState(false);
   return (
@@ -79,8 +81,16 @@ function TextInput({
         onChange={e => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        style={{ ...inputStyle, borderColor: focused ? colors.primary : colors.border }}
+        style={{
+          ...inputStyle,
+          borderColor: error ? colors.error : focused ? colors.primary : colors.border,
+        }}
       />
+      {error && (
+        <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.error, marginTop: '0.15rem' }}>
+          This field is required
+        </span>
+      )}
     </Field>
   );
 }
@@ -148,9 +158,13 @@ function assetToForm(a: Asset): AddAssetFormData {
 
 export default function EditAssetModal({ isOpen, asset, onClose, onSave }: EditAssetModalProps) {
   const [form, setForm] = useState<AddAssetFormData | null>(null);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    if (asset) setForm(assetToForm(asset));
+    if (asset) {
+      setForm(assetToForm(asset));
+      setSubmitted(false);
+    }
   }, [asset]);
 
   if (!isOpen || !asset || !form) return null;
@@ -158,8 +172,14 @@ export default function EditAssetModal({ isOpen, asset, onClose, onSave }: EditA
   const set = (key: keyof AddAssetFormData) => (v: string) =>
     setForm(prev => prev ? { ...prev, [key]: v } : prev);
 
+  const errors = {
+    asset_tag:     submitted && isBlank(form.asset_tag),
+    serial_number: submitted && isBlank(form.serial_number),
+  };
+
   const handleSubmit = () => {
-    if (!form.asset_tag.trim() || !form.serial_number.trim()) return;
+    setSubmitted(true);
+    if (isBlank(form.asset_tag) || isBlank(form.serial_number)) return;
     const updated: Asset = {
       ...asset,
       asset_tag: form.asset_tag.trim(),
@@ -256,8 +276,8 @@ export default function EditAssetModal({ isOpen, asset, onClose, onSave }: EditA
           {/* ── Basic Information ── */}
           <p style={sectionHeadStyle}>Basic Information</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
-            <TextInput label="Asset Tag *" value={form.asset_tag} onChange={set('asset_tag')} placeholder="e.g. ES-0042" />
-            <TextInput label="Serial Number *" value={form.serial_number} onChange={set('serial_number')} placeholder="e.g. C02X12ABCDEF" />
+            <TextInput label="Asset Tag *" value={form.asset_tag} onChange={set('asset_tag')} placeholder="e.g. ES-0042" error={errors.asset_tag} />
+            <TextInput label="Serial Number *" value={form.serial_number} onChange={set('serial_number')} placeholder="e.g. C02X12ABCDEF" error={errors.serial_number} />
             <SelectInput label="Category *" value={form.category} options={ASSET_CATEGORIES} onChange={set('category')} />
             <SelectInput label="Status *" value={form.status} options={ASSET_STATUSES} onChange={set('status')} />
             <TextInput label="Model" value={form.model} onChange={set('model')} placeholder="e.g. MacBook Pro 14" />

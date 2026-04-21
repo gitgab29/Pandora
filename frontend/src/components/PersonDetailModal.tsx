@@ -6,6 +6,7 @@ import type { Asset } from '../types/asset';
 import type { TransactionLog } from '../types/activity';
 import { ASSET_STATUS_LABELS } from '../types/asset';
 import { assetsApi, transactionsApi } from '../api';
+import { useToast } from '../context/ToastContext';
 import AssetCheckInModal from './AssetCheckInModal';
 import AssignAssetToPersonModal from './AssignAssetToPersonModal';
 import AssignAccessoryToPersonModal from './AssignAccessoryToPersonModal';
@@ -91,6 +92,7 @@ export default function PersonDetailModal({ isOpen, person, allPeople, onClose, 
   const [checkInTarget, setCheckInTarget] = useState<Asset | null>(null);
   const [assignAssetOpen, setAssignAssetOpen] = useState(false);
   const [assignAccessoryOpen, setAssignAccessoryOpen] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     if (!isOpen || !person) return;
@@ -115,9 +117,13 @@ export default function PersonDetailModal({ isOpen, person, allPeople, onClose, 
   });
 
   const handleCheckIn = (assetId: string, notes: string) => {
+    const asset = assets.find(a => a.id === assetId);
     assetsApi.checkIn(assetId, notes)
-      .then(() => setAssets(prev => prev.filter(a => a.id !== assetId)))
-      .catch(() => {});
+      .then(() => {
+        setAssets(prev => prev.filter(a => a.id !== assetId));
+        toast.success(`Checked in ${asset?.asset_tag ?? 'asset'}`);
+      })
+      .catch(() => toast.error('Could not check in asset. Please try again.'));
   };
 
   const handleAssetAssigned = (newAsset: Asset) => {

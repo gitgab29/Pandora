@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Person, PersonRole } from '../types/people';
+import { isBlank, isValidEmail } from '../utils/validation';
 
 interface AddEditPersonModalProps {
   isOpen: boolean;
@@ -72,9 +73,10 @@ const sectionHead: React.CSSProperties = {
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 function TextInput({
-  label, value, onChange, placeholder, type = 'text',
+  label, value, onChange, placeholder, type = 'text', error = false, errorMessage = 'This field is required',
 }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string;
+  label: string; value: string; onChange: (v: string) => void;
+  placeholder?: string; type?: string; error?: boolean; errorMessage?: string;
 }) {
   const [focused, setFocused] = useState(false);
   return (
@@ -87,8 +89,16 @@ function TextInput({
         onChange={e => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        style={{ ...inputBase, borderColor: focused ? colors.primary : colors.border }}
+        style={{
+          ...inputBase,
+          borderColor: error ? colors.error : focused ? colors.primary : colors.border,
+        }}
       />
+      {error && (
+        <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.error, marginTop: '0.15rem' }}>
+          {errorMessage}
+        </span>
+      )}
     </div>
   );
 }
@@ -128,6 +138,7 @@ export default function AddEditPersonModal({
   isOpen, mode, person, allPeople, onClose, onSave,
 }: AddEditPersonModalProps) {
   const [form, setForm] = useState(EMPTY_FORM);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -147,6 +158,7 @@ export default function AddEditPersonModal({
       } else {
         setForm(EMPTY_FORM);
       }
+      setSubmitted(false);
     }
   }, [isOpen, mode, person]);
 
@@ -166,10 +178,18 @@ export default function AddEditPersonModal({
     { value: 'ADMIN', label: 'Admin' },
   ];
 
-  const canSubmit = form.first_name.trim() && form.last_name.trim() && form.email.trim();
+  const emailBlank = isBlank(form.email);
+  const emailBadFormat = !emailBlank && !isValidEmail(form.email);
+  const errors = {
+    first_name: submitted && isBlank(form.first_name),
+    last_name:  submitted && isBlank(form.last_name),
+    email:      submitted && (emailBlank || emailBadFormat),
+  };
+  const emailErrorMessage = emailBlank ? 'This field is required' : 'Enter a valid email';
 
   const handleSubmit = () => {
-    if (!canSubmit) return;
+    setSubmitted(true);
+    if (isBlank(form.first_name) || isBlank(form.last_name) || emailBlank || emailBadFormat) return;
     const today = new Date().toISOString().split('T')[0];
     onSave({
       id:             person?.id ?? '',
@@ -192,6 +212,7 @@ export default function AddEditPersonModal({
 
   const handleClose = () => {
     setForm(EMPTY_FORM);
+    setSubmitted(false);
     onClose();
   };
 
@@ -252,10 +273,10 @@ export default function AddEditPersonModal({
           {/* Identity */}
           <p style={{ ...sectionHead, borderTop: 'none', marginTop: 0, paddingTop: spacing.md }}>Identity</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
-            <TextInput label="First Name *" value={form.first_name} onChange={set('first_name')} placeholder="e.g. Maria" />
-            <TextInput label="Last Name *"  value={form.last_name}  onChange={set('last_name')}  placeholder="e.g. Santos" />
+            <TextInput label="First Name *" value={form.first_name} onChange={set('first_name')} placeholder="e.g. Maria" error={errors.first_name} />
+            <TextInput label="Last Name *"  value={form.last_name}  onChange={set('last_name')}  placeholder="e.g. Santos" error={errors.last_name} />
             <div style={{ gridColumn: '1 / -1' }}>
-              <TextInput label="Email *" value={form.email} onChange={set('email')} placeholder="name@embeddedsilicon.com" type="email" />
+              <TextInput label="Email *" value={form.email} onChange={set('email')} placeholder="name@embeddedsilicon.com" type="email" error={errors.email} errorMessage={emailErrorMessage} />
             </div>
             <TextInput label="Badge Number" value={form.badge_number} onChange={set('badge_number')} placeholder="e.g. ES-B-001" />
             <TextInput label="Location"     value={form.location}     onChange={set('location')}     placeholder="e.g. HQ - Lab A" />
@@ -315,15 +336,14 @@ export default function AddEditPersonModal({
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!canSubmit}
             style={{
               padding: `${spacing.sm} ${spacing.xl}`,
               borderRadius: radius.full, border: 'none',
-              backgroundColor: canSubmit ? colors.primary : colors.bgDisabled,
+              backgroundColor: colors.primary,
               fontFamily: "'Archivo', sans-serif",
               fontSize: fontSize.sm, fontWeight: 600,
-              color: canSubmit ? colors.white : colors.textDisabled,
-              cursor: canSubmit ? 'pointer' : 'not-allowed',
+              color: colors.white,
+              cursor: 'pointer',
               transition: 'background-color 0.15s',
             }}
           >

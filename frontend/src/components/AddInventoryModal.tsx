@@ -3,6 +3,8 @@ import { X } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { AddInventoryFormData, Accessory } from '../types/inventory';
 import { accessoriesApi } from '../api';
+import { isBlank } from '../utils/validation';
+import { useToast } from '../context/ToastContext';
 
 interface AddInventoryModalProps {
   isOpen: boolean;
@@ -64,9 +66,10 @@ const sectionHeadStyle: React.CSSProperties = {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function TextInput({
-  label, value, onChange, placeholder, type = 'text',
+  label, value, onChange, placeholder, type = 'text', error = false, errorMessage = 'This field is required',
 }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string;
+  label: string; value: string; onChange: (v: string) => void;
+  placeholder?: string; type?: string; error?: boolean; errorMessage?: string;
 }) {
   const [focused, setFocused] = useState(false);
   return (
@@ -79,16 +82,25 @@ function TextInput({
         onChange={e => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        style={{ ...inputStyle, borderColor: focused ? colors.primary : colors.border }}
+        style={{
+          ...inputStyle,
+          borderColor: error ? colors.error : focused ? colors.primary : colors.border,
+        }}
       />
+      {error && (
+        <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.error, marginTop: '0.15rem' }}>
+          {errorMessage}
+        </span>
+      )}
     </div>
   );
 }
 
 function SelectInput({
-  label, value, options, onChange, placeholder,
+  label, value, options, onChange, placeholder, error = false,
 }: {
-  label: string; value: string; options: string[]; onChange: (v: string) => void; placeholder?: string;
+  label: string; value: string; options: string[]; onChange: (v: string) => void;
+  placeholder?: string; error?: boolean;
 }) {
   const [focused, setFocused] = useState(false);
   return (
@@ -101,7 +113,7 @@ function SelectInput({
         onBlur={() => setFocused(false)}
         style={{
           ...inputStyle,
-          borderColor: focused ? colors.primary : colors.border,
+          borderColor: error ? colors.error : focused ? colors.primary : colors.border,
           appearance: 'none',
           cursor: 'pointer',
           color: value ? colors.textPrimary : colors.textDisabled,
@@ -110,6 +122,11 @@ function SelectInput({
         <option value="">{placeholder ?? `Select ${label}`}</option>
         {options.map(o => <option key={o} value={o}>{o}</option>)}
       </select>
+      {error && (
+        <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.error, marginTop: '0.15rem' }}>
+          This field is required
+        </span>
+      )}
     </div>
   );
 }
@@ -119,19 +136,32 @@ function SelectInput({
 export default function AddInventoryModal({ isOpen, onClose, onSave }: AddInventoryModalProps) {
   const [form, setForm] = useState<AddInventoryFormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const toast = useToast();
 
   if (!isOpen) return null;
 
   const set = (key: keyof AddInventoryFormData) => (v: string) =>
     setForm(prev => ({ ...prev, [key]: v }));
 
+  const qtyNum = parseInt(form.quantity_available, 10);
+  const qtyInvalid = isBlank(form.quantity_available) || Number.isNaN(qtyNum) || qtyNum < 0;
+
+  const errors = {
+    item_name:          submitted && isBlank(form.item_name),
+    category:           submitted && isBlank(form.category),
+    quantity_available: submitted && qtyInvalid,
+  };
+
   const handleSubmit = () => {
-    if (!form.item_name.trim()) return;
+    setSubmitted(true);
+    if (isBlank(form.item_name) || isBlank(form.category) || qtyInvalid) return;
+
     setSaving(true);
     accessoriesApi.create({
       item_name: form.item_name.trim(),
       category: form.category || undefined,
-      quantity_available: parseInt(form.quantity_available) || 0,
+      quantity_available: qtyNum,
       min_quantity: parseInt(form.min_quantity) || 0,
       model_number: form.model_number || undefined,
       purchase_date: form.purchase_date || undefined,
@@ -143,13 +173,18 @@ export default function AddInventoryModal({ isOpen, onClose, onSave }: AddInvent
       notes: form.notes || undefined,
     }).then(created => {
       onSave?.(created);
+      toast.success(`Added “${created.item_name}” to inventory`);
       setForm(EMPTY_FORM);
+      setSubmitted(false);
       onClose();
-    }).catch(() => {}).finally(() => setSaving(false));
+    }).catch(() => {
+      toast.error('Could not add inventory item. Please try again.');
+    }).finally(() => setSaving(false));
   };
 
   const handleClose = () => {
     setForm(EMPTY_FORM);
+    setSubmitted(false);
     onClose();
   };
 
@@ -219,11 +254,19 @@ export default function AddInventoryModal({ isOpen, onClose, onSave }: AddInvent
           <p style={{ ...sectionHeadStyle, borderTop: 'none', marginTop: 0, paddingTop: spacing.md }}>Item Details</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
             <div style={{ gridColumn: '1 / -1' }}>
-              <TextInput label="Item Name *" value={form.item_name} onChange={set('item_name')} placeholder="e.g. USB-C Cable 2m" />
+              <TextInput label="Item Name *" value={form.item_name} onChange={set('item_name')} placeholder="e.g. USB-C Cable 2m" error={errors.item_name} />
             </div>
-            <SelectInput label="Category *" value={form.category} options={INVENTORY_CATEGORIES} onChange={set('category')} />
+            <SelectInput label="Category *" value={form.category} options={INVENTORY_CATEGORIES} onChange={set('category')} error={errors.category} />
             <TextInput label="Model Number" value={form.model_number} onChange={set('model_number')} placeholder="e.g. MX-USBC-200" />
-            <TextInput label="Quantity Available *" value={form.quantity_available} onChange={set('quantity_available')} placeholder="e.g. 25" type="number" />
+            <TextInput
+              label="Quantity Available *"
+              value={form.quantity_available}
+              onChange={set('quantity_available')}
+              placeholder="e.g. 25"
+              type="number"
+              error={errors.quantity_available}
+              errorMessage="Enter a valid quantity (0 or more)"
+            />
             <TextInput label="Min Quantity (Alert)" value={form.min_quantity} onChange={set('min_quantity')} placeholder="e.g. 5" type="number" />
           </div>
 

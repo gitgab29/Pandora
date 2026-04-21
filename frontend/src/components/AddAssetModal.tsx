@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { AddAssetFormData, AssetStatus } from '../types/asset';
 import { ASSET_STATUS_LABELS } from '../types/asset';
+import { isBlank } from '../utils/validation';
 
 interface AddAssetModalProps {
   isOpen: boolean;
@@ -74,9 +75,10 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function TextInput({
-  label, value, onChange, placeholder, type = 'text',
+  label, value, onChange, placeholder, type = 'text', error = false,
 }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string;
+  label: string; value: string; onChange: (v: string) => void;
+  placeholder?: string; type?: string; error?: boolean;
 }) {
   const [focused, setFocused] = useState(false);
   return (
@@ -88,16 +90,25 @@ function TextInput({
         onChange={e => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        style={{ ...inputStyle, borderColor: focused ? colors.primary : colors.border }}
+        style={{
+          ...inputStyle,
+          borderColor: error ? colors.error : focused ? colors.primary : colors.border,
+        }}
       />
+      {error && (
+        <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.error, marginTop: '0.15rem' }}>
+          This field is required
+        </span>
+      )}
     </Field>
   );
 }
 
 function SelectInput({
-  label, value, options, onChange, placeholder,
+  label, value, options, onChange, placeholder, error = false,
 }: {
-  label: string; value: string; options: string[]; onChange: (v: string) => void; placeholder?: string;
+  label: string; value: string; options: string[]; onChange: (v: string) => void;
+  placeholder?: string; error?: boolean;
 }) {
   const optionLabel = (o: string) => (ASSET_STATUS_LABELS as Record<string, string>)[o] ?? o;
   const [focused, setFocused] = useState(false);
@@ -110,7 +121,7 @@ function SelectInput({
         onBlur={() => setFocused(false)}
         style={{
           ...inputStyle,
-          borderColor: focused ? colors.primary : colors.border,
+          borderColor: error ? colors.error : focused ? colors.primary : colors.border,
           appearance: 'none',
           cursor: 'pointer',
           backgroundColor: value ? colors.bgSurface : colors.bgEmpty,
@@ -120,6 +131,11 @@ function SelectInput({
         <option value="">{placeholder ?? `Select ${label}`}</option>
         {options.map(o => <option key={o} value={o}>{optionLabel(o)}</option>)}
       </select>
+      {error && (
+        <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.error, marginTop: '0.15rem' }}>
+          This field is required
+        </span>
+      )}
     </Field>
   );
 }
@@ -128,20 +144,33 @@ function SelectInput({
 
 export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
   const [form, setForm] = useState<AddAssetFormData>(EMPTY_FORM);
+  const [submitted, setSubmitted] = useState(false);
 
   if (!isOpen) return null;
 
   const set = (key: keyof AddAssetFormData) => (v: string) =>
     setForm(prev => ({ ...prev, [key]: v }));
 
+  const errors = {
+    asset_tag:     submitted && isBlank(form.asset_tag),
+    serial_number: submitted && isBlank(form.serial_number),
+    category:      submitted && isBlank(form.category),
+    status:        submitted && isBlank(form.status),
+  };
+
   const handleSubmit = () => {
+    setSubmitted(true);
+    if (Object.values(errors).some(Boolean)) return;
+    if (isBlank(form.asset_tag) || isBlank(form.serial_number) || isBlank(form.category) || isBlank(form.status)) return;
     // TODO: POST /api/assets/ when backend is ready
     setForm(EMPTY_FORM);
+    setSubmitted(false);
     onClose();
   };
 
   const handleClose = () => {
     setForm(EMPTY_FORM);
+    setSubmitted(false);
     onClose();
   };
 
@@ -210,10 +239,10 @@ export default function AddAssetModal({ isOpen, onClose }: AddAssetModalProps) {
           {/* ── Basic Information ── */}
           <p style={sectionHeadStyle}>Basic Information</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
-            <TextInput label="Asset Tag *" value={form.asset_tag} onChange={set('asset_tag')} placeholder="e.g. ES-0042" />
-            <TextInput label="Serial Number *" value={form.serial_number} onChange={set('serial_number')} placeholder="e.g. C02X12ABCDEF" />
-            <SelectInput label="Category *" value={form.category} options={ASSET_CATEGORIES} onChange={set('category')} />
-            <SelectInput label="Status *" value={form.status} options={ASSET_STATUSES} onChange={set('status')} />
+            <TextInput label="Asset Tag *" value={form.asset_tag} onChange={set('asset_tag')} placeholder="e.g. ES-0042" error={errors.asset_tag} />
+            <TextInput label="Serial Number *" value={form.serial_number} onChange={set('serial_number')} placeholder="e.g. C02X12ABCDEF" error={errors.serial_number} />
+            <SelectInput label="Category *" value={form.category} options={ASSET_CATEGORIES} onChange={set('category')} error={errors.category} />
+            <SelectInput label="Status *" value={form.status} options={ASSET_STATUSES} onChange={set('status')} error={errors.status} />
             <TextInput label="Model" value={form.model} onChange={set('model')} placeholder="e.g. MacBook Pro 14" />
           </div>
 

@@ -3,6 +3,8 @@ import { X } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Accessory, AddInventoryFormData } from '../types/inventory';
 import { accessoriesApi } from '../api';
+import { isBlank } from '../utils/validation';
+import { useToast } from '../context/ToastContext';
 
 interface EditInventoryModalProps {
   isOpen: boolean;
@@ -67,9 +69,10 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function TextInput({
-  label, value, onChange, placeholder, type = 'text',
+  label, value, onChange, placeholder, type = 'text', error = false, errorMessage = 'This field is required',
 }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string;
+  label: string; value: string; onChange: (v: string) => void;
+  placeholder?: string; type?: string; error?: boolean; errorMessage?: string;
 }) {
   const [focused, setFocused] = useState(false);
   return (
@@ -81,16 +84,25 @@ function TextInput({
         onChange={e => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        style={{ ...inputStyle, borderColor: focused ? colors.primary : colors.border }}
+        style={{
+          ...inputStyle,
+          borderColor: error ? colors.error : focused ? colors.primary : colors.border,
+        }}
       />
+      {error && (
+        <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.error, marginTop: '0.15rem' }}>
+          {errorMessage}
+        </span>
+      )}
     </Field>
   );
 }
 
 function SelectInput({
-  label, value, options, onChange, placeholder,
+  label, value, options, onChange, placeholder, error = false,
 }: {
-  label: string; value: string; options: string[]; onChange: (v: string) => void; placeholder?: string;
+  label: string; value: string; options: string[]; onChange: (v: string) => void;
+  placeholder?: string; error?: boolean;
 }) {
   const [focused, setFocused] = useState(false);
   return (
@@ -102,7 +114,7 @@ function SelectInput({
         onBlur={() => setFocused(false)}
         style={{
           ...inputStyle,
-          borderColor: focused ? colors.primary : colors.border,
+          borderColor: error ? colors.error : focused ? colors.primary : colors.border,
           appearance: 'none',
           cursor: 'pointer',
           backgroundColor: value ? colors.bgSurface : colors.bgEmpty,
@@ -112,6 +124,11 @@ function SelectInput({
         <option value="">{placeholder ?? `Select ${label}`}</option>
         {options.map(o => <option key={o} value={o}>{o}</option>)}
       </select>
+      {error && (
+        <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.micro, color: colors.error, marginTop: '0.15rem' }}>
+          This field is required
+        </span>
+      )}
     </Field>
   );
 }
@@ -139,9 +156,15 @@ function itemToForm(i: Accessory): AddInventoryFormData {
 
 export default function EditInventoryModal({ isOpen, item, onClose, onSave }: EditInventoryModalProps) {
   const [form, setForm] = useState<AddInventoryFormData | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
-    if (item) setForm(itemToForm(item));
+    if (item) {
+      setForm(itemToForm(item));
+      setSubmitted(false);
+    }
   }, [item]);
 
   if (!isOpen || !item || !form) return null;
@@ -149,14 +172,22 @@ export default function EditInventoryModal({ isOpen, item, onClose, onSave }: Ed
   const set = (key: keyof AddInventoryFormData) => (v: string) =>
     setForm(prev => prev ? { ...prev, [key]: v } : prev);
 
+  const qtyNum = parseInt(form.quantity_available, 10);
+  const qtyInvalid = isBlank(form.quantity_available) || Number.isNaN(qtyNum) || qtyNum < 0;
+
+  const errors = {
+    item_name:          submitted && isBlank(form.item_name),
+    quantity_available: submitted && qtyInvalid,
+  };
+
   const handleSubmit = () => {
-    if (!form.item_name.trim()) return;
-    const qty = parseInt(form.quantity_available) || 0;
+    setSubmitted(true);
+    if (isBlank(form.item_name) || qtyInvalid) return;
     const minQty = parseInt(form.min_quantity) || 0;
     const patch: Partial<Accessory> = {
       item_name: form.item_name.trim(),
       category: form.category || undefined,
-      quantity_available: qty,
+      quantity_available: qtyNum,
       min_quantity: minQty,
       model_number: form.model_number || undefined,
       purchase_date: form.purchase_date || undefined,
@@ -167,9 +198,17 @@ export default function EditInventoryModal({ isOpen, item, onClose, onSave }: Ed
       location: form.location || undefined,
       notes: form.notes || undefined,
     };
+    setSaving(true);
     accessoriesApi.update(item.id, patch)
-      .then(updated => { onSave(updated); onClose(); })
-      .catch(() => {});
+      .then(updated => {
+        onSave(updated);
+        toast.success(`Updated “${updated.item_name}”`);
+        onClose();
+      })
+      .catch(() => {
+        toast.error('Could not update item. Please try again.');
+      })
+      .finally(() => setSaving(false));
   };
 
   return (
@@ -238,11 +277,19 @@ export default function EditInventoryModal({ isOpen, item, onClose, onSave }: Ed
           <p style={sectionHeadStyle}>Item Details</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: `${spacing.md} ${spacing.lg}`, marginTop: spacing.sm }}>
             <div style={{ gridColumn: '1 / -1' }}>
-              <TextInput label="Item Name *" value={form.item_name} onChange={set('item_name')} placeholder="e.g. USB-C Cable 2m" />
+              <TextInput label="Item Name *" value={form.item_name} onChange={set('item_name')} placeholder="e.g. USB-C Cable 2m" error={errors.item_name} />
             </div>
             <SelectInput label="Category" value={form.category} options={INVENTORY_CATEGORIES} onChange={set('category')} placeholder="Select category" />
             <TextInput label="Model Number" value={form.model_number} onChange={set('model_number')} placeholder="e.g. ANK-USB2M" />
-            <TextInput label="Qty Available *" value={form.quantity_available} onChange={set('quantity_available')} placeholder="e.g. 20" type="number" />
+            <TextInput
+              label="Qty Available *"
+              value={form.quantity_available}
+              onChange={set('quantity_available')}
+              placeholder="e.g. 20"
+              type="number"
+              error={errors.quantity_available}
+              errorMessage="Enter a valid quantity (0 or more)"
+            />
             <TextInput label="Min Quantity *" value={form.min_quantity} onChange={set('min_quantity')} placeholder="e.g. 5" type="number" />
           </div>
 
@@ -307,19 +354,20 @@ export default function EditInventoryModal({ isOpen, item, onClose, onSave }: Ed
           </button>
           <button
             onClick={handleSubmit}
+            disabled={saving}
             style={{
               padding: `${spacing.sm} ${spacing.xl}`,
               borderRadius: radius.full,
               border: 'none',
-              backgroundColor: colors.primary,
+              backgroundColor: saving ? colors.bgDisabled : colors.primary,
               fontFamily: "'Archivo', sans-serif",
               fontSize: fontSize.sm,
               fontWeight: 600,
-              color: colors.white,
-              cursor: 'pointer',
+              color: saving ? colors.textDisabled : colors.white,
+              cursor: saving ? 'not-allowed' : 'pointer',
             }}
           >
-            Save Changes
+            {saving ? 'Saving…' : 'Save Changes'}
           </button>
         </div>
       </div>
