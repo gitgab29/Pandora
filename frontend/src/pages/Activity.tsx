@@ -87,7 +87,7 @@ export default function Activity() {
   const [logs, setLogs] = useState<TransactionLog[]>([]);
 
   useEffect(() => {
-    transactionsApi.list({ ordering: '-transaction_date' }).then(data => setLogs(data.map(toActivityLogEntry)));
+    transactionsApi.list({ ordering: '-transaction_date', within_last_days: 15 }).then(data => setLogs(data.map(toActivityLogEntry)));
   }, []);
 
   // Filters & search
@@ -268,6 +268,18 @@ export default function Activity() {
                   }}
                 >
                   {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "'Archivo', sans-serif",
+                    fontSize: '0.75rem',
+                    color: colors.blueGrayMd,
+                    padding: `0.125rem ${spacing.sm}`,
+                    borderRadius: '0.25rem',
+                    backgroundColor: 'rgba(70,98,145,0.07)',
+                  }}
+                >
+                  Last 15 days · Older in Archive
                 </span>
 
                 {selectedIds.size > 0 && (

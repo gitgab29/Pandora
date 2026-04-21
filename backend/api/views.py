@@ -230,6 +230,24 @@ class AssetViewSet(viewsets.ModelViewSet):
         asset.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @action(detail=False, methods=['post'], url_path='auto_archive_eol')
+    def auto_archive_eol(self, request):
+        today = timezone.now().date()
+        assets = Asset.objects.filter(is_archived=False, end_of_life__lte=today)
+        count = 0
+        for asset in assets:
+            self._auto_checkin(asset, request.user, 'EOL auto-archiving')
+            _do_archive(asset, request.user, 'RETIRED', 'Auto-archived: end of life date passed')
+            TransactionLog.objects.create(
+                performed_by=request.user,
+                transaction_type=TransactionLog.TransactionType.ARCHIVE,
+                asset=asset,
+                event_description=f'{asset.asset_tag} auto-retired (end of life: {asset.end_of_life})',
+                notes='Auto-archived: end of life date passed',
+            )
+            count += 1
+        return Response({'archived_count': count})
+
     @action(detail=True, methods=['post'])
     def check_out(self, request, pk=None):
         asset = self.get_object()

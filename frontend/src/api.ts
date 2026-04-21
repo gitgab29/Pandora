@@ -129,6 +129,9 @@ export const assetsApi = {
   hardDelete: (id: string) =>
     api.delete(`/assets/${id}/hard_delete/`),
 
+  autoArchiveEol: () =>
+    api.post<{ archived_count: number }>('/assets/auto_archive_eol/').then(r => r.data),
+
   checkOut: (id: string, userId: string, notes?: string) =>
     api.post<Asset>(`/assets/${id}/check_out/`, { user_id: userId, notes }).then(r => r.data),
 

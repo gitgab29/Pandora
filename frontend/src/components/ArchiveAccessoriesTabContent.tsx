@@ -6,12 +6,12 @@ import Pagination from './Pagination';
 import AccessoryDetailModal from './AccessoryDetailModal';
 import RestoreConfirmModal from './RestoreConfirmModal';
 import HardDeleteConfirmModal from './HardDeleteConfirmModal';
+import BulkHardDeleteModal from './BulkHardDeleteModal';
 import { colors, spacing, radius } from '../theme';
 import type { Accessory } from '../types/inventory';
 import { accessoriesApi } from '../api';
 
 type ArchiveTab = 'All' | 'Deleted' | 'Retired';
-
 const ARCHIVE_TABS: ArchiveTab[] = ['All', 'Deleted', 'Retired'];
 const ROWS_PER_PAGE = 10;
 
@@ -54,14 +54,17 @@ const iconBtnStyle = (color: string): React.CSSProperties => ({
 });
 
 export default function ArchiveAccessoriesTabContent() {
-  const [items, setItems]     = useState<Accessory[]>([]);
+  const [items, setItems]       = useState<Accessory[]>([]);
   const [activeTab, setActiveTab] = useState<ArchiveTab>('All');
-  const [search, setSearch]   = useState('');
+  const [search, setSearch]     = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [editTarget,    setEditTarget]    = useState<Accessory | null>(null);
   const [detailTarget,  setDetailTarget]  = useState<Accessory | null>(null);
   const [restoreTarget, setRestoreTarget] = useState<Accessory | null>(null);
   const [hardDelTarget, setHardDelTarget] = useState<Accessory | null>(null);
+
+  const [selectedIds,     setSelectedIds]     = useState<Set<string>>(new Set());
+  const [bulkRestoreOpen, setBulkRestoreOpen] = useState(false);
+  const [bulkHardDelOpen, setBulkHardDelOpen] = useState(false);
 
   useEffect(() => {
     accessoriesApi.list({ archived_only: 1 }).then(setItems).catch(() => {});
@@ -78,19 +81,38 @@ export default function ArchiveAccessoriesTabContent() {
     if (activeTab === 'Deleted') list = list.filter(i => i.archive_reason === 'DELETED');
     if (activeTab === 'Retired') list = list.filter(i => i.archive_reason === 'RETIRED');
     const q = search.toLowerCase().trim();
-    if (q) {
-      list = list.filter(i =>
-        i.item_name.toLowerCase().includes(q) ||
-        (i.model_number ?? '').toLowerCase().includes(q) ||
-        (i.manufacturer ?? '').toLowerCase().includes(q) ||
-        (i.category ?? '').toLowerCase().includes(q),
-      );
-    }
+    if (q) list = list.filter(i =>
+      i.item_name.toLowerCase().includes(q) ||
+      (i.model_number ?? '').toLowerCase().includes(q) ||
+      (i.manufacturer ?? '').toLowerCase().includes(q) ||
+      (i.category ?? '').toLowerCase().includes(q),
+    );
     return list;
   }, [items, activeTab, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
   const pageItems  = filtered.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE);
+
+  const pageIds         = pageItems.map(i => i.id);
+  const allPageSelected = pageIds.length > 0 && pageIds.every(id => selectedIds.has(id));
+  const somePageSelected = pageIds.some(id => selectedIds.has(id));
+
+  const toggleAll = () => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (allPageSelected) pageIds.forEach(id => next.delete(id));
+      else pageIds.forEach(id => next.add(id));
+      return next;
+    });
+  };
+
+  const toggleOne = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
   const formatDate = (d?: string | null) => {
     if (!d) return '—';
@@ -113,6 +135,26 @@ export default function ArchiveAccessoriesTabContent() {
     setHardDelTarget(null);
   };
 
+  const handleBulkRestore = () => {
+    const ids = Array.from(selectedIds);
+    Promise.all(ids.map(id => accessoriesApi.restore(id)))
+      .then(() => {
+        setItems(prev => prev.filter(i => !selectedIds.has(i.id)));
+        setSelectedIds(new Set());
+      })
+      .catch(() => {});
+  };
+
+  const handleBulkHardDelete = () => {
+    const ids = Array.from(selectedIds);
+    Promise.all(ids.map(id => accessoriesApi.hardDelete(id)))
+      .then(() => {
+        setItems(prev => prev.filter(i => !selectedIds.has(i.id)));
+        setSelectedIds(new Set());
+      })
+      .catch(() => {});
+  };
+
   return (
     <>
       {/* Stat cards */}
@@ -122,6 +164,33 @@ export default function ArchiveAccessoriesTabContent() {
 
       {/* Table card */}
       <div style={{ backgroundColor: colors.bgSurface, borderRadius: radius.lg, border: '1px solid rgba(70,98,145,0.1)', boxShadow: '0 1px 4px rgba(3,12,35,0.06)', overflow: 'hidden' }}>
+
+        {/* Bulk action bar */}
+        {selectedIds.size > 0 && (
+          <div style={{ padding: `${spacing.sm} ${spacing.xl}`, backgroundColor: 'rgba(46,124,253,0.05)', borderBottom: '1px solid rgba(46,124,253,0.15)', display: 'flex', alignItems: 'center', gap: spacing.md, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.8125rem', fontWeight: 600, color: colors.primary }}>
+              {selectedIds.size} selected
+            </span>
+            <button
+              onClick={() => setBulkRestoreOpen(true)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(34,197,94,0.12)', color: '#15803d', fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              <RotateCcw size={11} /> Restore {selectedIds.size}
+            </button>
+            <button
+              onClick={() => setBulkHardDelOpen(true)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(239,68,68,0.1)', color: colors.error, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              <Trash2 size={11} /> Delete {selectedIds.size} Permanently
+            </button>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              style={{ padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: '1px solid rgba(70,98,145,0.2)', backgroundColor: 'transparent', color: colors.blueGrayMd, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', cursor: 'pointer' }}
+            >
+              Clear
+            </button>
+          </div>
+        )}
 
         {/* Toolbar */}
         <div style={{ padding: `${spacing.md} ${spacing.xl}`, borderBottom: '1px solid rgba(70,98,145,0.08)', display: 'flex', alignItems: 'center', gap: spacing.md, flexWrap: 'wrap' }}>
@@ -163,6 +232,15 @@ export default function ArchiveAccessoriesTabContent() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
+                <th style={{ ...TH, width: '2.5rem', paddingLeft: spacing.xl }}>
+                  <input
+                    type="checkbox"
+                    checked={allPageSelected}
+                    ref={el => { if (el) el.indeterminate = somePageSelected && !allPageSelected; }}
+                    onChange={toggleAll}
+                    style={{ cursor: 'pointer', accentColor: colors.primary }}
+                  />
+                </th>
                 <th style={TH}>Item Name</th>
                 <th style={TH}>Category</th>
                 <th style={{ ...TH, textAlign: 'center' }}>Qty</th>
@@ -175,56 +253,69 @@ export default function ArchiveAccessoriesTabContent() {
             <tbody>
               {pageItems.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ ...TD, textAlign: 'center', color: colors.blueGrayMd, padding: `${spacing.xl3} ${spacing.md}` }}>
+                  <td colSpan={8} style={{ ...TD, textAlign: 'center', color: colors.blueGrayMd, padding: `${spacing.xl3} ${spacing.md}` }}>
                     No archived accessories found.
                   </td>
                 </tr>
-              ) : pageItems.map((item, idx) => (
-                <tr
-                  key={item.id}
-                  onClick={() => setDetailTarget(item)}
-                  style={{
-                    backgroundColor: idx % 2 === 0 ? colors.bgSurface : colors.bgStripe,
-                    cursor: 'pointer',
-                    transition: 'background-color 0.1s',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(46,124,253,0.04)')}
-                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? colors.bgSurface : colors.bgStripe)}
-                >
-                  <td style={{ ...TD, fontWeight: 500 }}>{item.item_name}</td>
-                  <td style={TD}>
-                    <span style={{ display: 'inline-block', padding: `0.125rem ${spacing.sm}`, borderRadius: '0.25rem', backgroundColor: 'rgba(46,124,253,0.08)', color: colors.primary, fontSize: '0.75rem', fontWeight: 600 }}>
-                      {item.category ?? '—'}
-                    </span>
-                  </td>
-                  <td style={{ ...TD, textAlign: 'center', color: colors.blueGrayMd }}>{item.quantity_available}</td>
-                  <td style={{ ...TD, color: colors.blueGrayMd, maxWidth: '10rem', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.location ?? '—'}</td>
-                  <td style={TD}>
-                    <span style={{
-                      display: 'inline-block',
-                      padding: `0.125rem ${spacing.sm}`,
-                      borderRadius: '0.25rem',
-                      backgroundColor: item.archive_reason === 'RETIRED' ? 'rgba(252,156,45,0.1)' : 'rgba(239,68,68,0.1)',
-                      color: item.archive_reason === 'RETIRED' ? colors.orangeAccent : colors.error,
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                    }}>
-                      {item.archive_reason === 'RETIRED' ? 'Retired' : 'Deleted'}
-                    </span>
-                  </td>
-                  <td style={{ ...TD, color: colors.blueGrayMd, fontSize: '0.75rem' }}>{formatDate(item.archived_at)}</td>
-                  <td style={{ ...TD, textAlign: 'right' }} onClick={e => e.stopPropagation()}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: spacing.xs }}>
-                      <button title="Restore" style={iconBtnStyle(colors.success)} onClick={() => setRestoreTarget(item)}>
-                        <RotateCcw size={11} />
-                      </button>
-                      <button title="Delete permanently" style={iconBtnStyle(colors.error)} onClick={() => setHardDelTarget(item)}>
-                        <Trash2 size={11} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              ) : pageItems.map((item, idx) => {
+                const isSelected = selectedIds.has(item.id);
+                return (
+                  <tr
+                    key={item.id}
+                    onClick={() => setDetailTarget(item)}
+                    style={{
+                      backgroundColor: isSelected
+                        ? 'rgba(46,124,253,0.05)'
+                        : idx % 2 === 0 ? colors.bgSurface : colors.bgStripe,
+                      cursor: 'pointer',
+                      transition: 'background-color 0.1s',
+                    }}
+                    onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLTableRowElement).style.backgroundColor = 'rgba(46,124,253,0.04)'; }}
+                    onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLTableRowElement).style.backgroundColor = idx % 2 === 0 ? colors.bgSurface : colors.bgStripe; }}
+                  >
+                    <td style={{ ...TD, paddingLeft: spacing.xl }} onClick={e => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleOne(item.id)}
+                        style={{ cursor: 'pointer', accentColor: colors.primary }}
+                      />
+                    </td>
+                    <td style={{ ...TD, fontWeight: 500 }}>{item.item_name}</td>
+                    <td style={TD}>
+                      <span style={{ display: 'inline-block', padding: `0.125rem ${spacing.sm}`, borderRadius: '0.25rem', backgroundColor: 'rgba(46,124,253,0.08)', color: colors.primary, fontSize: '0.75rem', fontWeight: 600 }}>
+                        {item.category ?? '—'}
+                      </span>
+                    </td>
+                    <td style={{ ...TD, textAlign: 'center', color: colors.blueGrayMd }}>{item.quantity_available}</td>
+                    <td style={{ ...TD, color: colors.blueGrayMd, maxWidth: '10rem', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.location ?? '—'}</td>
+                    <td style={TD}>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: `0.125rem ${spacing.sm}`,
+                        borderRadius: '0.25rem',
+                        backgroundColor: item.archive_reason === 'RETIRED' ? 'rgba(252,156,45,0.1)' : 'rgba(239,68,68,0.1)',
+                        color: item.archive_reason === 'RETIRED' ? colors.orangeAccent : colors.error,
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                      }}>
+                        {item.archive_reason === 'RETIRED' ? 'Retired' : 'Deleted'}
+                      </span>
+                    </td>
+                    <td style={{ ...TD, color: colors.blueGrayMd, fontSize: '0.75rem' }}>{formatDate(item.archived_at)}</td>
+                    <td style={{ ...TD, textAlign: 'right' }} onClick={e => e.stopPropagation()}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: spacing.xs }}>
+                        <button title="Restore" style={iconBtnStyle(colors.success)} onClick={() => setRestoreTarget(item)}>
+                          <RotateCcw size={11} />
+                        </button>
+                        <button title="Delete permanently" style={iconBtnStyle(colors.error)} onClick={() => setHardDelTarget(item)}>
+                          <Trash2 size={11} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -236,12 +327,12 @@ export default function ArchiveAccessoriesTabContent() {
         )}
       </div>
 
-      {/* Modals */}
+      {/* Single-item modals */}
       <AccessoryDetailModal
         isOpen={!!detailTarget}
         item={detailTarget}
         onClose={() => setDetailTarget(null)}
-        onEdit={() => setEditTarget(detailTarget)}
+        onEdit={() => {}}
       />
       <RestoreConfirmModal
         isOpen={!!restoreTarget}
@@ -257,6 +348,23 @@ export default function ArchiveAccessoriesTabContent() {
         itemType="Accessory"
         onClose={() => setHardDelTarget(null)}
         onConfirm={handleHardDelete}
+      />
+
+      {/* Bulk modals */}
+      <RestoreConfirmModal
+        isOpen={bulkRestoreOpen}
+        itemName={`${selectedIds.size} selected accessor${selectedIds.size !== 1 ? 'ies' : 'y'}`}
+        itemType="Accessories"
+        destination="Inventory"
+        onClose={() => setBulkRestoreOpen(false)}
+        onConfirm={handleBulkRestore}
+      />
+      <BulkHardDeleteModal
+        isOpen={bulkHardDelOpen}
+        count={selectedIds.size}
+        itemType="Accessory"
+        onClose={() => setBulkHardDelOpen(false)}
+        onConfirm={handleBulkHardDelete}
       />
     </>
   );

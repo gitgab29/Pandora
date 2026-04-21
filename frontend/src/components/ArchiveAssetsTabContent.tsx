@@ -1,26 +1,26 @@
-import { useState, useMemo, useEffect } from 'react';
-import { Trash2, RotateCcw } from 'lucide-react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { Trash2, RotateCcw, Clock } from 'lucide-react';
 import StatisticCard from './StatisticCard';
 import SearchBar from './SearchBar';
 import Pagination from './Pagination';
 import AssetDetailModal from './AssetDetailModal';
 import RestoreConfirmModal from './RestoreConfirmModal';
 import HardDeleteConfirmModal from './HardDeleteConfirmModal';
+import BulkHardDeleteModal from './BulkHardDeleteModal';
 import { colors, spacing, radius, statusColors } from '../theme';
 import type { Asset, AssetStatus } from '../types/asset';
 import { assetsApi } from '../api';
 
 type ArchiveTab = 'All' | 'Deleted' | 'Retired';
-
 const ARCHIVE_TABS: ArchiveTab[] = ['All', 'Deleted', 'Retired'];
 const ROWS_PER_PAGE = 10;
 
 const STATUS_CONFIG: Record<AssetStatus, { dot: string; label: string }> = {
-  AVAILABLE:      { dot: colors.success,      label: 'Available' },
-  DEPLOYED:       { dot: colors.primary,      label: 'Deployed' },
-  IN_REPAIR:      { dot: colors.orangeAccent, label: 'In Repair' },
+  AVAILABLE:      { dot: colors.success,       label: 'Available' },
+  DEPLOYED:       { dot: colors.primary,       label: 'Deployed' },
+  IN_REPAIR:      { dot: colors.orangeAccent,  label: 'In Repair' },
   IN_MAINTENANCE: { dot: statusColors.retired, label: 'In Maintenance' },
-  LOST:           { dot: colors.error,        label: 'Lost' },
+  LOST:           { dot: colors.error,         label: 'Lost' },
   TO_AUDIT:       { dot: statusColors.toAudit, label: 'To Audit' },
 };
 
@@ -63,18 +63,27 @@ const iconBtnStyle = (color: string): React.CSSProperties => ({
 });
 
 export default function ArchiveAssetsTabContent() {
-  const [assets, setAssets] = useState<Asset[]>([]);
+  const [assets, setAssets]     = useState<Asset[]>([]);
   const [activeTab, setActiveTab] = useState<ArchiveTab>('All');
-  const [search, setSearch] = useState('');
+  const [search, setSearch]     = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [detailTarget,    setDetailTarget]    = useState<Asset | null>(null);
-  const [restoreTarget,   setRestoreTarget]   = useState<Asset | null>(null);
-  const [hardDelTarget,   setHardDelTarget]   = useState<Asset | null>(null);
+  const [detailTarget,  setDetailTarget]  = useState<Asset | null>(null);
+  const [restoreTarget, setRestoreTarget] = useState<Asset | null>(null);
+  const [hardDelTarget, setHardDelTarget] = useState<Asset | null>(null);
 
-  useEffect(() => {
+  const [selectedIds,       setSelectedIds]       = useState<Set<string>>(new Set());
+  const [bulkRestoreOpen,   setBulkRestoreOpen]   = useState(false);
+  const [bulkHardDelOpen,   setBulkHardDelOpen]   = useState(false);
+
+  const [eolRunning, setEolRunning] = useState(false);
+  const [eolResult,  setEolResult]  = useState<number | null>(null);
+
+  const loadAssets = useCallback(() => {
     assetsApi.list({ archived_only: 1 }).then(setAssets).catch(() => {});
   }, []);
+
+  useEffect(() => { loadAssets(); }, [loadAssets]);
 
   const statCards = useMemo(() => [
     { title: 'Total Archived', value: assets.length },
@@ -87,19 +96,38 @@ export default function ArchiveAssetsTabContent() {
     if (activeTab === 'Deleted') items = items.filter(a => a.archive_reason === 'DELETED');
     if (activeTab === 'Retired') items = items.filter(a => a.archive_reason === 'RETIRED');
     const q = search.toLowerCase().trim();
-    if (q) {
-      items = items.filter(a =>
-        a.asset_tag.toLowerCase().includes(q) ||
-        (a.model ?? '').toLowerCase().includes(q) ||
-        (a.manufacturer ?? '').toLowerCase().includes(q) ||
-        a.category.toLowerCase().includes(q),
-      );
-    }
+    if (q) items = items.filter(a =>
+      a.asset_tag.toLowerCase().includes(q) ||
+      (a.model ?? '').toLowerCase().includes(q) ||
+      (a.manufacturer ?? '').toLowerCase().includes(q) ||
+      a.category.toLowerCase().includes(q),
+    );
     return items;
   }, [assets, activeTab, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
   const pageItems  = filtered.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE);
+
+  const pageIds         = pageItems.map(a => a.id);
+  const allPageSelected = pageIds.length > 0 && pageIds.every(id => selectedIds.has(id));
+  const somePageSelected = pageIds.some(id => selectedIds.has(id));
+
+  const toggleAll = () => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (allPageSelected) pageIds.forEach(id => next.delete(id));
+      else pageIds.forEach(id => next.add(id));
+      return next;
+    });
+  };
+
+  const toggleOne = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
   const formatDate = (d?: string | null) => {
     if (!d) return '—';
@@ -122,6 +150,38 @@ export default function ArchiveAssetsTabContent() {
     setHardDelTarget(null);
   };
 
+  const handleBulkRestore = () => {
+    const ids = Array.from(selectedIds);
+    Promise.all(ids.map(id => assetsApi.restore(id)))
+      .then(() => {
+        setAssets(prev => prev.filter(a => !selectedIds.has(a.id)));
+        setSelectedIds(new Set());
+      })
+      .catch(() => {});
+  };
+
+  const handleBulkHardDelete = () => {
+    const ids = Array.from(selectedIds);
+    Promise.all(ids.map(id => assetsApi.hardDelete(id)))
+      .then(() => {
+        setAssets(prev => prev.filter(a => !selectedIds.has(a.id)));
+        setSelectedIds(new Set());
+      })
+      .catch(() => {});
+  };
+
+  const handleAutoArchiveEol = () => {
+    setEolRunning(true);
+    setEolResult(null);
+    assetsApi.autoArchiveEol()
+      .then(({ archived_count }) => {
+        setEolResult(archived_count);
+        loadAssets();
+      })
+      .catch(() => setEolResult(0))
+      .finally(() => setEolRunning(false));
+  };
+
   return (
     <>
       {/* Stat cards */}
@@ -131,6 +191,33 @@ export default function ArchiveAssetsTabContent() {
 
       {/* Table card */}
       <div style={{ backgroundColor: colors.bgSurface, borderRadius: radius.lg, border: '1px solid rgba(70,98,145,0.1)', boxShadow: '0 1px 4px rgba(3,12,35,0.06)', overflow: 'hidden' }}>
+
+        {/* Bulk action bar */}
+        {selectedIds.size > 0 && (
+          <div style={{ padding: `${spacing.sm} ${spacing.xl}`, backgroundColor: 'rgba(46,124,253,0.05)', borderBottom: '1px solid rgba(46,124,253,0.15)', display: 'flex', alignItems: 'center', gap: spacing.md, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.8125rem', fontWeight: 600, color: colors.primary }}>
+              {selectedIds.size} selected
+            </span>
+            <button
+              onClick={() => setBulkRestoreOpen(true)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(34,197,94,0.12)', color: '#15803d', fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              <RotateCcw size={11} /> Restore {selectedIds.size}
+            </button>
+            <button
+              onClick={() => setBulkHardDelOpen(true)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(239,68,68,0.1)', color: colors.error, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              <Trash2 size={11} /> Delete {selectedIds.size} Permanently
+            </button>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              style={{ padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: '1px solid rgba(70,98,145,0.2)', backgroundColor: 'transparent', color: colors.blueGrayMd, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', cursor: 'pointer' }}
+            >
+              Clear
+            </button>
+          </div>
+        )}
 
         {/* Toolbar */}
         <div style={{ padding: `${spacing.md} ${spacing.xl}`, borderBottom: '1px solid rgba(70,98,145,0.08)', display: 'flex', alignItems: 'center', gap: spacing.md, flexWrap: 'wrap' }}>
@@ -164,7 +251,39 @@ export default function ArchiveAssetsTabContent() {
               ))}
             </div>
           </div>
-          <SearchBar value={search} onChange={v => { setSearch(v); setCurrentPage(1); }} placeholder="Search assets…" />
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' }}>
+            <button
+              onClick={handleAutoArchiveEol}
+              disabled={eolRunning}
+              title="Auto-retire all assets whose End of Life date has passed"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                padding: `0.35rem ${spacing.md}`,
+                borderRadius: radius.full,
+                border: `1px solid ${eolRunning ? 'rgba(70,98,145,0.15)' : 'rgba(252,156,45,0.4)'}`,
+                backgroundColor: eolRunning ? colors.bgSubtle : 'rgba(252,156,45,0.06)',
+                color: eolRunning ? colors.blueGrayMd : colors.orangeAccent,
+                fontFamily: "'Archivo', sans-serif",
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                cursor: eolRunning ? 'not-allowed' : 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'background-color 0.15s, border-color 0.15s, color 0.15s',
+              }}
+            >
+              <Clock size={12} />
+              {eolRunning ? 'Running…' : 'Auto-Archive EOL'}
+            </button>
+            {eolResult !== null && (
+              <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', color: eolResult > 0 ? '#15803d' : colors.blueGrayMd }}>
+                {eolResult > 0 ? `${eolResult} asset${eolResult !== 1 ? 's' : ''} retired` : 'No EOL assets found'}
+              </span>
+            )}
+            <SearchBar value={search} onChange={v => { setSearch(v); setCurrentPage(1); }} placeholder="Search assets…" />
+          </div>
         </div>
 
         {/* Table */}
@@ -172,6 +291,15 @@ export default function ArchiveAssetsTabContent() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
+                <th style={{ ...TH, width: '2.5rem', paddingLeft: spacing.xl }}>
+                  <input
+                    type="checkbox"
+                    checked={allPageSelected}
+                    ref={el => { if (el) el.indeterminate = somePageSelected && !allPageSelected; }}
+                    onChange={toggleAll}
+                    style={{ cursor: 'pointer', accentColor: colors.primary }}
+                  />
+                </th>
                 <th style={TH}>Asset Tag</th>
                 <th style={TH}>Item Name</th>
                 <th style={TH}>Category</th>
@@ -184,25 +312,36 @@ export default function ArchiveAssetsTabContent() {
             <tbody>
               {pageItems.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ ...TD, textAlign: 'center', color: colors.blueGrayMd, padding: `${spacing.xl3} ${spacing.md}` }}>
+                  <td colSpan={8} style={{ ...TD, textAlign: 'center', color: colors.blueGrayMd, padding: `${spacing.xl3} ${spacing.md}` }}>
                     No archived assets found.
                   </td>
                 </tr>
               ) : pageItems.map((asset, idx) => {
                 const sc = STATUS_CONFIG[asset.status as AssetStatus];
                 const itemName = [asset.manufacturer, asset.model].filter(Boolean).join(' ') || '—';
+                const isSelected = selectedIds.has(asset.id);
                 return (
                   <tr
                     key={asset.id}
                     onClick={() => setDetailTarget(asset)}
                     style={{
-                      backgroundColor: idx % 2 === 0 ? colors.bgSurface : colors.bgStripe,
+                      backgroundColor: isSelected
+                        ? 'rgba(46,124,253,0.05)'
+                        : idx % 2 === 0 ? colors.bgSurface : colors.bgStripe,
                       cursor: 'pointer',
                       transition: 'background-color 0.1s',
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(46,124,253,0.04)')}
-                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? colors.bgSurface : colors.bgStripe)}
+                    onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLTableRowElement).style.backgroundColor = 'rgba(46,124,253,0.04)'; }}
+                    onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLTableRowElement).style.backgroundColor = idx % 2 === 0 ? colors.bgSurface : colors.bgStripe; }}
                   >
+                    <td style={{ ...TD, paddingLeft: spacing.xl }} onClick={e => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleOne(asset.id)}
+                        style={{ cursor: 'pointer', accentColor: colors.primary }}
+                      />
+                    </td>
                     <td style={{ ...TD, fontFamily: "'Roboto Mono', monospace", fontSize: '0.75rem', color: colors.blueGrayMd }}>{asset.asset_tag}</td>
                     <td style={{ ...TD, fontWeight: 500, maxWidth: '12rem', overflow: 'hidden', textOverflow: 'ellipsis' }}>{itemName}</td>
                     <td style={TD}>{asset.category}</td>
@@ -244,7 +383,6 @@ export default function ArchiveAssetsTabContent() {
           </table>
         </div>
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div style={{ padding: `${spacing.md} ${spacing.xl}`, borderTop: '1px solid rgba(70,98,145,0.08)' }}>
             <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
@@ -252,7 +390,7 @@ export default function ArchiveAssetsTabContent() {
         )}
       </div>
 
-      {/* Modals */}
+      {/* Single-item modals */}
       <AssetDetailModal
         isOpen={!!detailTarget}
         asset={detailTarget}
@@ -273,6 +411,23 @@ export default function ArchiveAssetsTabContent() {
         itemType="Asset"
         onClose={() => setHardDelTarget(null)}
         onConfirm={handleHardDelete}
+      />
+
+      {/* Bulk modals */}
+      <RestoreConfirmModal
+        isOpen={bulkRestoreOpen}
+        itemName={`${selectedIds.size} selected asset${selectedIds.size !== 1 ? 's' : ''}`}
+        itemType="Assets"
+        destination="Inventory"
+        onClose={() => setBulkRestoreOpen(false)}
+        onConfirm={handleBulkRestore}
+      />
+      <BulkHardDeleteModal
+        isOpen={bulkHardDelOpen}
+        count={selectedIds.size}
+        itemType="Asset"
+        onClose={() => setBulkHardDelOpen(false)}
+        onConfirm={handleBulkHardDelete}
       />
     </>
   );
