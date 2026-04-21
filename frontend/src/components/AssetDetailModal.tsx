@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Pencil, Monitor, Laptop, Smartphone, Tablet, Cpu, Package } from 'lucide-react';
+import { X, Pencil, Monitor, Laptop, Smartphone, Tablet, Cpu, Package, LogOut, LogIn, Wrench, ClipboardCheck, AlertTriangle } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Asset, AssetStatus } from '../types/asset';
 import { ASSET_STATUS_LABELS } from '../types/asset';
@@ -11,6 +11,9 @@ interface AssetDetailModalProps {
   onClose: () => void;
   onEdit: () => void;
   onRetire?: (notes?: string) => void;
+  onCheckOut?: () => void;
+  onCheckIn?: () => void;
+  onChangeStatus?: (target: AssetStatus) => void;
 }
 
 const STATUS_COLORS: Record<AssetStatus, string> = {
@@ -51,9 +54,19 @@ function SectionLabel({ children, style }: { children: React.ReactNode; style?: 
   );
 }
 
-export default function AssetDetailModal({ isOpen, asset, onClose, onEdit, onRetire }: AssetDetailModalProps) {
+export default function AssetDetailModal({ isOpen, asset, onClose, onEdit, onRetire, onCheckOut, onCheckIn, onChangeStatus }: AssetDetailModalProps) {
   const [retireOpen, setRetireOpen] = useState(false);
   if (!isOpen || !asset) return null;
+
+  const showCheckOut    = asset.status === 'AVAILABLE' && !!onCheckOut;
+  const showCheckIn     = asset.status === 'DEPLOYED'  && !!onCheckIn;
+  const showSetRepair   = (asset.status === 'AVAILABLE' || asset.status === 'DEPLOYED' || asset.status === 'TO_AUDIT') && !!onChangeStatus;
+  const showSetAudit    = (asset.status === 'DEPLOYED'  || asset.status === 'IN_REPAIR' || asset.status === 'IN_MAINTENANCE') && !!onChangeStatus;
+  const showSetLost     = asset.status !== 'LOST' && !!onChangeStatus;
+  const footerVisible   = showCheckOut || showCheckIn || showSetRepair || showSetAudit || showSetLost;
+
+  const handleAction = (cb?: () => void) => () => { onClose(); cb?.(); };
+  const handleStatus = (target: AssetStatus) => () => { onClose(); onChangeStatus?.(target); };
 
   const statusColor = STATUS_COLORS[asset.status] ?? colors.blueGrayMd;
   const statusLabel = ASSET_STATUS_LABELS[asset.status] ?? asset.status;
@@ -220,6 +233,67 @@ export default function AssetDetailModal({ isOpen, asset, onClose, onEdit, onRet
             </span>
           </div>
         </div>
+
+        {/* ── Footer actions ── */}
+        {footerVisible && (
+          <div style={{ flexShrink: 0, borderTop: '1px solid rgba(70,98,145,0.1)', padding: `${spacing.md} ${spacing.xl}`, display: 'flex', gap: spacing.sm, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            {showSetLost && (
+              <button
+                onClick={handleStatus('LOST')}
+                style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: `1px solid ${colors.error}59`, backgroundColor: `${colors.error}14`, fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: colors.error, cursor: 'pointer', transition: 'background-color 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = `${colors.error}22`)}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = `${colors.error}14`)}
+              >
+                <AlertTriangle size={12} />
+                Set Lost
+              </button>
+            )}
+            {showSetAudit && (
+              <button
+                onClick={handleStatus('TO_AUDIT')}
+                style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: `1px solid rgba(234,179,8,0.4)`, backgroundColor: 'rgba(234,179,8,0.1)', fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: '#a16207', cursor: 'pointer', transition: 'background-color 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(234,179,8,0.18)')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(234,179,8,0.1)')}
+              >
+                <ClipboardCheck size={12} />
+                Set to Audit
+              </button>
+            )}
+            {showSetRepair && (
+              <button
+                onClick={handleStatus('IN_REPAIR')}
+                style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: `1px solid rgba(252,156,45,0.35)`, backgroundColor: 'rgba(252,156,45,0.08)', fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: colors.orangeAccent, cursor: 'pointer', transition: 'background-color 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(252,156,45,0.15)')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(252,156,45,0.08)')}
+              >
+                <Wrench size={12} />
+                Set to Repair
+              </button>
+            )}
+            {showCheckIn && (
+              <button
+                onClick={handleAction(onCheckIn)}
+                style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: 'none', backgroundColor: colors.orangeAccent, fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: colors.white, cursor: 'pointer', transition: 'filter 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(0.95)')}
+                onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
+              >
+                <LogIn size={12} />
+                Check In
+              </button>
+            )}
+            {showCheckOut && (
+              <button
+                onClick={handleAction(onCheckOut)}
+                style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: 'none', backgroundColor: colors.success, fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: colors.white, cursor: 'pointer', transition: 'filter 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(0.95)')}
+                onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
+              >
+                <LogOut size={12} />
+                Check Out
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
     {onRetire && (

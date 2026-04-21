@@ -13,6 +13,7 @@ import CopyAssetModal from './CopyAssetModal';
 import AssetCheckOutModal from './AssetCheckOutModal';
 import AssetCheckInModal from './AssetCheckInModal';
 import AssetDetailModal from './AssetDetailModal';
+import ChangeStatusModal from './ChangeStatusModal';
 import { colors, spacing, radius, statusColors } from '../theme';
 import type { Asset, AssetStatus } from '../types/asset';
 import { assetsApi, usersApi } from '../api';
@@ -98,6 +99,7 @@ export default function AssetsTabContent() {
   const [copyTarget,     setCopyTarget]     = useState<Asset | null>(null);
   const [checkOutTarget, setCheckOutTarget] = useState<Asset | null>(null);
   const [checkInTarget,  setCheckInTarget]  = useState<Asset | null>(null);
+  const [statusTarget,   setStatusTarget]   = useState<{ asset: Asset; status: AssetStatus } | null>(null);
 
   const allCategories = useMemo(
     () => [...new Set(assets.map(a => a.category))].sort(),
@@ -196,6 +198,12 @@ export default function AssetsTabContent() {
 
   const handleCheckIn = (assetId: string, notes: string) => {
     assetsApi.checkIn(assetId, notes)
+      .then(updated => setAssets(prev => prev.map(a => a.id === assetId ? updated : a)))
+      .catch(() => {});
+  };
+
+  const handleChangeStatus = (assetId: string, status: AssetStatus, notes: string) => {
+    assetsApi.changeStatus(assetId, status, notes)
       .then(updated => setAssets(prev => prev.map(a => a.id === assetId ? updated : a)))
       .catch(() => {});
   };
@@ -577,6 +585,29 @@ export default function AssetsTabContent() {
             .then(() => setAssets(prev => prev.filter(a => a.id !== detailTarget.id)))
             .catch(() => {});
         }}
+        onCheckOut={() => {
+          const a = detailTarget;
+          setDetailTarget(null);
+          setCheckOutTarget(a);
+        }}
+        onCheckIn={() => {
+          const a = detailTarget;
+          setDetailTarget(null);
+          setCheckInTarget(a);
+        }}
+        onChangeStatus={target => {
+          const a = detailTarget;
+          setDetailTarget(null);
+          if (a) setStatusTarget({ asset: a, status: target });
+        }}
+      />
+
+      <ChangeStatusModal
+        isOpen={statusTarget !== null}
+        asset={statusTarget?.asset ?? null}
+        initialStatus={statusTarget?.status}
+        onClose={() => setStatusTarget(null)}
+        onConfirm={handleChangeStatus}
       />
 
       {(filterOpen || sortOpen) && (

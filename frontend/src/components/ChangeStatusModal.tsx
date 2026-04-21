@@ -7,6 +7,7 @@ import { ASSET_STATUS_LABELS } from '../types/asset';
 interface ChangeStatusModalProps {
   isOpen: boolean;
   asset: Asset | null;
+  initialStatus?: AssetStatus;
   onClose: () => void;
   onConfirm: (assetId: string, status: AssetStatus, notes: string) => void;
 }
@@ -41,6 +42,7 @@ const inputStyle: React.CSSProperties = {
 export default function ChangeStatusModal({
   isOpen,
   asset,
+  initialStatus,
   onClose,
   onConfirm,
 }: ChangeStatusModalProps) {
@@ -51,10 +53,10 @@ export default function ChangeStatusModal({
 
   useEffect(() => {
     if (isOpen && asset) {
-      setStatus(asset.status);
+      setStatus(initialStatus ?? asset.status);
       setNotes('');
     }
-  }, [isOpen, asset]);
+  }, [isOpen, asset, initialStatus]);
 
   if (!isOpen || !asset) return null;
 
