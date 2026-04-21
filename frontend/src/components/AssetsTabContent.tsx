@@ -73,10 +73,10 @@ export default function AssetsTabContent() {
   }, []);
 
   const statCards = useMemo(() => [
-    { title: 'Total Assets', value: assets.length },
-    { title: 'Available',    value: assets.filter(a => a.status === 'AVAILABLE').length },
-    { title: 'Deployed',     value: assets.filter(a => a.status === 'DEPLOYED').length },
-    { title: 'To Audit',     value: assets.filter(a => a.status === 'TO_AUDIT').length },
+    { title: 'Total Assets', value: assets.length,                                          filter: 'All'       as AssetStatus | 'All' },
+    { title: 'Available',    value: assets.filter(a => a.status === 'AVAILABLE').length,    filter: 'AVAILABLE' as AssetStatus | 'All' },
+    { title: 'Deployed',     value: assets.filter(a => a.status === 'DEPLOYED').length,     filter: 'DEPLOYED'  as AssetStatus | 'All' },
+    { title: 'To Audit',     value: assets.filter(a => a.status === 'TO_AUDIT').length,     filter: 'TO_AUDIT'  as AssetStatus | 'All' },
   ], [assets]);
   const [search, setSearch] = useState('');
   const validStatuses: Array<AssetStatus | 'All'> = ['All', 'AVAILABLE', 'DEPLOYED', 'IN_REPAIR', 'TO_AUDIT', 'LOST'];
@@ -240,7 +240,12 @@ export default function AssetsTabContent() {
       {showStats && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.lg, marginBottom: spacing.xl2 }}>
           {statCards.map(card => (
-            <StatisticCard key={card.title} title={card.title} value={card.value} />
+            <StatisticCard
+              key={card.title}
+              title={card.title}
+              value={card.value}
+              onClick={() => handleTabChange(card.filter)}
+            />
           ))}
         </div>
       )}

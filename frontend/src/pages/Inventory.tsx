@@ -122,10 +122,10 @@ export default function Inventory() {
     const outOfStock   = inventory.filter(i => i.quantity_available === 0).length;
     const totalUnits   = inventory.reduce((s, i) => s + i.quantity_available, 0);
     return [
-      { title: 'Total Items',  value: totalItems,  trend: { value: 12, direction: 'up'   as const } },
-      { title: 'Total Units',  value: totalUnits,  trend: { value: 8,  direction: 'up'   as const } },
-      { title: 'Low Stock',    value: lowStock,    trend: { value: 25, direction: 'down' as const } },
-      { title: 'Out of Stock', value: outOfStock },
+      { title: 'Total Items',  value: totalItems,  trend: { value: 12, direction: 'up'   as const }, filter: 'All'          as FilterTab },
+      { title: 'Total Units',  value: totalUnits,  trend: { value: 8,  direction: 'up'   as const }, filter: 'All'          as FilterTab },
+      { title: 'Low Stock',    value: lowStock,    trend: { value: 25, direction: 'down' as const }, filter: 'Low Stock'    as FilterTab },
+      { title: 'Out of Stock', value: outOfStock,                                                    filter: 'Out of Stock' as FilterTab },
     ];
   }, [inventory]);
 
@@ -332,7 +332,13 @@ export default function Inventory() {
           {showStats && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.lg, marginBottom: spacing.xl2 }}>
               {statCards.map(card => (
-                <StatisticCard key={card.title} title={card.title} value={card.value} trend={card.trend} />
+                <StatisticCard
+                  key={card.title}
+                  title={card.title}
+                  value={card.value}
+                  trend={card.trend}
+                  onClick={() => handleTabChange(card.filter)}
+                />
               ))}
             </div>
           )}
