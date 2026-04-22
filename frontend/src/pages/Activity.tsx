@@ -1,12 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Trash2, Eye, Download, ListFilter } from 'lucide-react';
+import { Eye, Download, ListFilter } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
 import Pagination from '../components/Pagination';
 import SortDropdown from '../components/SortDropdown';
 import FeatureNotAvailableModal from '../components/FeatureNotAvailableModal';
-import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import ActivityDetailModal from '../components/ActivityDetailModal';
 import { colors, spacing, radius } from '../theme';
 import type { ActivityLogEntry as TransactionLog } from '../types/activity';
@@ -100,12 +99,8 @@ export default function Activity() {
   const [search,      setSearch]      = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Selection
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
   // Modals
   const [detailLog,       setDetailLog]       = useState<TransactionLog | null>(null);
-  const [deleteTarget,    setDeleteTarget]    = useState<TransactionLog | null>(null);
   const [exportModalOpen, setExportModalOpen] = useState(false);
 
   const closeDropdowns = () => { setFilterOpen(false); setSortOpen(false); };
@@ -152,44 +147,6 @@ export default function Activity() {
     (currentPage - 1) * ROWS_PER_PAGE,
     currentPage * ROWS_PER_PAGE,
   );
-
-  // ── Selection ─────────────────────────────────────────────────────────────
-
-  const pageIds        = pageLogs.map(l => l.id);
-  const allPageSelected = pageIds.length > 0 && pageIds.every(id => selectedIds.has(id));
-  const someSelected    = pageIds.some(id => selectedIds.has(id));
-
-  const toggleAll = () => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (allPageSelected) pageIds.forEach(id => next.delete(id));
-      else pageIds.forEach(id => next.add(id));
-      return next;
-    });
-  };
-
-  const toggleOne = (id: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  // ── Delete ────────────────────────────────────────────────────────────────
-
-  const handleDelete = (log: TransactionLog) => {
-    // TransactionLogs are read-only in the API; remove from local list only
-    setLogs(prev => prev.filter(l => l.id !== log.id));
-    setSelectedIds(prev => { const next = new Set(prev); next.delete(log.id); return next; });
-    setDeleteTarget(null);
-  };
-
-  const handleBulkDelete = () => {
-    setLogs(prev => prev.filter(l => !selectedIds.has(l.id)));
-    setSelectedIds(new Set());
-  };
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -247,7 +204,7 @@ export default function Activity() {
                 gap: spacing.md,
               }}
             >
-              {/* Left: title + count + bulk delete */}
+              {/* Left: title + count */}
               <div style={{ display: 'flex', alignItems: 'center', gap: spacing.md }}>
                 <h2
                   style={{
@@ -281,29 +238,6 @@ export default function Activity() {
                 >
                   Last 15 days · Older in Archive
                 </span>
-
-                {selectedIds.size > 0 && (
-                  <button
-                    onClick={handleBulkDelete}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      padding: `${spacing.xs} ${spacing.md}`,
-                      borderRadius: radius.full,
-                      border: 'none',
-                      backgroundColor: colors.bgErrorLight,
-                      color: colors.error,
-                      fontFamily: "'Archivo', sans-serif",
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <Trash2 size={12} />
-                    Delete {selectedIds.size} selected
-                  </button>
-                )}
               </div>
 
               {/* Right: search + filter + sort + export */}
@@ -389,15 +323,6 @@ export default function Activity() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
-                    <th style={{ ...TH, width: '2.5rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={allPageSelected}
-                        ref={el => { if (el) el.indeterminate = someSelected && !allPageSelected; }}
-                        onChange={toggleAll}
-                        style={{ cursor: 'pointer', accentColor: colors.primary }}
-                      />
-                    </th>
                     <th style={TH}>Date</th>
                     <th style={TH}>Performed By</th>
                     <th style={TH}>Type</th>
@@ -413,7 +338,7 @@ export default function Activity() {
                   {pageLogs.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={10}
+                        colSpan={9}
                         style={{
                           ...TD,
                           textAlign: 'center',
@@ -426,38 +351,18 @@ export default function Activity() {
                     </tr>
                   ) : (
                     pageLogs.map((log, idx) => {
-                      const isSelected = selectedIds.has(log.id);
                       return (
                         <tr
                           key={log.id}
                           onClick={() => setDetailLog(log)}
                           style={{
-                            backgroundColor: isSelected
-                              ? 'rgba(46,124,253,0.05)'
-                              : idx % 2 === 0 ? 'colors.bgSurface' : 'colors.bgStripe',
+                            backgroundColor: idx % 2 === 0 ? colors.bgSurface : colors.bgStripe,
                             cursor: 'pointer',
                             transition: 'background-color 0.1s',
                           }}
-                          onMouseEnter={e => {
-                            if (!isSelected)
-                              (e.currentTarget as HTMLTableRowElement).style.backgroundColor = 'rgba(46,124,253,0.03)';
-                          }}
-                          onMouseLeave={e => {
-                            if (!isSelected)
-                              (e.currentTarget as HTMLTableRowElement).style.backgroundColor =
-                                idx % 2 === 0 ? 'colors.bgSurface' : 'colors.bgStripe';
-                          }}
+                          onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(46,124,253,0.03)')}
+                          onMouseLeave={e => (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? colors.bgSurface : colors.bgStripe)}
                         >
-                          {/* Checkbox — stop propagation so clicking it doesn't open detail */}
-                          <td style={TD} onClick={e => e.stopPropagation()}>
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleOne(log.id)}
-                              style={{ cursor: 'pointer', accentColor: colors.primary }}
-                            />
-                          </td>
-
                           <td style={{ ...TD, color: colors.blueGrayMd, fontSize: '0.75rem' }}>
                             {log.date}
                           </td>
@@ -513,13 +418,6 @@ export default function Activity() {
                               >
                                 <Eye size={13} />
                               </RowIconBtn>
-                              <RowIconBtn
-                                title="Delete log"
-                                hoverColor="#ef4444"
-                                onClick={() => setDeleteTarget(log)}
-                              >
-                                <Trash2 size={13} />
-                              </RowIconBtn>
                             </div>
                           </td>
                         </tr>
@@ -549,14 +447,6 @@ export default function Activity() {
 
       {/* ── Modals ── */}
       <ActivityDetailModal log={detailLog} onClose={() => setDetailLog(null)} />
-
-      <DeleteConfirmModal
-        isOpen={!!deleteTarget}
-        itemName={deleteTarget ? `${deleteTarget.event} #${deleteTarget.id}` : ''}
-        itemType="Activity Log"
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
-      />
 
       <FeatureNotAvailableModal
         isOpen={exportModalOpen}

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Trash2, Pencil, Copy, Plus, Download, Filter, Eye, EyeOff } from 'lucide-react';
+import { Trash2, Pencil, Copy, Plus, Download, Filter, Eye, EyeOff, Archive, LogIn, LogOut, RefreshCw } from 'lucide-react';
 import StatisticCard from './StatisticCard';
 import SearchBar from './SearchBar';
 import Pagination from './Pagination';
@@ -14,6 +14,9 @@ import AssetCheckOutModal from './AssetCheckOutModal';
 import AssetCheckInModal from './AssetCheckInModal';
 import AssetDetailModal from './AssetDetailModal';
 import ChangeStatusModal from './ChangeStatusModal';
+import BulkCheckInModal from './BulkCheckInModal';
+import BulkCheckOutModal from './BulkCheckOutModal';
+import BulkChangeStatusModal from './BulkChangeStatusModal';
 import { colors, spacing, radius, statusColors } from '../theme';
 import type { Asset, AssetStatus } from '../types/asset';
 import { ASSET_STATUS_LABELS } from '../types/asset';
@@ -103,6 +106,12 @@ export default function AssetsTabContent() {
   const [checkOutTarget, setCheckOutTarget] = useState<Asset | null>(null);
   const [checkInTarget,  setCheckInTarget]  = useState<Asset | null>(null);
   const [statusTarget,   setStatusTarget]   = useState<{ asset: Asset; status: AssetStatus } | null>(null);
+
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [bulkCheckInOpen,   setBulkCheckInOpen]   = useState(false);
+  const [bulkCheckOutOpen,  setBulkCheckOutOpen]  = useState(false);
+  const [bulkStatusOpen,    setBulkStatusOpen]    = useState(false);
+  const [bulkLoading,       setBulkLoading]       = useState(false);
 
   const allCategories = useMemo(
     () => [...new Set(assets.map(a => a.category))].sort(),
@@ -225,6 +234,94 @@ export default function AssetsTabContent() {
         toast.success(`Status updated to ${ASSET_STATUS_LABELS[updated.status]}`);
       })
       .catch(() => toast.error('Could not update status. Please try again.'));
+  };
+
+  const handleBulkArchive = async () => {
+    const ids = [...selectedIds];
+    setBulkLoading(true);
+    try {
+      await Promise.all(ids.map(id => assetsApi.retire(id)));
+      setAssets(prev => prev.filter(a => !selectedIds.has(a.id)));
+      setSelectedIds(new Set());
+      toast.success(`Archived ${ids.length} asset${ids.length !== 1 ? 's' : ''}`);
+    } catch {
+      toast.error('Some assets could not be archived. Please try again.');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = [...selectedIds];
+    setBulkDeleteConfirm(false);
+    setBulkLoading(true);
+    try {
+      await Promise.all(ids.map(id => assetsApi.remove(id)));
+      setAssets(prev => prev.filter(a => !selectedIds.has(a.id)));
+      setSelectedIds(new Set());
+      toast.success(`Deleted ${ids.length} asset${ids.length !== 1 ? 's' : ''}`);
+    } catch {
+      toast.error('Some assets could not be deleted. Please try again.');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkCheckIn = async (notes: string) => {
+    const ids = [...selectedIds];
+    setBulkCheckInOpen(false);
+    setBulkLoading(true);
+    try {
+      const results = await Promise.all(ids.map(id => assetsApi.checkIn(id, notes)));
+      setAssets(prev => {
+        const map = new Map(results.map(r => [r.id, r]));
+        return prev.map(a => map.get(a.id) ?? a);
+      });
+      setSelectedIds(new Set());
+      toast.success(`Checked in ${ids.length} asset${ids.length !== 1 ? 's' : ''}`);
+    } catch {
+      toast.error('Some assets could not be checked in. Please try again.');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkCheckOut = async (userId: string, notes: string) => {
+    const ids = [...selectedIds];
+    setBulkCheckOutOpen(false);
+    setBulkLoading(true);
+    try {
+      const results = await Promise.all(ids.map(id => assetsApi.checkOut(id, userId, notes)));
+      setAssets(prev => {
+        const map = new Map(results.map(r => [r.id, r]));
+        return prev.map(a => map.get(a.id) ?? a);
+      });
+      setSelectedIds(new Set());
+      toast.success(`Checked out ${ids.length} asset${ids.length !== 1 ? 's' : ''}`);
+    } catch {
+      toast.error('Some assets could not be checked out. Please try again.');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkChangeStatus = async (status: AssetStatus, notes: string) => {
+    const ids = [...selectedIds];
+    setBulkStatusOpen(false);
+    setBulkLoading(true);
+    try {
+      const results = await Promise.all(ids.map(id => assetsApi.changeStatus(id, status, notes)));
+      setAssets(prev => {
+        const map = new Map(results.map(r => [r.id, r]));
+        return prev.map(a => map.get(a.id) ?? a);
+      });
+      setSelectedIds(new Set());
+      toast.success(`Updated status of ${ids.length} asset${ids.length !== 1 ? 's' : ''} to ${ASSET_STATUS_LABELS[status]}`);
+    } catch {
+      toast.error('Some assets could not be updated. Please try again.');
+    } finally {
+      setBulkLoading(false);
+    }
   };
 
   return (
@@ -388,6 +485,69 @@ export default function AssetsTabContent() {
           </div>
         </div>
 
+        {/* ── Bulk action bar ── */}
+        {selectedIds.size > 0 && (
+          <div
+            style={{
+              padding: `${spacing.sm} ${spacing.xl}`,
+              backgroundColor: 'rgba(46,124,253,0.05)',
+              borderBottom: '1px solid rgba(46,124,253,0.15)',
+              display: 'flex', alignItems: 'center', gap: spacing.md, flexWrap: 'wrap',
+            }}
+          >
+            <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.8125rem', fontWeight: 600, color: colors.primary, whiteSpace: 'nowrap' }}>
+              {selectedIds.size} selected
+            </span>
+
+            <button
+              onClick={handleBulkArchive}
+              disabled={bulkLoading}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(252,156,45,0.12)', color: '#b45309', fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+            >
+              <Archive size={11} /> Archive {selectedIds.size}
+            </button>
+
+            <button
+              onClick={() => setBulkDeleteConfirm(true)}
+              disabled={bulkLoading}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(239,68,68,0.1)', color: colors.error, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+            >
+              <Trash2 size={11} /> Delete {selectedIds.size}
+            </button>
+
+            <button
+              onClick={() => setBulkCheckInOpen(true)}
+              disabled={bulkLoading}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(34,197,94,0.12)', color: '#15803d', fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+            >
+              <LogIn size={11} /> Check In
+            </button>
+
+            <button
+              onClick={() => setBulkCheckOutOpen(true)}
+              disabled={bulkLoading}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(252,156,45,0.12)', color: colors.orangeAccent, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+            >
+              <LogOut size={11} /> Check Out
+            </button>
+
+            <button
+              onClick={() => setBulkStatusOpen(true)}
+              disabled={bulkLoading}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(46,124,253,0.1)', color: colors.primary, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+            >
+              <RefreshCw size={11} /> Change Status
+            </button>
+
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              style={{ display: 'inline-flex', alignItems: 'center', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: '1px solid rgba(70,98,145,0.2)', backgroundColor: 'transparent', color: colors.blueGrayMd, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              Clear
+            </button>
+          </div>
+        )}
+
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -396,6 +556,7 @@ export default function AssetsTabContent() {
                   <input
                     type="checkbox"
                     checked={allPageSelected}
+                    ref={el => { if (el) el.indeterminate = pageItems.some(a => selectedIds.has(a.id)) && !allPageSelected; }}
                     onChange={toggleAll}
                     style={{ cursor: 'pointer', accentColor: colors.primary }}
                   />
@@ -659,6 +820,36 @@ export default function AssetsTabContent() {
           onClick={closeDropdowns}
         />
       )}
+
+      <DeleteConfirmModal
+        isOpen={bulkDeleteConfirm}
+        itemName={`${selectedIds.size} selected asset${selectedIds.size !== 1 ? 's' : ''}`}
+        itemType=""
+        onClose={() => setBulkDeleteConfirm(false)}
+        onConfirm={handleBulkDelete}
+      />
+
+      <BulkCheckInModal
+        isOpen={bulkCheckInOpen}
+        count={selectedIds.size}
+        onConfirm={handleBulkCheckIn}
+        onClose={() => setBulkCheckInOpen(false)}
+      />
+
+      <BulkCheckOutModal
+        isOpen={bulkCheckOutOpen}
+        count={selectedIds.size}
+        users={users}
+        onConfirm={handleBulkCheckOut}
+        onClose={() => setBulkCheckOutOpen(false)}
+      />
+
+      <BulkChangeStatusModal
+        isOpen={bulkStatusOpen}
+        count={selectedIds.size}
+        onConfirm={handleBulkChangeStatus}
+        onClose={() => setBulkStatusOpen(false)}
+      />
     </>
   );
 }

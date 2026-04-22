@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Trash2, Pencil, Plus, Download, AlertTriangle, Filter,
-  Eye, EyeOff,
+  Eye, EyeOff, Archive,
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
@@ -194,6 +194,40 @@ export default function Inventory() {
   };
 
   const closeDropdowns = () => { setFilterOpen(false); setSortOpen(false); };
+
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
+
+  const handleBulkArchive = async () => {
+    const ids = [...selectedIds];
+    setBulkLoading(true);
+    try {
+      await Promise.all(ids.map(id => accessoriesApi.retire(id)));
+      setInventory(prev => prev.filter(i => !selectedIds.has(i.id)));
+      setSelectedIds(new Set());
+      toast.success(`Archived ${ids.length} item${ids.length !== 1 ? 's' : ''}`);
+    } catch {
+      toast.error('Some items could not be archived. Please try again.');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = [...selectedIds];
+    setBulkDeleteConfirm(false);
+    setBulkLoading(true);
+    try {
+      await Promise.all(ids.map(id => accessoriesApi.remove(id)));
+      setInventory(prev => prev.filter(i => !selectedIds.has(i.id)));
+      setSelectedIds(new Set());
+      toast.success(`Deleted ${ids.length} item${ids.length !== 1 ? 's' : ''}`);
+    } catch {
+      toast.error('Some items could not be deleted. Please try again.');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
 
   // ── Action handlers ────────────────────────────────────────────────────────
 
@@ -535,6 +569,45 @@ export default function Inventory() {
               ))}
             </div>
 
+            {/* ── Bulk action bar ── */}
+            {selectedIds.size > 0 && (
+              <div
+                style={{
+                  padding: `${spacing.sm} ${spacing.xl}`,
+                  backgroundColor: 'rgba(46,124,253,0.05)',
+                  borderBottom: '1px solid rgba(46,124,253,0.15)',
+                  display: 'flex', alignItems: 'center', gap: spacing.md, flexWrap: 'wrap',
+                }}
+              >
+                <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.8125rem', fontWeight: 600, color: colors.primary, whiteSpace: 'nowrap' }}>
+                  {selectedIds.size} selected
+                </span>
+
+                <button
+                  onClick={handleBulkArchive}
+                  disabled={bulkLoading}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(252,156,45,0.12)', color: '#b45309', fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  <Archive size={11} /> Archive {selectedIds.size}
+                </button>
+
+                <button
+                  onClick={() => setBulkDeleteConfirm(true)}
+                  disabled={bulkLoading}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(239,68,68,0.1)', color: colors.error, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  <Trash2 size={11} /> Delete {selectedIds.size}
+                </button>
+
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  style={{ display: 'inline-flex', alignItems: 'center', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: '1px solid rgba(70,98,145,0.2)', backgroundColor: 'transparent', color: colors.blueGrayMd, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+
             {/* Table */}
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -544,6 +617,7 @@ export default function Inventory() {
                       <input
                         type="checkbox"
                         checked={allPageSelected}
+                        ref={el => { if (el) el.indeterminate = pageItems.some(i => selectedIds.has(i.id)) && !allPageSelected; }}
                         onChange={toggleAll}
                         style={{ cursor: 'pointer', accentColor: colors.primary }}
                       />
@@ -797,6 +871,14 @@ export default function Inventory() {
             .then(() => { setInventory(prev => prev.filter(i => i.id !== detailTarget.id)); setDetailTarget(null); })
             .catch(() => {});
         }}
+      />
+
+      <DeleteConfirmModal
+        isOpen={bulkDeleteConfirm}
+        itemName={`${selectedIds.size} selected item${selectedIds.size !== 1 ? 's' : ''}`}
+        itemType=""
+        onClose={() => setBulkDeleteConfirm(false)}
+        onConfirm={handleBulkDelete}
       />
 
       {/* Backdrop — closes open dropdowns on outside click */}

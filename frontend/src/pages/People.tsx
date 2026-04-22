@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Trash2, Pencil, Eye, Plus, ArrowUpAZ, ArrowDownAZ, Check, ChevronDown, ChevronUp, Shield, Mail, Briefcase, Building2 } from 'lucide-react';
+import { Trash2, Pencil, Eye, Plus, ArrowUpAZ, ArrowDownAZ, Check, ChevronDown, ChevronUp, Shield, Mail, Briefcase, Building2, Archive } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
@@ -91,6 +91,10 @@ export default function People() {
   const [sortDir, setSortDir]   = useState<SortDir>('desc');
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
+
   const [detailPerson, setDetailPerson] = useState<Person | null>(null);
   const [editPerson,   setEditPerson]   = useState<Person | null>(null);
   const [deletePerson, setDeletePerson] = useState<Person | null>(null);
@@ -129,6 +133,23 @@ export default function People() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
   const pageItems  = filtered.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE);
 
+  const allPageSelected = pageItems.length > 0 && pageItems.every(p => selectedIds.has(p.id));
+  const toggleAll = () => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (allPageSelected) pageItems.forEach(p => next.delete(p.id));
+      else pageItems.forEach(p => next.add(p.id));
+      return next;
+    });
+  };
+  const toggleRow = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
   const supervisorLabel = (supervisorId: string | null | undefined) => {
     if (!supervisorId) return '—';
     const mgr = people.find(p => p.id === supervisorId);
@@ -137,7 +158,7 @@ export default function People() {
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
-  const handleSearch = (val: string) => { setSearch(val); setCurrentPage(1); };
+  const handleSearch = (val: string) => { setSearch(val); setCurrentPage(1); setSelectedIds(new Set()); };
 
   const handleSortDir = (dir: SortDir) => { setSortDir(dir); setCurrentPage(1); };
 
@@ -180,6 +201,37 @@ export default function People() {
       })
       .catch(() => toast.error('Could not delete person. Please try again.'));
     setDeletePerson(null);
+  };
+
+  const handleBulkArchive = async () => {
+    const ids = [...selectedIds];
+    setBulkLoading(true);
+    try {
+      await Promise.all(ids.map(id => usersApi.retire(id)));
+      setPeople(prev => prev.filter(p => !selectedIds.has(p.id)));
+      setSelectedIds(new Set());
+      toast.success(`Archived ${ids.length} person${ids.length !== 1 ? 's' : ''}`);
+    } catch {
+      toast.error('Some people could not be archived. Please try again.');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = [...selectedIds];
+    setBulkDeleteConfirm(false);
+    setBulkLoading(true);
+    try {
+      await Promise.all(ids.map(id => usersApi.remove(id)));
+      setPeople(prev => prev.filter(p => !selectedIds.has(p.id)));
+      setSelectedIds(new Set());
+      toast.success(`Deleted ${ids.length} person${ids.length !== 1 ? 's' : ''}`);
+    } catch {
+      toast.error('Some people could not be deleted. Please try again.');
+    } finally {
+      setBulkLoading(false);
+    }
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -527,11 +579,59 @@ export default function People() {
               </div>
             </div>
 
+            {/* ── Bulk action bar ── */}
+            {selectedIds.size > 0 && (
+              <div
+                style={{
+                  padding: `${spacing.sm} ${spacing.xl}`,
+                  backgroundColor: 'rgba(46,124,253,0.05)',
+                  borderBottom: '1px solid rgba(46,124,253,0.15)',
+                  display: 'flex', alignItems: 'center', gap: spacing.md, flexWrap: 'wrap',
+                }}
+              >
+                <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.8125rem', fontWeight: 600, color: colors.primary, whiteSpace: 'nowrap' }}>
+                  {selectedIds.size} selected
+                </span>
+
+                <button
+                  onClick={handleBulkArchive}
+                  disabled={bulkLoading}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(252,156,45,0.12)', color: '#b45309', fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  <Archive size={11} /> Archive {selectedIds.size}
+                </button>
+
+                <button
+                  onClick={() => setBulkDeleteConfirm(true)}
+                  disabled={bulkLoading}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(239,68,68,0.1)', color: colors.error, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  <Trash2 size={11} /> Delete {selectedIds.size}
+                </button>
+
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  style={{ display: 'inline-flex', alignItems: 'center', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: '1px solid rgba(70,98,145,0.2)', backgroundColor: 'transparent', color: colors.blueGrayMd, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+
             {/* ── Table ── */}
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
+                    <th style={{ ...TH, width: '2.5rem', textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={allPageSelected}
+                        ref={el => { if (el) el.indeterminate = pageItems.some(p => selectedIds.has(p.id)) && !allPageSelected; }}
+                        onChange={toggleAll}
+                        style={{ cursor: 'pointer', accentColor: colors.primary }}
+                      />
+                    </th>
                     <th style={TH}>Name</th>
                     <th style={TH}>Email</th>
                     <th style={TH}>Position</th>
@@ -545,7 +645,7 @@ export default function People() {
                   {pageItems.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={7}
+                        colSpan={8}
                         style={{
                           ...TD, textAlign: 'center',
                           color: colors.blueGrayMd,
@@ -572,6 +672,16 @@ export default function People() {
                           onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(46,124,253,0.04)')}
                           onMouseLeave={e => (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? colors.bgSurface : colors.bgStripe)}
                         >
+                          {/* Checkbox */}
+                          <td style={{ ...TD, textAlign: 'center', width: '2.5rem' }} onClick={e => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(person.id)}
+                              onChange={() => toggleRow(person.id)}
+                              style={{ cursor: 'pointer', accentColor: colors.primary }}
+                            />
+                          </td>
+
                           {/* Name */}
                           <td style={{ ...TD, fontWeight: 500 }}>{displayName}</td>
 
@@ -708,6 +818,15 @@ export default function People() {
         itemType="Person"
         onClose={() => setDeletePerson(null)}
         onConfirm={handleDelete}
+      />
+
+      {/* Bulk delete */}
+      <DeleteConfirmModal
+        isOpen={bulkDeleteConfirm}
+        itemName={`${selectedIds.size} selected person${selectedIds.size !== 1 ? 's' : ''}`}
+        itemType=""
+        onClose={() => setBulkDeleteConfirm(false)}
+        onConfirm={handleBulkDelete}
       />
     </div>
   );
