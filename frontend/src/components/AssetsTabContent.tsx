@@ -531,10 +531,17 @@ export default function AssetsTabContent() {
         {/* ── Bulk action bar ── */}
         {selectedIds.size > 0 && (() => {
           const countOf = (s: AssetStatus) => assets.filter(a => selectedIds.has(a.id) && a.status === s).length;
+          const deployedCount    = countOf('DEPLOYED');
+          const availableCount   = countOf('AVAILABLE');
           const auditCount       = countOf('TO_AUDIT');
           const repairCount      = countOf('IN_REPAIR');
           const maintenanceCount = countOf('IN_MAINTENANCE');
           const lostCount        = countOf('LOST');
+
+          // Check In: only for DEPLOYED assets; Check Out: only for AVAILABLE assets
+          const showCheckIn  = activeTab === 'DEPLOYED' || (activeTab === 'All' && deployedCount > 0);
+          const showCheckOut = activeTab === 'AVAILABLE' || (activeTab === 'All' && availableCount > 0);
+
           return (
             <div
               style={{
@@ -564,21 +571,25 @@ export default function AssetsTabContent() {
                 <Trash2 size={11} /> Delete {selectedIds.size}
               </button>
 
-              <button
-                onClick={() => setBulkCheckInOpen(true)}
-                disabled={bulkLoading}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(34,197,94,0.12)', color: '#15803d', fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
-              >
-                <LogIn size={11} /> Check In
-              </button>
+              {showCheckIn && (
+                <button
+                  onClick={() => setBulkCheckInOpen(true)}
+                  disabled={bulkLoading}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(34,197,94,0.12)', color: '#15803d', fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  <LogIn size={11} /> Check In
+                </button>
+              )}
 
-              <button
-                onClick={() => setBulkCheckOutOpen(true)}
-                disabled={bulkLoading}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(252,156,45,0.12)', color: colors.orangeAccent, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
-              >
-                <LogOut size={11} /> Check Out
-              </button>
+              {showCheckOut && (
+                <button
+                  onClick={() => setBulkCheckOutOpen(true)}
+                  disabled={bulkLoading}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(252,156,45,0.12)', color: colors.orangeAccent, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  <LogOut size={11} /> Check Out
+                </button>
+              )}
 
               <button
                 onClick={() => setBulkStatusOpen(true)}
