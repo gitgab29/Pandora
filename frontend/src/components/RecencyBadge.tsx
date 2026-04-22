@@ -1,4 +1,4 @@
-import { colors, radius } from '../theme';
+import { colors } from '../theme';
 
 export default function RecencyBadge({ visible }: { visible: boolean }) {
   if (!visible) return null;
@@ -6,22 +6,16 @@ export default function RecencyBadge({ visible }: { visible: boolean }) {
     <span
       style={{
         display: 'inline-block',
-        padding: '0.1rem 0.375rem',
-        borderRadius: radius.full,
-        backgroundColor: 'rgba(46,124,253,0.12)',
-        color: colors.primary,
-        fontFamily: "'Archivo', sans-serif",
-        fontSize: '0.5625rem',
-        fontWeight: 700,
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
-        marginLeft: '0.375rem',
+        width: 8,
+        height: 8,
+        borderRadius: '50%',
+        backgroundColor: colors.primary,
+        boxShadow: `0 0 0 2px rgba(46,124,253,0.25)`,
+        marginLeft: '0.4rem',
         flexShrink: 0,
         verticalAlign: 'middle',
-        lineHeight: 1.4,
       }}
-    >
-      New
-    </span>
+      aria-label="New"
+    />
   );
 }

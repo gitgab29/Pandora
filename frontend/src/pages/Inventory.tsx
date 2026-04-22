@@ -74,7 +74,7 @@ export default function Inventory() {
   const [inventory, setInventory] = useState<Accessory[]>([]);
   const [users, setUsers] = useState<Person[]>([]);
   const toast = useToast();
-  const { isNew: isAccessoryNew, markSeen: markAccessoriesSeen } = useRecency('accessories');
+  const { isNew: isAccessoryNew, markItemSeen: markAccessoryItemSeen } = useRecency('accessories');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const tabFromUrl = searchParams.get('tab') as InventoryTab | null;
   const [activeInventoryTab, setActiveInventoryTab] = useState<InventoryTab>(
@@ -96,12 +96,6 @@ export default function Inventory() {
     usersApi.list({ is_active: true }).then(setUsers).catch(() => {});
   }, []);
 
-  // Mark accessories feed as seen after 2.5s dwell on that tab
-  useEffect(() => {
-    if (activeInventoryTab !== 'Accessories') return;
-    const timer = setTimeout(markAccessoriesSeen, 2500);
-    return () => clearTimeout(timer);
-  }, [activeInventoryTab, markAccessoriesSeen]);
 
   const [featureModalOpen, setFeatureModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -665,7 +659,7 @@ export default function Inventory() {
                       return (
                         <tr
                           key={item.id}
-                          onClick={() => setDetailTarget(item)}
+                          onClick={() => { markAccessoryItemSeen(item.id); setDetailTarget(item); }}
                           style={{
                             backgroundColor: idx % 2 === 0 ? colors.bgSurface : colors.bgStripe,
                             cursor: 'pointer',
@@ -688,7 +682,7 @@ export default function Inventory() {
                           <td style={{ ...TD, fontWeight: 500 }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
                               {item.item_name}
-                              <RecencyBadge visible={isAccessoryNew(item.created_at)} />
+                              <RecencyBadge visible={isAccessoryNew(item.id, item.created_at)} />
                               {isLowStock && (
                                 <AlertTriangle size={11} color={colors.orangeAccent} aria-label="Low stock" />
                               )}

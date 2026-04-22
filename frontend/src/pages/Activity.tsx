@@ -86,17 +86,11 @@ const EVENT_TAB_ACCENT: Record<string, string> = {
 export default function Activity() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [logs, setLogs] = useState<TransactionLog[]>([]);
-  const { isNew, markSeen } = useRecency('activity');
+  const { isNew, markItemSeen } = useRecency('activity');
 
   useEffect(() => {
     transactionsApi.list({ ordering: '-transaction_date', within_last_days: 15 }).then(data => setLogs(data.map(toActivityLogEntry)));
   }, []);
-
-  // Mark feed as seen after 2.5s dwell
-  useEffect(() => {
-    const timer = setTimeout(markSeen, 2500);
-    return () => clearTimeout(timer);
-  }, [markSeen]);
 
   // Filters & search
   const [eventTab,    setEventTab]    = useState<EventTab>('All');
@@ -363,7 +357,7 @@ export default function Activity() {
                       return (
                         <tr
                           key={log.id}
-                          onClick={() => setDetailLog(log)}
+                          onClick={() => { markItemSeen(log.id); setDetailLog(log); }}
                           style={{
                             backgroundColor: idx % 2 === 0 ? colors.bgSurface : colors.bgStripe,
                             cursor: 'pointer',
@@ -374,7 +368,7 @@ export default function Activity() {
                         >
                           <td style={{ ...TD, color: colors.blueGrayMd, fontSize: '0.75rem' }}>
                             {log.date}
-                            <RecencyBadge visible={isNew(log.created_at)} />
+                            <RecencyBadge visible={isNew(log.id, log.created_at)} />
                           </td>
 
                           <td style={{ ...TD, fontWeight: 600 }}>
@@ -424,7 +418,7 @@ export default function Activity() {
                               <RowIconBtn
                                 title="View detail"
                                 hoverColor={colors.primary}
-                                onClick={() => setDetailLog(log)}
+                                onClick={() => { markItemSeen(log.id); setDetailLog(log); }}
                               >
                                 <Eye size={13} />
                               </RowIconBtn>

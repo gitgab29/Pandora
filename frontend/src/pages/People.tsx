@@ -84,17 +84,11 @@ export default function People() {
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [people, setPeople]     = useState<Person[]>([]);
-  const { isNew, markSeen } = useRecency('people');
+  const { isNew, markItemSeen } = useRecency('people');
 
   useEffect(() => {
     usersApi.list().then(setPeople).catch(() => {});
   }, []);
-
-  // Mark feed as seen after 2.5s dwell
-  useEffect(() => {
-    const timer = setTimeout(markSeen, 2500);
-    return () => clearTimeout(timer);
-  }, [markSeen]);
   const [search, setSearch]     = useState('');
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDir, setSortDir]   = useState<SortDir>('desc');
@@ -672,7 +666,7 @@ export default function People() {
                       return (
                         <tr
                           key={person.id}
-                          onClick={() => setDetailPerson(person)}
+                          onClick={() => { markItemSeen(person.id); setDetailPerson(person); }}
                           style={{
                             backgroundColor: idx % 2 === 0 ? colors.bgSurface : colors.bgStripe,
                             cursor: 'pointer',
@@ -694,7 +688,7 @@ export default function People() {
                           {/* Name */}
                           <td style={{ ...TD, fontWeight: 500 }}>
                             {displayName}
-                            <RecencyBadge visible={isNew(person.created_at)} />
+                            <RecencyBadge visible={isNew(person.id, person.created_at)} />
                           </td>
 
                           {/* Email */}
@@ -750,7 +744,7 @@ export default function People() {
                                 <Pencil size={11} />
                               </button>
                               <button
-                                onClick={() => setDetailPerson(person)}
+                                onClick={() => { markItemSeen(person.id); setDetailPerson(person); }}
                                 title="View detail"
                                 style={iconBtnStyle(colors.primary)}
                               >
