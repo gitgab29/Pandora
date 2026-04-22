@@ -42,6 +42,7 @@ export interface Asset {
   model?: string;
   category: AssetCategory | string;
   status: AssetStatus;
+  previous_status?: AssetStatus | null;
   serial_number: string;
   warranty_expiry?: string;
   end_of_life?: string;

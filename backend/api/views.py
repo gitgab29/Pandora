@@ -281,6 +281,7 @@ class AssetViewSet(viewsets.ModelViewSet):
 
         from_user = asset.assigned_to
         asset.assigned_to = to_user
+        asset.previous_status = asset.status
         asset.status = Asset.Status.DEPLOYED
         asset.save()
 
@@ -301,6 +302,7 @@ class AssetViewSet(viewsets.ModelViewSet):
         notes     = request.data.get('notes', '')
         from_user = asset.assigned_to
         asset.assigned_to = None
+        asset.previous_status = asset.status
         asset.status = Asset.Status.AVAILABLE
         asset.save()
 
@@ -322,6 +324,7 @@ class AssetViewSet(viewsets.ModelViewSet):
         notes      = request.data.get('notes', '')
         if new_status not in Asset.Status.values:
             return Response({'detail': 'Invalid status.'}, status=status.HTTP_400_BAD_REQUEST)
+        asset.previous_status = asset.status
         asset.status = new_status
         asset.save()
         tx_type = _STATUS_TX_TYPE.get(new_status, TransactionLog.TransactionType.ADJUSTMENT)

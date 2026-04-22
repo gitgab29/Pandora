@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Pencil, Monitor, Laptop, Smartphone, Tablet, Cpu, Package, LogOut, LogIn, Wrench, ClipboardCheck, AlertTriangle } from 'lucide-react';
+import { X, Pencil, Monitor, Laptop, Smartphone, Tablet, Cpu, Package, LogOut, LogIn, Wrench, ClipboardCheck, AlertTriangle, CheckCircle2, MapPin } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Asset, AssetStatus } from '../types/asset';
 import { ASSET_STATUS_LABELS } from '../types/asset';
@@ -14,6 +14,7 @@ interface AssetDetailModalProps {
   onCheckOut?: () => void;
   onCheckIn?: () => void;
   onChangeStatus?: (target: AssetStatus) => void;
+  onResolve?: (targetStatus: AssetStatus, notes: string) => void;
 }
 
 const STATUS_COLORS: Record<AssetStatus, string> = {
@@ -31,6 +32,13 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
   Tablet: Tablet,
   PC: Cpu,
   Monitor: Monitor,
+};
+
+const RESOLUTION_CONFIG: Partial<Record<AssetStatus, { label: string; icon: React.ElementType }>> = {
+  TO_AUDIT:       { label: 'Mark Audited',  icon: ClipboardCheck },
+  IN_REPAIR:      { label: 'Mark Repaired', icon: Wrench },
+  IN_MAINTENANCE: { label: 'Mark Done',     icon: CheckCircle2 },
+  LOST:           { label: 'Mark Found',    icon: MapPin },
 };
 
 function InfoField({ label, value }: { label: string; value: string | null | undefined }) {
@@ -54,16 +62,22 @@ function SectionLabel({ children, style }: { children: React.ReactNode; style?: 
   );
 }
 
-export default function AssetDetailModal({ isOpen, asset, onClose, onEdit, onRetire, onCheckOut, onCheckIn, onChangeStatus }: AssetDetailModalProps) {
+export default function AssetDetailModal({ isOpen, asset, onClose, onEdit, onRetire, onCheckOut, onCheckIn, onChangeStatus, onResolve }: AssetDetailModalProps) {
   const [retireOpen, setRetireOpen] = useState(false);
+  const [pendingResolve, setPendingResolve] = useState<{ targetStatus: AssetStatus; label: string } | null>(null);
+  const [resolveNotes, setResolveNotes] = useState('');
   if (!isOpen || !asset) return null;
+
+  const resolutionConfig = RESOLUTION_CONFIG[asset.status];
+  const resolveTarget    = (asset.previous_status ?? 'AVAILABLE') as AssetStatus;
+  const showResolution   = !!resolutionConfig && !!onResolve;
 
   const showCheckOut    = asset.status === 'AVAILABLE' && !!onCheckOut;
   const showCheckIn     = asset.status === 'DEPLOYED'  && !!onCheckIn;
   const showSetRepair   = (asset.status === 'AVAILABLE' || asset.status === 'DEPLOYED' || asset.status === 'TO_AUDIT') && !!onChangeStatus;
   const showSetAudit    = (asset.status === 'DEPLOYED'  || asset.status === 'IN_REPAIR' || asset.status === 'IN_MAINTENANCE') && !!onChangeStatus;
   const showSetLost     = asset.status !== 'LOST' && !!onChangeStatus;
-  const footerVisible   = showCheckOut || showCheckIn || showSetRepair || showSetAudit || showSetLost;
+  const footerVisible   = showCheckOut || showCheckIn || showSetRepair || showSetAudit || showSetLost || showResolution;
 
   const handleAction = (cb?: () => void) => () => { onClose(); cb?.(); };
   const handleStatus = (target: AssetStatus) => () => { onClose(); onChangeStatus?.(target); };
@@ -236,61 +250,122 @@ export default function AssetDetailModal({ isOpen, asset, onClose, onEdit, onRet
 
         {/* ── Footer actions ── */}
         {footerVisible && (
-          <div style={{ flexShrink: 0, borderTop: '1px solid rgba(70,98,145,0.1)', padding: `${spacing.md} ${spacing.xl}`, display: 'flex', gap: spacing.sm, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            {showSetLost && (
-              <button
-                onClick={handleStatus('LOST')}
-                style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: `1px solid ${colors.error}59`, backgroundColor: `${colors.error}14`, fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: colors.error, cursor: 'pointer', transition: 'background-color 0.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = `${colors.error}22`)}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = `${colors.error}14`)}
-              >
-                <AlertTriangle size={12} />
-                Set Lost
-              </button>
-            )}
-            {showSetAudit && (
-              <button
-                onClick={handleStatus('TO_AUDIT')}
-                style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: `1px solid rgba(234,179,8,0.4)`, backgroundColor: 'rgba(234,179,8,0.1)', fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: '#a16207', cursor: 'pointer', transition: 'background-color 0.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(234,179,8,0.18)')}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(234,179,8,0.1)')}
-              >
-                <ClipboardCheck size={12} />
-                Set to Audit
-              </button>
-            )}
-            {showSetRepair && (
-              <button
-                onClick={handleStatus('IN_REPAIR')}
-                style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: `1px solid rgba(252,156,45,0.35)`, backgroundColor: 'rgba(252,156,45,0.08)', fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: colors.orangeAccent, cursor: 'pointer', transition: 'background-color 0.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(252,156,45,0.15)')}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(252,156,45,0.08)')}
-              >
-                <Wrench size={12} />
-                Set to Repair
-              </button>
-            )}
-            {showCheckIn && (
-              <button
-                onClick={handleAction(onCheckIn)}
-                style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: 'none', backgroundColor: colors.orangeAccent, fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: colors.white, cursor: 'pointer', transition: 'filter 0.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(0.95)')}
-                onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
-              >
-                <LogIn size={12} />
-                Check In
-              </button>
-            )}
-            {showCheckOut && (
-              <button
-                onClick={handleAction(onCheckOut)}
-                style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: 'none', backgroundColor: colors.success, fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: colors.white, cursor: 'pointer', transition: 'filter 0.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(0.95)')}
-                onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
-              >
-                <LogOut size={12} />
-                Check Out
-              </button>
+          <div style={{ flexShrink: 0, borderTop: '1px solid rgba(70,98,145,0.1)', padding: `${spacing.md} ${spacing.xl}` }}>
+            {pendingResolve ? (
+              /* Inline resolve confirm */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
+                  <CheckCircle2 size={14} color={colors.success} />
+                  <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, color: colors.textSecondary }}>
+                    Resolve to{' '}
+                    <strong style={{ color: colors.textPrimary }}>{ASSET_STATUS_LABELS[pendingResolve.targetStatus]}</strong>
+                  </span>
+                </div>
+                <textarea
+                  value={resolveNotes}
+                  onChange={e => setResolveNotes(e.target.value)}
+                  placeholder="Optional notes…"
+                  rows={2}
+                  style={{ width: '100%', resize: 'none', padding: `${spacing.xs} ${spacing.sm}`, borderRadius: radius.md, border: '1px solid rgba(70,98,145,0.2)', backgroundColor: colors.bgSubtle, fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, color: colors.textPrimary, outline: 'none', boxSizing: 'border-box' }}
+                />
+                <div style={{ display: 'flex', gap: spacing.sm, justifyContent: 'flex-end', alignItems: 'center' }}>
+                  <button
+                    onClick={() => { setPendingResolve(null); setResolveNotes(''); }}
+                    style={{ padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: 'none', backgroundColor: 'transparent', fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: colors.blueGrayMd, cursor: 'pointer' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => { onResolve?.(pendingResolve.targetStatus, resolveNotes.trim()); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: 'none', backgroundColor: colors.success, fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: colors.white, cursor: 'pointer', transition: 'filter 0.15s' }}
+                    onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(0.9)')}
+                    onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
+                  >
+                    <CheckCircle2 size={12} />
+                    {pendingResolve.label}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Normal footer row */
+              <div style={{ display: 'flex', gap: spacing.sm, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+                {/* Resolution button — left side */}
+                <div>
+                  {showResolution && resolutionConfig && (() => {
+                    const Icon = resolutionConfig.icon;
+                    return (
+                      <button
+                        onClick={() => setPendingResolve({ targetStatus: resolveTarget, label: resolutionConfig.label })}
+                        style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: `1px solid rgba(34,197,94,0.4)`, backgroundColor: 'rgba(34,197,94,0.1)', fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: '#15803d', cursor: 'pointer', transition: 'background-color 0.15s' }}
+                        onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(34,197,94,0.18)')}
+                        onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(34,197,94,0.1)')}
+                      >
+                        <Icon size={12} />
+                        {resolutionConfig.label}
+                      </button>
+                    );
+                  })()}
+                </div>
+
+                {/* Status change buttons — right side */}
+                <div style={{ display: 'flex', gap: spacing.sm, flexWrap: 'wrap', marginLeft: 'auto' }}>
+                  {showSetLost && (
+                    <button
+                      onClick={handleStatus('LOST')}
+                      style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: `1px solid ${colors.error}59`, backgroundColor: `${colors.error}14`, fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: colors.error, cursor: 'pointer', transition: 'background-color 0.15s' }}
+                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = `${colors.error}22`)}
+                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = `${colors.error}14`)}
+                    >
+                      <AlertTriangle size={12} />
+                      Set Lost
+                    </button>
+                  )}
+                  {showSetAudit && (
+                    <button
+                      onClick={handleStatus('TO_AUDIT')}
+                      style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: `1px solid rgba(234,179,8,0.4)`, backgroundColor: 'rgba(234,179,8,0.1)', fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: '#a16207', cursor: 'pointer', transition: 'background-color 0.15s' }}
+                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(234,179,8,0.18)')}
+                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(234,179,8,0.1)')}
+                    >
+                      <ClipboardCheck size={12} />
+                      Set to Audit
+                    </button>
+                  )}
+                  {showSetRepair && (
+                    <button
+                      onClick={handleStatus('IN_REPAIR')}
+                      style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: `1px solid rgba(252,156,45,0.35)`, backgroundColor: 'rgba(252,156,45,0.08)', fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: colors.orangeAccent, cursor: 'pointer', transition: 'background-color 0.15s' }}
+                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(252,156,45,0.15)')}
+                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(252,156,45,0.08)')}
+                    >
+                      <Wrench size={12} />
+                      Set to Repair
+                    </button>
+                  )}
+                  {showCheckIn && (
+                    <button
+                      onClick={handleAction(onCheckIn)}
+                      style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: 'none', backgroundColor: colors.orangeAccent, fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: colors.white, cursor: 'pointer', transition: 'filter 0.15s' }}
+                      onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(0.95)')}
+                      onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
+                    >
+                      <LogIn size={12} />
+                      Check In
+                    </button>
+                  )}
+                  {showCheckOut && (
+                    <button
+                      onClick={handleAction(onCheckOut)}
+                      style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: 'none', backgroundColor: colors.success, fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: colors.white, cursor: 'pointer', transition: 'filter 0.15s' }}
+                      onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(0.95)')}
+                      onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
+                    >
+                      <LogOut size={12} />
+                      Check Out
+                    </button>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         )}

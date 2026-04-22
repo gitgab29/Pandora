@@ -109,6 +109,7 @@ class Asset(TimeStampedModel, ArchivableMixin):
     model = models.CharField(max_length=100, blank=True)
     category = models.CharField(max_length=50, choices=Category.choices, default=Category.OTHER)
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.AVAILABLE)
+    previous_status = models.CharField(max_length=50, choices=Status.choices, null=True, blank=True)
     serial_number = models.CharField(max_length=255, blank=True)
     warranty_expiry = models.DateField(null=True, blank=True)
     end_of_life = models.DateField(null=True, blank=True)

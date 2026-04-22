@@ -632,6 +632,17 @@ export default function AssetsTabContent() {
           setDetailTarget(null);
           if (a) setStatusTarget({ asset: a, status: target });
         }}
+        onResolve={(targetStatus, notes) => {
+          const a = detailTarget;
+          if (!a) return;
+          setDetailTarget(null);
+          assetsApi.changeStatus(a.id, targetStatus, notes)
+            .then(updated => {
+              setAssets(prev => prev.map(x => x.id === updated.id ? updated : x));
+              toast.success(`Asset resolved to ${ASSET_STATUS_LABELS[updated.status]}`);
+            })
+            .catch(() => toast.error('Could not update status. Please try again.'));
+        }}
       />
 
       <ChangeStatusModal

@@ -56,7 +56,7 @@ class AssetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Asset
         fields = (
-            'id', 'asset_tag', 'model', 'category', 'status',
+            'id', 'asset_tag', 'model', 'category', 'status', 'previous_status',
             'serial_number', 'warranty_expiry', 'end_of_life',
             'order_number', 'purchase_date', 'purchase_cost', 'depreciation_value',
             'manufacturer', 'supplier',
