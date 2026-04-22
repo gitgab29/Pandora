@@ -48,6 +48,15 @@ export const badgeColors = {
   asset:     { bg: 'rgba(46,124,253,0.1)',   text: '#2e7cfd' },
   inventory: { bg: 'rgba(45,252,249,0.12)',  text: '#0891b2' },
   license:   { bg: 'rgba(252,156,45,0.12)',  text: '#b45309' },
+  // Status-change events
+  statusChange: { bg: 'rgba(234,179,8,0.12)',   text: '#92400e' },
+  // Data-edit events
+  adjustment:   { bg: 'rgba(107,114,128,0.1)',  text: '#4b5563' },
+  // Archive / restore
+  archive:      { bg: 'rgba(239,68,68,0.1)',    text: '#dc2626' },
+  restore:      { bg: 'rgba(34,197,94,0.12)',   text: '#15803d' },
+  // Transfer
+  transfer:     { bg: 'rgba(139,92,246,0.1)',   text: '#7c3aed' },
   // Fallback
   default:   { bg: '#f3f4f6',               text: '#374151' },
 } as const;

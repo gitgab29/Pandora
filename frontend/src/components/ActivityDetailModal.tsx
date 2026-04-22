@@ -3,11 +3,21 @@ import { colors, spacing, radius, fontSize, shadows, badgeColors } from '../them
 import type { ActivityLogEntry as TransactionLog } from '../types/activity';
 
 const EVENT_COLORS: Record<string, { bg: string; color: string }> = {
-  'Check In':  { bg: badgeColors.checkIn.bg,  color: badgeColors.checkIn.text },
-  'Check Out': { bg: badgeColors.checkOut.bg, color: badgeColors.checkOut.text },
-  'Update':    { bg: badgeColors.update.bg,   color: badgeColors.update.text },
-  'Audit':     { bg: badgeColors.audit.bg,    color: badgeColors.audit.text },
-  'Request':   { bg: badgeColors.request.bg,  color: badgeColors.request.text },
+  'Check In':              { bg: badgeColors.checkIn.bg,      color: badgeColors.checkIn.text },
+  'Check Out':             { bg: badgeColors.checkOut.bg,     color: badgeColors.checkOut.text },
+  'Transfer':              { bg: badgeColors.transfer.bg,     color: badgeColors.transfer.text },
+  'Adjustment':            { bg: badgeColors.adjustment.bg,   color: badgeColors.adjustment.text },
+  'Archived':              { bg: badgeColors.archive.bg,      color: badgeColors.archive.text },
+  'Restored':              { bg: badgeColors.restore.bg,      color: badgeColors.restore.text },
+  'Set to In Repair':      { bg: badgeColors.statusChange.bg, color: badgeColors.statusChange.text },
+  'Set to In Maintenance': { bg: badgeColors.statusChange.bg, color: badgeColors.statusChange.text },
+  'Marked as Lost':        { bg: badgeColors.archive.bg,      color: badgeColors.archive.text },
+  'Flagged for Audit':     { bg: badgeColors.audit.bg,        color: badgeColors.audit.text },
+  'Marked Available':      { bg: badgeColors.checkIn.bg,      color: badgeColors.checkIn.text },
+  'Set to Deployed':       { bg: badgeColors.update.bg,       color: badgeColors.update.text },
+  'Update':                { bg: badgeColors.update.bg,       color: badgeColors.update.text },
+  'Audit':                 { bg: badgeColors.audit.bg,        color: badgeColors.audit.text },
+  'Request':               { bg: badgeColors.request.bg,      color: badgeColors.request.text },
 };
 
 const TYPE_COLORS: Record<string, { bg: string; color: string }> = {
@@ -35,6 +45,7 @@ export default function ActivityDetailModal({ log, onClose }: Props) {
     { label: 'Event',         value: log.event },
     { label: 'Item',          value: log.item },
     { label: 'To / From',     value: log.toFrom },
+    { label: 'Description',   value: log.eventDescription },
     { label: 'Department',    value: log.department ?? '—' },
     { label: 'Notes',         value: log.notes },
   ];

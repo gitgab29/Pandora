@@ -13,6 +13,25 @@ from .serializers import (
     AccessorySerializer, TransactionLogSerializer,
 )
 
+# Maps Asset.Status → the specific TransactionType for status-change events
+_STATUS_TX_TYPE = {
+    Asset.Status.IN_REPAIR:      TransactionLog.TransactionType.STATUS_IN_REPAIR,
+    Asset.Status.IN_MAINTENANCE: TransactionLog.TransactionType.STATUS_IN_MAINTENANCE,
+    Asset.Status.LOST:           TransactionLog.TransactionType.STATUS_LOST,
+    Asset.Status.TO_AUDIT:       TransactionLog.TransactionType.STATUS_TO_AUDIT,
+    Asset.Status.AVAILABLE:      TransactionLog.TransactionType.STATUS_AVAILABLE,
+    Asset.Status.DEPLOYED:       TransactionLog.TransactionType.STATUS_DEPLOYED,
+}
+
+_STATUS_DESC = {
+    Asset.Status.IN_REPAIR:      'set to In Repair',
+    Asset.Status.IN_MAINTENANCE: 'set to In Maintenance',
+    Asset.Status.LOST:           'marked as Lost',
+    Asset.Status.TO_AUDIT:       'flagged for Audit',
+    Asset.Status.AVAILABLE:      'marked as Available',
+    Asset.Status.DEPLOYED:       'set to Deployed',
+}
+
 
 # ── Shared archive helpers ────────────────────────────────────────────────────
 
@@ -79,7 +98,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 transaction_type=TransactionLog.TransactionType.CHECK_IN,
                 asset=asset,
                 from_user=prev,
-                event_description=f'{asset.asset_tag} auto-checked in (user archived)',
+                event_description=f'Asset {asset.asset_tag} auto-checked in — holder removed from system',
             )
         user.is_active = False
         _do_archive(user, request.user, 'DELETED', notes)
@@ -87,7 +106,7 @@ class UserViewSet(viewsets.ModelViewSet):
             performed_by=request.user,
             transaction_type=TransactionLog.TransactionType.ARCHIVE,
             to_user=user,
-            event_description=f'User {user.first_name} {user.last_name} archived (deleted)',
+            event_description=f'User {user.first_name} {user.last_name} ({user.email}) removed from system',
             notes=notes,
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -106,7 +125,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 transaction_type=TransactionLog.TransactionType.CHECK_IN,
                 asset=asset,
                 from_user=prev,
-                event_description=f'{asset.asset_tag} auto-checked in (user retired)',
+                event_description=f'Asset {asset.asset_tag} auto-checked in — holder retired',
             )
         user.is_active = False
         _do_archive(user, request.user, 'RETIRED', notes)
@@ -114,7 +133,7 @@ class UserViewSet(viewsets.ModelViewSet):
             performed_by=request.user,
             transaction_type=TransactionLog.TransactionType.ARCHIVE,
             to_user=user,
-            event_description=f'User {user.first_name} {user.last_name} retired',
+            event_description=f'User {user.first_name} {user.last_name} ({user.email}) marked as retired',
             notes=notes,
         )
         return Response(UserSerializer(user).data)
@@ -128,7 +147,7 @@ class UserViewSet(viewsets.ModelViewSet):
             performed_by=request.user,
             transaction_type=TransactionLog.TransactionType.RESTORE,
             to_user=user,
-            event_description=f'User {user.first_name} {user.last_name} restored from archive',
+            event_description=f'User {user.first_name} {user.last_name} ({user.email}) restored and reactivated',
         )
         return Response(UserSerializer(user).data)
 
@@ -180,7 +199,7 @@ class AssetViewSet(viewsets.ModelViewSet):
             transaction_type=TransactionLog.TransactionType.CHECK_IN,
             asset=asset,
             from_user=prev,
-            event_description=f'{asset.asset_tag} auto-checked in before {reason_suffix}',
+            event_description=f'Asset {asset.asset_tag} auto-checked in before {reason_suffix}',
         )
 
     def destroy(self, request, *args, **kwargs):
@@ -192,7 +211,7 @@ class AssetViewSet(viewsets.ModelViewSet):
             performed_by=request.user,
             transaction_type=TransactionLog.TransactionType.ARCHIVE,
             asset=asset,
-            event_description=f'{asset.asset_tag} archived (deleted)',
+            event_description=f'Asset {asset.asset_tag} moved to archive (permanently deleted)',
             notes=notes,
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -207,7 +226,7 @@ class AssetViewSet(viewsets.ModelViewSet):
             performed_by=request.user,
             transaction_type=TransactionLog.TransactionType.ARCHIVE,
             asset=asset,
-            event_description=f'{asset.asset_tag} retired',
+            event_description=f'Asset {asset.asset_tag} retired and archived',
             notes=notes,
         )
         return Response(AssetSerializer(asset).data)
@@ -220,7 +239,7 @@ class AssetViewSet(viewsets.ModelViewSet):
             performed_by=request.user,
             transaction_type=TransactionLog.TransactionType.RESTORE,
             asset=asset,
-            event_description=f'{asset.asset_tag} restored from archive',
+            event_description=f'Asset {asset.asset_tag} restored from archive',
         )
         return Response(AssetSerializer(asset).data)
 
@@ -242,7 +261,7 @@ class AssetViewSet(viewsets.ModelViewSet):
                 performed_by=request.user,
                 transaction_type=TransactionLog.TransactionType.ARCHIVE,
                 asset=asset,
-                event_description=f'{asset.asset_tag} auto-retired (end of life: {asset.end_of_life})',
+                event_description=f'Asset {asset.asset_tag} automatically retired — end of life date reached ({asset.end_of_life})',
                 notes='Auto-archived: end of life date passed',
             )
             count += 1
@@ -271,7 +290,7 @@ class AssetViewSet(viewsets.ModelViewSet):
             asset=asset,
             to_user=to_user,
             from_user=from_user,
-            event_description=f'{asset.asset_tag} checked out to {to_user.first_name} {to_user.last_name}',
+            event_description=f'Asset {asset.asset_tag} checked out to {to_user.first_name} {to_user.last_name}',
             notes=notes,
         )
         return Response(AssetSerializer(asset).data)
@@ -285,12 +304,13 @@ class AssetViewSet(viewsets.ModelViewSet):
         asset.status = Asset.Status.AVAILABLE
         asset.save()
 
+        holder_name = f' from {from_user.first_name} {from_user.last_name}' if from_user else ''
         TransactionLog.objects.create(
             performed_by=request.user,
             transaction_type=TransactionLog.TransactionType.CHECK_IN,
             asset=asset,
             from_user=from_user,
-            event_description=f'{asset.asset_tag} checked in',
+            event_description=f'Asset {asset.asset_tag} checked in{holder_name}',
             notes=notes,
         )
         return Response(AssetSerializer(asset).data)
@@ -304,14 +324,27 @@ class AssetViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'Invalid status.'}, status=status.HTTP_400_BAD_REQUEST)
         asset.status = new_status
         asset.save()
+        tx_type = _STATUS_TX_TYPE.get(new_status, TransactionLog.TransactionType.ADJUSTMENT)
+        desc    = _STATUS_DESC.get(new_status, f'status changed to {new_status}')
         TransactionLog.objects.create(
             performed_by=request.user,
-            transaction_type=TransactionLog.TransactionType.ADJUSTMENT,
+            transaction_type=tx_type,
             asset=asset,
-            event_description=f'{asset.asset_tag} status changed to {new_status}',
+            event_description=f'Asset {asset.asset_tag} {desc}',
             notes=notes,
         )
         return Response(AssetSerializer(asset).data)
+
+
+    def perform_update(self, serializer):
+        serializer.save()
+        asset = serializer.instance
+        TransactionLog.objects.create(
+            performed_by=self.request.user,
+            transaction_type=TransactionLog.TransactionType.ADJUSTMENT,
+            asset=asset,
+            event_description=f'Asset {asset.asset_tag} details updated',
+        )
 
 
 class AccessoryViewSet(viewsets.ModelViewSet):
@@ -351,7 +384,7 @@ class AccessoryViewSet(viewsets.ModelViewSet):
             performed_by=request.user,
             transaction_type=TransactionLog.TransactionType.ARCHIVE,
             accessory=accessory,
-            event_description=f'{accessory.item_name} archived (deleted)',
+            event_description=f'{accessory.item_name} moved to archive (permanently deleted)',
             notes=notes,
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -365,7 +398,7 @@ class AccessoryViewSet(viewsets.ModelViewSet):
             performed_by=request.user,
             transaction_type=TransactionLog.TransactionType.ARCHIVE,
             accessory=accessory,
-            event_description=f'{accessory.item_name} retired',
+            event_description=f'{accessory.item_name} retired and archived',
             notes=notes,
         )
         return Response(AccessorySerializer(accessory).data)
@@ -381,6 +414,16 @@ class AccessoryViewSet(viewsets.ModelViewSet):
             event_description=f'{accessory.item_name} restored from archive',
         )
         return Response(AccessorySerializer(accessory).data)
+
+    def perform_update(self, serializer):
+        serializer.save()
+        accessory = serializer.instance
+        TransactionLog.objects.create(
+            performed_by=self.request.user,
+            transaction_type=TransactionLog.TransactionType.ADJUSTMENT,
+            accessory=accessory,
+            event_description=f'{accessory.item_name} details updated',
+        )
 
     @action(detail=True, methods=['delete'], url_path='hard_delete')
     def hard_delete(self, request, pk=None):
@@ -430,13 +473,14 @@ class AccessoryViewSet(viewsets.ModelViewSet):
 
         accessory.quantity_available -= qty
         accessory.save()
+        recipient = f' to {to_user.first_name} {to_user.last_name}' if to_user else ''
         TransactionLog.objects.create(
             performed_by=request.user,
             transaction_type=TransactionLog.TransactionType.CHECK_OUT,
             accessory=accessory,
             to_user=to_user,
             quantity=qty,
-            event_description=f'{qty}x {accessory.item_name} checked out',
+            event_description=f'{qty}x {accessory.item_name} checked out{recipient}',
             notes=notes,
         )
         return Response(AccessorySerializer(accessory).data)
@@ -455,13 +499,14 @@ class AccessoryViewSet(viewsets.ModelViewSet):
                 return Response({'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
         accessory.quantity_available += qty
         accessory.save()
+        returner = f' returned by {from_user.first_name} {from_user.last_name}' if from_user else ' checked in to inventory'
         TransactionLog.objects.create(
             performed_by=request.user,
             transaction_type=TransactionLog.TransactionType.CHECK_IN,
             accessory=accessory,
             from_user=from_user,
             quantity=qty,
-            event_description=f'{qty}x {accessory.item_name} checked in',
+            event_description=f'{qty}x {accessory.item_name}{returner}',
             notes=notes,
         )
         return Response(AccessorySerializer(accessory).data)

@@ -17,7 +17,19 @@ export interface TransactionLog {
   transaction_date: string;
   performed_by: string;
   performed_by_detail: UserMinimal;
-  transaction_type: 'CHECK_OUT' | 'CHECK_IN' | 'TRANSFER' | 'ADJUSTMENT';
+  transaction_type:
+    | 'CHECK_OUT'
+    | 'CHECK_IN'
+    | 'TRANSFER'
+    | 'ADJUSTMENT'
+    | 'ARCHIVE'
+    | 'RESTORE'
+    | 'STATUS_IN_REPAIR'
+    | 'STATUS_IN_MAINTENANCE'
+    | 'STATUS_LOST'
+    | 'STATUS_TO_AUDIT'
+    | 'STATUS_AVAILABLE'
+    | 'STATUS_DEPLOYED';
   event_description: string;
   asset: string | null;
   asset_detail: AssetDetail | null;
@@ -38,9 +50,10 @@ export interface ActivityLogEntry {
   date: string;
   rawDate: string;
   user: string;
-  /** 'Asset' | 'Accessory' | 'Transfer' | 'Adjustment' */
+  /** 'Asset' | 'Inventory' | 'Other' */
   type: string;
   event: string;
+  eventDescription: string;
   item: string;
   toFrom: string;
   notes: string;
@@ -48,10 +61,18 @@ export interface ActivityLogEntry {
 }
 
 const TX_TYPE_LABEL: Record<string, string> = {
-  CHECK_OUT:  'Check Out',
-  CHECK_IN:   'Check In',
-  TRANSFER:   'Transfer',
-  ADJUSTMENT: 'Adjustment',
+  CHECK_OUT:             'Check Out',
+  CHECK_IN:              'Check In',
+  TRANSFER:              'Transfer',
+  ADJUSTMENT:            'Adjustment',
+  ARCHIVE:               'Archived',
+  RESTORE:               'Restored',
+  STATUS_IN_REPAIR:      'Set to In Repair',
+  STATUS_IN_MAINTENANCE: 'Set to In Maintenance',
+  STATUS_LOST:           'Marked as Lost',
+  STATUS_TO_AUDIT:       'Flagged for Audit',
+  STATUS_AVAILABLE:      'Marked Available',
+  STATUS_DEPLOYED:       'Set to Deployed',
 };
 
 /** Map an API TransactionLog to the UI flat ActivityLogEntry. */
@@ -86,8 +107,9 @@ export function toActivityLogEntry(log: TransactionLog): ActivityLogEntry {
     user: who,
     type,
     event: TX_TYPE_LABEL[log.transaction_type] ?? log.transaction_type,
+    eventDescription: log.event_description || '—',
     item,
     toFrom,
-    notes: log.notes || log.event_description || '—',
+    notes: log.notes || '—',
   };
 }

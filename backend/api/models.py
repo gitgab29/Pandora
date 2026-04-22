@@ -166,12 +166,18 @@ class Accessory(TimeStampedModel, ArchivableMixin):
 
 class TransactionLog(models.Model):
     class TransactionType(models.TextChoices):
-        CHECK_OUT  = 'CHECK_OUT',  'Check Out'
-        CHECK_IN   = 'CHECK_IN',   'Check In'
-        TRANSFER   = 'TRANSFER',   'Transfer'
-        ADJUSTMENT = 'ADJUSTMENT', 'Adjustment'
-        ARCHIVE    = 'ARCHIVE',    'Archive'
-        RESTORE    = 'RESTORE',    'Restore'
+        CHECK_OUT             = 'CHECK_OUT',             'Check Out'
+        CHECK_IN              = 'CHECK_IN',              'Check In'
+        TRANSFER              = 'TRANSFER',              'Transfer'
+        ADJUSTMENT            = 'ADJUSTMENT',            'Adjustment'
+        ARCHIVE               = 'ARCHIVE',               'Archive'
+        RESTORE               = 'RESTORE',               'Restore'
+        STATUS_IN_REPAIR      = 'STATUS_IN_REPAIR',      'Set to In Repair'
+        STATUS_IN_MAINTENANCE = 'STATUS_IN_MAINTENANCE', 'Set to In Maintenance'
+        STATUS_LOST           = 'STATUS_LOST',           'Marked as Lost'
+        STATUS_TO_AUDIT       = 'STATUS_TO_AUDIT',       'Flagged for Audit'
+        STATUS_AVAILABLE      = 'STATUS_AVAILABLE',      'Marked Available'
+        STATUS_DEPLOYED       = 'STATUS_DEPLOYED',       'Set to Deployed'
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     transaction_date = models.DateTimeField(default=timezone.now)

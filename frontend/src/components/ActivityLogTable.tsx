@@ -9,8 +9,25 @@ import type { ActivityLogEntry as TransactionLog } from '../types/activity';
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const FILTER_GROUPS = [
-  { label: 'Type',  options: ['All', 'Asset', 'Inventory', 'License'] },
-  { label: 'Event', options: ['All', 'Check In', 'Check Out', 'Update', 'Audit', 'Request'] },
+  { label: 'Type',  options: ['All', 'Asset', 'Inventory', 'Other'] },
+  {
+    label: 'Event',
+    options: [
+      'All',
+      'Check In',
+      'Check Out',
+      'Transfer',
+      'Adjustment',
+      'Archived',
+      'Restored',
+      'Set to In Repair',
+      'Set to In Maintenance',
+      'Marked as Lost',
+      'Flagged for Audit',
+      'Marked Available',
+      'Set to Deployed',
+    ],
+  },
 ];
 
 const SORT_OPTIONS = [
