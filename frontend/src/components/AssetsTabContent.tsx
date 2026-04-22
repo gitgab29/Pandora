@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Trash2, Pencil, Copy, Plus, Download, Filter, Eye, EyeOff, Archive, LogIn, LogOut, RefreshCw } from 'lucide-react';
+import { Trash2, Pencil, Copy, Plus, Download, Filter, Eye, EyeOff, Archive, LogIn, LogOut, RefreshCw, ShieldCheck, Wrench, Settings, MapPin } from 'lucide-react';
 import StatisticCard from './StatisticCard';
 import SearchBar from './SearchBar';
 import Pagination from './Pagination';
@@ -17,6 +17,7 @@ import ChangeStatusModal from './ChangeStatusModal';
 import BulkCheckInModal from './BulkCheckInModal';
 import BulkCheckOutModal from './BulkCheckOutModal';
 import BulkChangeStatusModal from './BulkChangeStatusModal';
+import BulkResolveStatusModal from './BulkResolveStatusModal';
 import { colors, spacing, radius, statusColors } from '../theme';
 import type { Asset, AssetStatus } from '../types/asset';
 import { ASSET_STATUS_LABELS } from '../types/asset';
@@ -116,11 +117,12 @@ export default function AssetsTabContent() {
   const [checkInTarget,  setCheckInTarget]  = useState<Asset | null>(null);
   const [statusTarget,   setStatusTarget]   = useState<{ asset: Asset; status: AssetStatus } | null>(null);
 
-  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
-  const [bulkCheckInOpen,   setBulkCheckInOpen]   = useState(false);
-  const [bulkCheckOutOpen,  setBulkCheckOutOpen]  = useState(false);
-  const [bulkStatusOpen,    setBulkStatusOpen]    = useState(false);
-  const [bulkLoading,       setBulkLoading]       = useState(false);
+  const [bulkDeleteConfirm,      setBulkDeleteConfirm]      = useState(false);
+  const [bulkCheckInOpen,        setBulkCheckInOpen]        = useState(false);
+  const [bulkCheckOutOpen,       setBulkCheckOutOpen]       = useState(false);
+  const [bulkStatusOpen,         setBulkStatusOpen]         = useState(false);
+  const [bulkResolveTarget, setBulkResolveTarget] = useState<'TO_AUDIT' | 'IN_REPAIR' | 'IN_MAINTENANCE' | 'LOST' | null>(null);
+  const [bulkLoading,            setBulkLoading]            = useState(false);
 
   const allCategories = useMemo(
     () => [...new Set(assets.map(a => a.category))].sort(),
@@ -333,6 +335,38 @@ export default function AssetsTabContent() {
     }
   };
 
+  const RESOLVE_CONFIG = {
+    TO_AUDIT:       { label: 'audit',       fallback: 'AVAILABLE' as AssetStatus },
+    IN_REPAIR:      { label: 'repair',      fallback: 'AVAILABLE' as AssetStatus },
+    IN_MAINTENANCE: { label: 'maintenance', fallback: 'AVAILABLE' as AssetStatus },
+    LOST:           { label: 'lost',        fallback: 'AVAILABLE' as AssetStatus },
+  } as const;
+
+  const handleBulkResolveStatus = async (targetStatus: keyof typeof RESOLVE_CONFIG, notes: string) => {
+    const cfg = RESOLVE_CONFIG[targetStatus];
+    const matching = assets.filter(a => selectedIds.has(a.id) && a.status === targetStatus);
+    if (matching.length === 0) return;
+    setBulkResolveTarget(null);
+    setBulkLoading(true);
+    try {
+      const results = await Promise.all(
+        matching.map(a =>
+          assetsApi.changeStatus(a.id, (a.previous_status ?? cfg.fallback) as AssetStatus, notes || `Resolved from ${cfg.label}`),
+        ),
+      );
+      setAssets(prev => {
+        const map = new Map(results.map(r => [r.id, r]));
+        return prev.map(a => map.get(a.id) ?? a);
+      });
+      setSelectedIds(new Set());
+      toast.success(`Resolved ${matching.length} asset${matching.length !== 1 ? 's' : ''} from ${cfg.label}`);
+    } catch {
+      toast.error('Some assets could not be resolved. Please try again.');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showStats ? spacing.md : spacing.xl2 }}>
@@ -495,67 +529,114 @@ export default function AssetsTabContent() {
         </div>
 
         {/* ── Bulk action bar ── */}
-        {selectedIds.size > 0 && (
-          <div
-            style={{
-              padding: `${spacing.sm} ${spacing.xl}`,
-              backgroundColor: 'rgba(46,124,253,0.05)',
-              borderBottom: '1px solid rgba(46,124,253,0.15)',
-              display: 'flex', alignItems: 'center', gap: spacing.md, flexWrap: 'wrap',
-            }}
-          >
-            <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.8125rem', fontWeight: 600, color: colors.primary, whiteSpace: 'nowrap' }}>
-              {selectedIds.size} selected
-            </span>
-
-            <button
-              onClick={handleBulkArchive}
-              disabled={bulkLoading}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(252,156,45,0.12)', color: '#b45309', fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+        {selectedIds.size > 0 && (() => {
+          const countOf = (s: AssetStatus) => assets.filter(a => selectedIds.has(a.id) && a.status === s).length;
+          const auditCount       = countOf('TO_AUDIT');
+          const repairCount      = countOf('IN_REPAIR');
+          const maintenanceCount = countOf('IN_MAINTENANCE');
+          const lostCount        = countOf('LOST');
+          return (
+            <div
+              style={{
+                padding: `${spacing.sm} ${spacing.xl}`,
+                backgroundColor: 'rgba(46,124,253,0.05)',
+                borderBottom: '1px solid rgba(46,124,253,0.15)',
+                display: 'flex', alignItems: 'center', gap: spacing.md, flexWrap: 'wrap',
+              }}
             >
-              <Archive size={11} /> Archive {selectedIds.size}
-            </button>
+              <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.8125rem', fontWeight: 600, color: colors.primary, whiteSpace: 'nowrap' }}>
+                {selectedIds.size} selected
+              </span>
 
-            <button
-              onClick={() => setBulkDeleteConfirm(true)}
-              disabled={bulkLoading}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(239,68,68,0.1)', color: colors.error, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
-            >
-              <Trash2 size={11} /> Delete {selectedIds.size}
-            </button>
+              <button
+                onClick={handleBulkArchive}
+                disabled={bulkLoading}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(252,156,45,0.12)', color: '#b45309', fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+              >
+                <Archive size={11} /> Archive {selectedIds.size}
+              </button>
 
-            <button
-              onClick={() => setBulkCheckInOpen(true)}
-              disabled={bulkLoading}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(34,197,94,0.12)', color: '#15803d', fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
-            >
-              <LogIn size={11} /> Check In
-            </button>
+              <button
+                onClick={() => setBulkDeleteConfirm(true)}
+                disabled={bulkLoading}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(239,68,68,0.1)', color: colors.error, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+              >
+                <Trash2 size={11} /> Delete {selectedIds.size}
+              </button>
 
-            <button
-              onClick={() => setBulkCheckOutOpen(true)}
-              disabled={bulkLoading}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(252,156,45,0.12)', color: colors.orangeAccent, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
-            >
-              <LogOut size={11} /> Check Out
-            </button>
+              <button
+                onClick={() => setBulkCheckInOpen(true)}
+                disabled={bulkLoading}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(34,197,94,0.12)', color: '#15803d', fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+              >
+                <LogIn size={11} /> Check In
+              </button>
 
-            <button
-              onClick={() => setBulkStatusOpen(true)}
-              disabled={bulkLoading}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(46,124,253,0.1)', color: colors.primary, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
-            >
-              <RefreshCw size={11} /> Change Status
-            </button>
+              <button
+                onClick={() => setBulkCheckOutOpen(true)}
+                disabled={bulkLoading}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(252,156,45,0.12)', color: colors.orangeAccent, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+              >
+                <LogOut size={11} /> Check Out
+              </button>
 
-            <button
-              onClick={() => setSelectedIds(new Set())}
-              style={{ display: 'inline-flex', alignItems: 'center', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: '1px solid rgba(70,98,145,0.2)', backgroundColor: 'transparent', color: colors.blueGrayMd, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
-            >
-              Clear
-            </button>
-          </div>
-        )}
+              <button
+                onClick={() => setBulkStatusOpen(true)}
+                disabled={bulkLoading}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(46,124,253,0.1)', color: colors.primary, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+              >
+                <RefreshCw size={11} /> Change Status
+              </button>
+
+              {auditCount > 0 && (
+                <button
+                  onClick={() => setBulkResolveTarget('TO_AUDIT')}
+                  disabled={bulkLoading}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(124,58,237,0.1)', color: '#7c3aed', fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  <ShieldCheck size={11} /> Set Audited ({auditCount})
+                </button>
+              )}
+
+              {repairCount > 0 && (
+                <button
+                  onClick={() => setBulkResolveTarget('IN_REPAIR')}
+                  disabled={bulkLoading}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(217,119,6,0.1)', color: '#d97706', fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  <Wrench size={11} /> Mark Repaired ({repairCount})
+                </button>
+              )}
+
+              {maintenanceCount > 0 && (
+                <button
+                  onClick={() => setBulkResolveTarget('IN_MAINTENANCE')}
+                  disabled={bulkLoading}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(8,145,178,0.1)', color: '#0891b2', fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  <Settings size={11} /> Mark Serviced ({maintenanceCount})
+                </button>
+              )}
+
+              {lostCount > 0 && (
+                <button
+                  onClick={() => setBulkResolveTarget('LOST')}
+                  disabled={bulkLoading}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(220,38,38,0.1)', color: '#dc2626', fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  <MapPin size={11} /> Mark Found ({lostCount})
+                </button>
+              )}
+
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                style={{ display: 'inline-flex', alignItems: 'center', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: '1px solid rgba(70,98,145,0.2)', backgroundColor: 'transparent', color: colors.blueGrayMd, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+              >
+                Clear
+              </button>
+            </div>
+          );
+        })()}
 
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -862,6 +943,63 @@ export default function AssetsTabContent() {
         onConfirm={handleBulkChangeStatus}
         onClose={() => setBulkStatusOpen(false)}
       />
+
+      {bulkResolveTarget === 'TO_AUDIT' && (
+        <BulkResolveStatusModal
+          isOpen
+          count={assets.filter(a => selectedIds.has(a.id) && a.status === 'TO_AUDIT').length}
+          icon={<ShieldCheck size={16} color="#7c3aed" />}
+          title="Set Assets as Audited"
+          description="Selected assets flagged for audit will be marked as audited and reverted to their previous status."
+          confirmLabel="Set Audited"
+          accentColor="#7c3aed"
+          notesPlaceholder="Audit findings, resolution notes, etc."
+          onConfirm={notes => handleBulkResolveStatus('TO_AUDIT', notes)}
+          onClose={() => setBulkResolveTarget(null)}
+        />
+      )}
+      {bulkResolveTarget === 'IN_REPAIR' && (
+        <BulkResolveStatusModal
+          isOpen
+          count={assets.filter(a => selectedIds.has(a.id) && a.status === 'IN_REPAIR').length}
+          icon={<Wrench size={16} color="#d97706" />}
+          title="Mark Assets as Repaired"
+          description="Selected assets in repair will be marked as repaired and reverted to their previous status."
+          confirmLabel="Mark Repaired"
+          accentColor="#d97706"
+          notesPlaceholder="Repair details, parts replaced, technician notes, etc."
+          onConfirm={notes => handleBulkResolveStatus('IN_REPAIR', notes)}
+          onClose={() => setBulkResolveTarget(null)}
+        />
+      )}
+      {bulkResolveTarget === 'IN_MAINTENANCE' && (
+        <BulkResolveStatusModal
+          isOpen
+          count={assets.filter(a => selectedIds.has(a.id) && a.status === 'IN_MAINTENANCE').length}
+          icon={<Settings size={16} color="#0891b2" />}
+          title="Mark Assets as Serviced"
+          description="Selected assets under maintenance will be marked as serviced and reverted to their previous status."
+          confirmLabel="Mark Serviced"
+          accentColor="#0891b2"
+          notesPlaceholder="Service details, maintenance completed, etc."
+          onConfirm={notes => handleBulkResolveStatus('IN_MAINTENANCE', notes)}
+          onClose={() => setBulkResolveTarget(null)}
+        />
+      )}
+      {bulkResolveTarget === 'LOST' && (
+        <BulkResolveStatusModal
+          isOpen
+          count={assets.filter(a => selectedIds.has(a.id) && a.status === 'LOST').length}
+          icon={<MapPin size={16} color="#dc2626" />}
+          title="Mark Assets as Found"
+          description="Selected lost assets will be marked as found and reverted to their previous status."
+          confirmLabel="Mark Found"
+          accentColor="#dc2626"
+          notesPlaceholder="Recovery location, condition, how it was found, etc."
+          onConfirm={notes => handleBulkResolveStatus('LOST', notes)}
+          onClose={() => setBulkResolveTarget(null)}
+        />
+      )}
     </>
   );
 }
