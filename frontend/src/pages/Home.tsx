@@ -67,14 +67,16 @@ export default function Home() {
   const available = assets.filter(a => a.status === 'AVAILABLE').length;
   const deployed  = assets.filter(a => a.status === 'DEPLOYED').length;
   const toAudit   = assets.filter(a => a.status === 'TO_AUDIT').length;
-  const inRepair  = assets.filter(a => a.status === 'IN_REPAIR').length;
+  const inRepair       = assets.filter(a => a.status === 'IN_REPAIR').length;
+  const inMaintenance  = assets.filter(a => a.status === 'IN_MAINTENANCE').length;
 
   const statCards = [
-    { title: 'Total Assets',    value: assets.length,      path: '/inventory?tab=Assets' },
-    { title: 'Available',       value: available,           path: '/inventory?tab=Assets&status=AVAILABLE' },
-    { title: 'Deployed',        value: deployed,            path: '/inventory?tab=Assets&status=DEPLOYED' },
-    { title: 'To Audit',        value: toAudit,             path: '/inventory?tab=Assets&status=TO_AUDIT' },
-    { title: 'In Repair',       value: inRepair,            path: '/inventory?tab=Assets&status=IN_REPAIR' },
+    { title: 'Total Assets',    value: assets.length,       path: '/inventory?tab=Assets' },
+    { title: 'Available',       value: available,            path: '/inventory?tab=Assets&status=AVAILABLE' },
+    { title: 'Deployed',        value: deployed,             path: '/inventory?tab=Assets&status=DEPLOYED' },
+    { title: 'To Audit',        value: toAudit,              path: '/inventory?tab=Assets&status=TO_AUDIT' },
+    { title: 'In Repair',       value: inRepair,             path: '/inventory?tab=Assets&status=IN_REPAIR' },
+    { title: 'In Maintenance',  value: inMaintenance,        path: '/inventory?tab=Assets&status=IN_MAINTENANCE' },
   ];
 
   const overviewCards = [

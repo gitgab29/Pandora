@@ -38,7 +38,7 @@ const STATUS_CONFIG: Record<AssetStatus, { dot: string; label: string }> = {
 };
 
 const FILTER_TABS: Array<AssetStatus | 'All'> = [
-  'All', 'AVAILABLE', 'DEPLOYED', 'IN_REPAIR', 'TO_AUDIT', 'LOST',
+  'All', 'AVAILABLE', 'DEPLOYED', 'IN_REPAIR', 'IN_MAINTENANCE', 'TO_AUDIT', 'LOST',
 ];
 
 const SORT_OPTIONS = ['Tag (A–Z)', 'Tag (Z–A)', 'Date Added (Newest)', 'Date Added (Oldest)', 'Status'];
@@ -94,7 +94,7 @@ export default function AssetsTabContent() {
     { title: 'To Audit',     value: assets.filter(a => a.status === 'TO_AUDIT').length,     filter: 'TO_AUDIT'  as AssetStatus | 'All' },
   ], [assets]);
   const [search, setSearch] = useState('');
-  const validStatuses: Array<AssetStatus | 'All'> = ['All', 'AVAILABLE', 'DEPLOYED', 'IN_REPAIR', 'TO_AUDIT', 'LOST'];
+  const validStatuses: Array<AssetStatus | 'All'> = ['All', 'AVAILABLE', 'DEPLOYED', 'IN_REPAIR', 'IN_MAINTENANCE', 'TO_AUDIT', 'LOST'];
   const [activeTab, setActiveTab] = useState<AssetStatus | 'All'>(
     statusFromUrl && validStatuses.includes(statusFromUrl) ? statusFromUrl : 'All'
   );

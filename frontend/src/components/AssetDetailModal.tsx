@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Pencil, Monitor, Laptop, Smartphone, Tablet, Cpu, Package, LogOut, LogIn, Wrench, ClipboardCheck, AlertTriangle, CheckCircle2, MapPin } from 'lucide-react';
+import { X, Pencil, Monitor, Laptop, Smartphone, Tablet, Cpu, Package, LogOut, LogIn, Wrench, ClipboardCheck, AlertTriangle, CheckCircle2, MapPin, Settings } from 'lucide-react';
 import { colors, spacing, radius, fontSize, shadows } from '../theme';
 import type { Asset, AssetStatus } from '../types/asset';
 import { ASSET_STATUS_LABELS } from '../types/asset';
@@ -69,15 +69,21 @@ export default function AssetDetailModal({ isOpen, asset, onClose, onEdit, onRet
   if (!isOpen || !asset) return null;
 
   const resolutionConfig = RESOLUTION_CONFIG[asset.status];
-  const resolveTarget    = (asset.previous_status ?? 'AVAILABLE') as AssetStatus;
+  // Only restore to a meaningful previous state — never back to LOST/TO_AUDIT/etc.
+  const resolveTarget    = (
+    asset.previous_status === 'AVAILABLE' || asset.previous_status === 'DEPLOYED'
+      ? asset.previous_status
+      : 'AVAILABLE'
+  ) as AssetStatus;
   const showResolution   = !!resolutionConfig && !!onResolve;
 
-  const showCheckOut    = asset.status === 'AVAILABLE' && !!onCheckOut;
-  const showCheckIn     = asset.status === 'DEPLOYED'  && !!onCheckIn;
-  const showSetRepair   = (asset.status === 'AVAILABLE' || asset.status === 'DEPLOYED' || asset.status === 'TO_AUDIT') && !!onChangeStatus;
-  const showSetAudit    = (asset.status === 'DEPLOYED'  || asset.status === 'IN_REPAIR' || asset.status === 'IN_MAINTENANCE') && !!onChangeStatus;
-  const showSetLost     = asset.status !== 'LOST' && !!onChangeStatus;
-  const footerVisible   = showCheckOut || showCheckIn || showSetRepair || showSetAudit || showSetLost || showResolution;
+  const showCheckOut       = asset.status === 'AVAILABLE' && !!onCheckOut;
+  const showCheckIn        = asset.status === 'DEPLOYED'  && !!onCheckIn;
+  const showSetRepair      = (asset.status === 'AVAILABLE' || asset.status === 'DEPLOYED' || asset.status === 'TO_AUDIT' || asset.status === 'IN_MAINTENANCE') && !!onChangeStatus;
+  const showSetMaintenance = (asset.status === 'AVAILABLE' || asset.status === 'DEPLOYED' || asset.status === 'TO_AUDIT' || asset.status === 'IN_REPAIR') && !!onChangeStatus;
+  const showSetAudit       = (asset.status === 'DEPLOYED'  || asset.status === 'IN_REPAIR' || asset.status === 'IN_MAINTENANCE') && !!onChangeStatus;
+  const showSetLost        = asset.status !== 'LOST' && !!onChangeStatus;
+  const footerVisible      = showCheckOut || showCheckIn || showSetRepair || showSetMaintenance || showSetAudit || showSetLost || showResolution;
 
   const handleAction = (cb?: () => void) => () => { onClose(); cb?.(); };
   const handleStatus = (target: AssetStatus) => () => { onClose(); onChangeStatus?.(target); };
@@ -340,6 +346,17 @@ export default function AssetDetailModal({ isOpen, asset, onClose, onEdit, onRet
                     >
                       <Wrench size={12} />
                       Set to Repair
+                    </button>
+                  )}
+                  {showSetMaintenance && (
+                    <button
+                      onClick={handleStatus('IN_MAINTENANCE')}
+                      style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `0.375rem ${spacing.md}`, borderRadius: radius.md, border: `1px solid rgba(148,163,184,0.4)`, backgroundColor: 'rgba(148,163,184,0.1)', fontFamily: "'Archivo', sans-serif", fontSize: fontSize.xs, fontWeight: 600, color: '#475569', cursor: 'pointer', transition: 'background-color 0.15s' }}
+                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(148,163,184,0.18)')}
+                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(148,163,184,0.1)')}
+                    >
+                      <Settings size={12} />
+                      Set to Maintenance
                     </button>
                   )}
                   {showCheckIn && (
