@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { NotificationsProvider } from './context/NotificationsContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
@@ -14,6 +15,7 @@ import Archive from './pages/Archive';
 export default function App() {
   return (
     <AuthProvider>
+      <NotificationsProvider>
       <ToastProvider>
         <BrowserRouter>
           <Routes>
@@ -29,6 +31,7 @@ export default function App() {
           </Routes>
         </BrowserRouter>
       </ToastProvider>
+      </NotificationsProvider>
     </AuthProvider>
   );
 }

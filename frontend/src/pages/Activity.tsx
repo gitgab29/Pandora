@@ -11,6 +11,8 @@ import { colors, spacing, radius } from '../theme';
 import type { ActivityLogEntry as TransactionLog } from '../types/activity';
 import { toActivityLogEntry } from '../types/activity';
 import { transactionsApi } from '../api';
+import { useRecency } from '../hooks/useRecency';
+import RecencyBadge from '../components/RecencyBadge';
 
 const DEPARTMENTS = ['Engineering', 'Operations', 'IT', 'Finance', 'HR', 'Human Resources', 'Product'];
 
@@ -84,10 +86,17 @@ const EVENT_TAB_ACCENT: Record<string, string> = {
 export default function Activity() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [logs, setLogs] = useState<TransactionLog[]>([]);
+  const { isNew, markSeen } = useRecency('activity');
 
   useEffect(() => {
     transactionsApi.list({ ordering: '-transaction_date', within_last_days: 15 }).then(data => setLogs(data.map(toActivityLogEntry)));
   }, []);
+
+  // Mark feed as seen after 2.5s dwell
+  useEffect(() => {
+    const timer = setTimeout(markSeen, 2500);
+    return () => clearTimeout(timer);
+  }, [markSeen]);
 
   // Filters & search
   const [eventTab,    setEventTab]    = useState<EventTab>('All');
@@ -365,6 +374,7 @@ export default function Activity() {
                         >
                           <td style={{ ...TD, color: colors.blueGrayMd, fontSize: '0.75rem' }}>
                             {log.date}
+                            <RecencyBadge visible={isNew(log.created_at)} />
                           </td>
 
                           <td style={{ ...TD, fontWeight: 600 }}>

@@ -24,6 +24,8 @@ import type { Accessory } from '../types/inventory';
 import type { Person } from '../types/people';
 import { accessoriesApi, usersApi } from '../api';
 import { useToast } from '../context/ToastContext';
+import { useRecency } from '../hooks/useRecency';
+import RecencyBadge from '../components/RecencyBadge';
 
 type InventoryTab = 'Assets' | 'Accessories' | 'Licenses' | 'Consumables';
 const INVENTORY_TABS: InventoryTab[] = ['Assets', 'Accessories', 'Licenses', 'Consumables'];
@@ -72,6 +74,7 @@ export default function Inventory() {
   const [inventory, setInventory] = useState<Accessory[]>([]);
   const [users, setUsers] = useState<Person[]>([]);
   const toast = useToast();
+  const { isNew: isAccessoryNew, markSeen: markAccessoriesSeen } = useRecency('accessories');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const tabFromUrl = searchParams.get('tab') as InventoryTab | null;
   const [activeInventoryTab, setActiveInventoryTab] = useState<InventoryTab>(
@@ -92,6 +95,14 @@ export default function Inventory() {
     accessoriesApi.list().then(setInventory).catch(() => {});
     usersApi.list({ is_active: true }).then(setUsers).catch(() => {});
   }, []);
+
+  // Mark accessories feed as seen after 2.5s dwell on that tab
+  useEffect(() => {
+    if (activeInventoryTab !== 'Accessories') return;
+    const timer = setTimeout(markAccessoriesSeen, 2500);
+    return () => clearTimeout(timer);
+  }, [activeInventoryTab, markAccessoriesSeen]);
+
   const [featureModalOpen, setFeatureModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState('');
@@ -677,6 +688,7 @@ export default function Inventory() {
                           <td style={{ ...TD, fontWeight: 500 }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
                               {item.item_name}
+                              <RecencyBadge visible={isAccessoryNew(item.created_at)} />
                               {isLowStock && (
                                 <AlertTriangle size={11} color={colors.orangeAccent} aria-label="Low stock" />
                               )}

@@ -13,6 +13,8 @@ import type { Person } from '../types/people';
 import { usersApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useRecency } from '../hooks/useRecency';
+import RecencyBadge from '../components/RecencyBadge';
 
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -82,10 +84,17 @@ export default function People() {
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [people, setPeople]     = useState<Person[]>([]);
+  const { isNew, markSeen } = useRecency('people');
 
   useEffect(() => {
     usersApi.list().then(setPeople).catch(() => {});
   }, []);
+
+  // Mark feed as seen after 2.5s dwell
+  useEffect(() => {
+    const timer = setTimeout(markSeen, 2500);
+    return () => clearTimeout(timer);
+  }, [markSeen]);
   const [search, setSearch]     = useState('');
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDir, setSortDir]   = useState<SortDir>('desc');
@@ -683,7 +692,10 @@ export default function People() {
                           </td>
 
                           {/* Name */}
-                          <td style={{ ...TD, fontWeight: 500 }}>{displayName}</td>
+                          <td style={{ ...TD, fontWeight: 500 }}>
+                            {displayName}
+                            <RecencyBadge visible={isNew(person.created_at)} />
+                          </td>
 
                           {/* Email */}
                           <td style={{ ...TD, color: colors.blueGrayMd, fontSize: '0.75rem' }}>

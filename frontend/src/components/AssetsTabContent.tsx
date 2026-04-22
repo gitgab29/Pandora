@@ -23,6 +23,8 @@ import { ASSET_STATUS_LABELS } from '../types/asset';
 import { assetsApi, usersApi } from '../api';
 import type { Person } from '../types/people';
 import { useToast } from '../context/ToastContext';
+import { useRecency } from '../hooks/useRecency';
+import RecencyBadge from './RecencyBadge';
 
 
 
@@ -72,11 +74,18 @@ export default function AssetsTabContent() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [users, setUsers] = useState<Person[]>([]);
   const toast = useToast();
+  const { isNew, markSeen } = useRecency('assets');
 
   useEffect(() => {
     assetsApi.list().then(setAssets).catch(() => {});
     usersApi.list({ is_active: true }).then(setUsers).catch(() => {});
   }, []);
+
+  // Mark the feed as seen after 2.5s dwell so NEW badges clear on next visit
+  useEffect(() => {
+    const timer = setTimeout(markSeen, 2500);
+    return () => clearTimeout(timer);
+  }, [markSeen]);
 
   const statCards = useMemo(() => [
     { title: 'Total Assets', value: assets.length,                                          filter: 'All'       as AssetStatus | 'All' },
@@ -612,7 +621,10 @@ export default function AssetsTabContent() {
                         />
                       </td>
 
-                      <td style={{ ...TD, fontWeight: 500 }}>{asset.asset_tag}</td>
+                      <td style={{ ...TD, fontWeight: 500 }}>
+                        {asset.asset_tag}
+                        <RecencyBadge visible={isNew(asset.created_at)} />
+                      </td>
 
                       <td style={{ ...TD, color: colors.textPrimary }}>
                         {[asset.manufacturer, asset.model].filter(Boolean).join(' ') || '—'}

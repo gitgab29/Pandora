@@ -1,21 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, LayoutGrid, Package, Wrench, FileKey, ShoppingBag, LayoutDashboard, Users, UserCircle2, Settings, LogOut } from 'lucide-react';
 import { colors, sizing, spacing, radius, typography } from '../theme';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications, formatNotification } from '../context/NotificationsContext';
+import { timeAgo } from '../utils/timeAgo';
 
 interface HeaderProps {
   title: string;
 }
 
-// ── Dummy data ────────────────────────────────────────────────────────────────
-
-const NOTIFICATIONS = [
-  { id: 1, text: 'LeJon James checked out a MacBook Pro',       time: '2 min ago',  unread: true  },
-  { id: 2, text: 'Maria Chen returned a USB-C Dock',            time: '15 min ago', unread: true  },
-  { id: 3, text: 'Tyler Brooks submitted an asset request',      time: '1 hr ago',   unread: true  },
-  { id: 4, text: 'Priya Nair completed a device audit',          time: '3 hrs ago',  unread: false },
-];
+// ── Quick links ────────────────────────────────────────────────────────────────
 
 const QUICK_LINKS = [
   { icon: LayoutDashboard, label: 'Dashboard',   path: '/home' },
@@ -26,18 +21,26 @@ const QUICK_LINKS = [
   { icon: Users,           label: 'People',       path: '/people' },
 ];
 
-const UNREAD_COUNT = NOTIFICATIONS.filter(n => n.unread).length;
-
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function Header({ title }: HeaderProps) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { notifications, unreadCount, lastSeenAt, markAllRead } = useNotifications();
   const [notifOpen,   setNotifOpen]   = useState(false);
   const [gridOpen,    setGridOpen]    = useState(false);
   const [avatarOpen,  setAvatarOpen]  = useState(false);
 
   const closeAll = () => { setNotifOpen(false); setGridOpen(false); setAvatarOpen(false); };
+
+  // Mark all read when the notification dropdown closes (user has seen them)
+  const prevNotifOpen = useRef(false);
+  useEffect(() => {
+    if (prevNotifOpen.current && !notifOpen) {
+      markAllRead();
+    }
+    prevNotifOpen.current = notifOpen;
+  }, [notifOpen, markAllRead]);
 
   const userInitials = user
     ? `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase()
@@ -123,7 +126,7 @@ export default function Header({ title }: HeaderProps) {
               <IconBtn active={notifOpen} onClick={() => { setNotifOpen(v => !v); setGridOpen(false); }}>
                 <Bell size={17} />
               </IconBtn>
-              {UNREAD_COUNT > 0 && (
+              {unreadCount > 0 && (
                 <span
                   style={{
                     position: 'absolute',
@@ -144,7 +147,7 @@ export default function Header({ title }: HeaderProps) {
                     border: '1.5px solid rgba(255,255,255,0.95)',
                   }}
                 >
-                  {UNREAD_COUNT}
+                  {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
             </div>
@@ -167,73 +170,92 @@ export default function Header({ title }: HeaderProps) {
                       color: colors.blueGrayMd,
                     }}
                   >
-                    {UNREAD_COUNT} unread
+                    {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
-                  {NOTIFICATIONS.map(n => (
-                    <div
-                      key={n.id}
-                      style={{
-                        padding: `0.5625rem ${spacing.md}`,
-                        borderRadius: radius.sm,
-                        backgroundColor: n.unread ? 'rgba(46,124,253,0.05)' : 'transparent',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.12s ease',
-                      }}
-                      onMouseEnter={e =>
-                        (e.currentTarget.style.backgroundColor = n.unread
-                          ? 'rgba(46,124,253,0.1)'
-                          : colors.bgSubtle)
-                      }
-                      onMouseLeave={e =>
-                        (e.currentTarget.style.backgroundColor = n.unread
-                          ? 'rgba(46,124,253,0.05)'
-                          : 'transparent')
-                      }
-                    >
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: spacing.sm }}>
-                        {n.unread && (
-                          <div
-                            style={{
-                              width: '0.375rem',
-                              height: '0.375rem',
-                              borderRadius: radius.full,
-                              backgroundColor: colors.primary,
-                              marginTop: '0.3125rem',
-                              flexShrink: 0,
-                            }}
-                          />
-                        )}
-                        <div style={{ flex: 1 }}>
-                          <p
-                            style={{
-                              margin: `0 0 0.125rem`,
-                              fontFamily: "'Archivo', sans-serif",
-                              fontSize: '0.781rem',
-                              color: colors.textPrimary,
-                              fontWeight: n.unread ? 500 : 400,
-                              lineHeight: 1.4,
-                            }}
-                          >
-                            {n.text}
-                          </p>
-                          <p
-                            style={{
-                              margin: 0,
-                              fontFamily: "'Archivo', sans-serif",
-                              fontSize: '0.6875rem',
-                              color: colors.blueGrayMd,
-                            }}
-                          >
-                            {n.time}
-                          </p>
+                {notifications.length === 0 ? (
+                  <p
+                    style={{
+                      margin: `${spacing.xl} 0`,
+                      textAlign: 'center',
+                      fontFamily: "'Archivo', sans-serif",
+                      fontSize: '0.781rem',
+                      color: colors.blueGrayMd,
+                    }}
+                  >
+                    No recent activity
+                  </p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
+                    {notifications.map(n => {
+                      const isUnread = n.created_at > lastSeenAt;
+                      return (
+                        <div
+                          key={n.id}
+                          onClick={() => { navigate('/activity'); setNotifOpen(false); }}
+                          style={{
+                            padding: `0.5625rem ${spacing.md}`,
+                            borderRadius: radius.sm,
+                            backgroundColor: isUnread ? 'rgba(46,124,253,0.05)' : 'transparent',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.12s ease',
+                          }}
+                          onMouseEnter={e =>
+                            (e.currentTarget.style.backgroundColor = isUnread
+                              ? 'rgba(46,124,253,0.1)'
+                              : colors.bgSubtle)
+                          }
+                          onMouseLeave={e =>
+                            (e.currentTarget.style.backgroundColor = isUnread
+                              ? 'rgba(46,124,253,0.05)'
+                              : 'transparent')
+                          }
+                        >
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: spacing.sm }}>
+                            {isUnread && (
+                              <div
+                                style={{
+                                  width: '0.375rem',
+                                  height: '0.375rem',
+                                  borderRadius: radius.full,
+                                  backgroundColor: colors.primary,
+                                  marginTop: '0.3125rem',
+                                  flexShrink: 0,
+                                }}
+                              />
+                            )}
+                            <div style={{ flex: 1 }}>
+                              <p
+                                style={{
+                                  margin: `0 0 0.125rem`,
+                                  fontFamily: "'Archivo', sans-serif",
+                                  fontSize: '0.781rem',
+                                  color: colors.textPrimary,
+                                  fontWeight: isUnread ? 500 : 400,
+                                  lineHeight: 1.4,
+                                  whiteSpace: 'normal',
+                                }}
+                              >
+                                {formatNotification(n)}
+                              </p>
+                              <p
+                                style={{
+                                  margin: 0,
+                                  fontFamily: "'Archivo', sans-serif",
+                                  fontSize: '0.6875rem',
+                                  color: colors.blueGrayMd,
+                                }}
+                              >
+                                {timeAgo(n.created_at)}
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
 
                 <div
                   style={{
