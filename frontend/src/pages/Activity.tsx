@@ -34,6 +34,15 @@ const SORT_OPTIONS = [
 
 const ROWS_PER_PAGE = 15;
 
+const NEW_BG       = 'rgba(46,124,253,0.06)';
+const NEW_BG_HOVER = 'rgba(46,124,253,0.10)';
+const HOVER_BG     = 'rgba(46,124,253,0.03)';
+
+function restingBg(isNewRow: boolean, idx: number): string {
+  if (isNewRow) return NEW_BG;
+  return idx % 2 === 0 ? colors.bgSurface : colors.bgStripe;
+}
+
 // ── Style tokens ──────────────────────────────────────────────────────────────
 
 const TH: React.CSSProperties = {
@@ -86,7 +95,8 @@ const EVENT_TAB_ACCENT: Record<string, string> = {
 export default function Activity() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [logs, setLogs] = useState<TransactionLog[]>([]);
-  const { isNew, markItemSeen } = useRecency('activity');
+  const { isNew, markSeen, markAllSeen, newCount } = useRecency<TransactionLog>('activity');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     transactionsApi.list({ ordering: '-transaction_date', within_last_days: 15 }).then(data => setLogs(data.map(toActivityLogEntry)));
@@ -150,6 +160,23 @@ export default function Activity() {
     (currentPage - 1) * ROWS_PER_PAGE,
     currentPage * ROWS_PER_PAGE,
   );
+
+  const allPageSelected = pageLogs.length > 0 && pageLogs.every(l => selectedIds.has(l.id));
+  const toggleAll = () => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (allPageSelected) pageLogs.forEach(l => next.delete(l.id));
+      else pageLogs.forEach(l => next.add(l.id));
+      return next;
+    });
+  };
+  const toggleRow = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -241,6 +268,27 @@ export default function Activity() {
                 >
                   Last 15 days · Older in Archive
                 </span>
+                {newCount(filtered) > 0 && (
+                  <button
+                    onClick={() => markAllSeen(filtered)}
+                    title={`Mark ${newCount(filtered)} new as read`}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                      padding: `0.2rem ${spacing.sm}`,
+                      borderRadius: radius.full,
+                      border: `1px solid ${colors.primary}`,
+                      backgroundColor: 'rgba(46,124,253,0.06)',
+                      color: colors.primary,
+                      fontFamily: "'Archivo', sans-serif",
+                      fontSize: '0.6875rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <Eye size={11} /> Mark all as read ({newCount(filtered)})
+                  </button>
+                )}
               </div>
 
               {/* Right: search + filter + sort + export */}
@@ -321,11 +369,48 @@ export default function Activity() {
               })}
             </div>
 
+            {/* ── Bulk action bar ── */}
+            {selectedIds.size > 0 && (
+              <div
+                style={{
+                  padding: `${spacing.sm} ${spacing.xl}`,
+                  backgroundColor: 'rgba(46,124,253,0.05)',
+                  borderBottom: '1px solid rgba(46,124,253,0.15)',
+                  display: 'flex', alignItems: 'center', gap: spacing.md, flexWrap: 'wrap',
+                }}
+              >
+                <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.8125rem', fontWeight: 600, color: colors.primary, whiteSpace: 'nowrap' }}>
+                  {selectedIds.size} selected
+                </span>
+                <button
+                  onClick={() => { markSeen([...selectedIds]); setSelectedIds(new Set()); }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(46,124,253,0.1)', color: colors.primary, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  <Eye size={11} /> Mark as read
+                </button>
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  style={{ display: 'inline-flex', alignItems: 'center', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: '1px solid rgba(70,98,145,0.2)', backgroundColor: 'transparent', color: colors.blueGrayMd, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+
             {/* ── Table ── */}
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
+                    <th style={{ ...TH, width: '2.5rem', textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={allPageSelected}
+                        ref={el => { if (el) el.indeterminate = pageLogs.some(l => selectedIds.has(l.id)) && !allPageSelected; }}
+                        onChange={toggleAll}
+                        style={{ cursor: 'pointer', accentColor: colors.primary }}
+                      />
+                    </th>
                     <th style={TH}>Date</th>
                     <th style={TH}>Performed By</th>
                     <th style={TH}>Type</th>
@@ -334,6 +419,7 @@ export default function Activity() {
                     <th style={TH}>To / From</th>
                     <th style={TH}>Department</th>
                     <th style={{ ...TH, width: '100%' }}>Notes</th>
+                    <th style={{ ...TH, width: '3.5rem', textAlign: 'center' }}></th>
                     <th style={{ ...TH, textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
@@ -341,7 +427,7 @@ export default function Activity() {
                   {pageLogs.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={9}
+                        colSpan={11}
                         style={{
                           ...TD,
                           textAlign: 'center',
@@ -354,21 +440,30 @@ export default function Activity() {
                     </tr>
                   ) : (
                     pageLogs.map((log, idx) => {
+                      const newRow = isNew(log);
                       return (
                         <tr
                           key={log.id}
-                          onClick={() => { markItemSeen(log.id); setDetailLog(log); }}
+                          onClick={() => { markSeen([log.id]); setDetailLog(log); }}
                           style={{
-                            backgroundColor: idx % 2 === 0 ? colors.bgSurface : colors.bgStripe,
+                            backgroundColor: restingBg(newRow, idx),
                             cursor: 'pointer',
                             transition: 'background-color 0.1s',
                           }}
-                          onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(46,124,253,0.03)')}
-                          onMouseLeave={e => (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? colors.bgSurface : colors.bgStripe)}
+                          onMouseEnter={e => (e.currentTarget.style.backgroundColor = newRow ? NEW_BG_HOVER : HOVER_BG)}
+                          onMouseLeave={e => (e.currentTarget.style.backgroundColor = restingBg(newRow, idx))}
                         >
+                          <td style={{ ...TD, textAlign: 'center', width: '2.5rem' }} onClick={e => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(log.id)}
+                              onChange={() => toggleRow(log.id)}
+                              style={{ cursor: 'pointer', accentColor: colors.primary }}
+                            />
+                          </td>
+
                           <td style={{ ...TD, color: colors.blueGrayMd, fontSize: '0.75rem' }}>
                             {log.date}
-                            <RecencyBadge visible={isNew(log.id, log.created_at)} />
                           </td>
 
                           <td style={{ ...TD, fontWeight: 600 }}>
@@ -405,6 +500,10 @@ export default function Activity() {
                             {log.notes}
                           </td>
 
+                          <td style={{ ...TD, textAlign: 'center' }}>
+                            <RecencyBadge visible={newRow} />
+                          </td>
+
                           {/* Actions — stop propagation */}
                           <td style={{ ...TD, textAlign: 'right' }} onClick={e => e.stopPropagation()}>
                             <div
@@ -418,7 +517,7 @@ export default function Activity() {
                               <RowIconBtn
                                 title="View detail"
                                 hoverColor={colors.primary}
-                                onClick={() => { markItemSeen(log.id); setDetailLog(log); }}
+                                onClick={() => { markSeen([log.id]); setDetailLog(log); }}
                               >
                                 <Eye size={13} />
                               </RowIconBtn>

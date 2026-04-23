@@ -21,6 +21,15 @@ import RecencyBadge from '../components/RecencyBadge';
 
 const ROWS_PER_PAGE = 10;
 
+const NEW_BG       = 'rgba(46,124,253,0.06)';
+const NEW_BG_HOVER = 'rgba(46,124,253,0.10)';
+const HOVER_BG     = 'rgba(46,124,253,0.04)';
+
+function restingBg(isNewRow: boolean, idx: number): string {
+  if (isNewRow) return NEW_BG;
+  return idx % 2 === 0 ? colors.bgSurface : colors.bgStripe;
+}
+
 type SortField = 'name' | 'department' | 'created_at';
 type SortDir   = 'asc'  | 'desc';
 
@@ -84,7 +93,7 @@ export default function People() {
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [people, setPeople]     = useState<Person[]>([]);
-  const { isNew, markItemSeen } = useRecency('people');
+  const { isNew, markSeen, markAllSeen, newCount } = useRecency<Person>('people');
 
   useEffect(() => {
     usersApi.list().then(setPeople).catch(() => {});
@@ -174,6 +183,7 @@ export default function People() {
     })
       .then(created => {
         setPeople(prev => [...prev, created]);
+        markSeen([created.id]);
         toast.success(`Added ${created.first_name} ${created.last_name}`);
       })
       .catch(() => toast.error('Could not add person. Please try again.'));
@@ -183,6 +193,7 @@ export default function People() {
     usersApi.update(updated.id, updated)
       .then(saved => {
         setPeople(prev => prev.map(p => p.id === saved.id ? saved : p));
+        markSeen([saved.id]);
         toast.success(`Updated ${saved.first_name} ${saved.last_name}`);
       })
       .catch(() => toast.error('Could not update person. Please try again.'));
@@ -464,6 +475,27 @@ export default function People() {
                 >
                   {filtered.length} active
                 </span>
+                {newCount(filtered) > 0 && (
+                  <button
+                    onClick={() => markAllSeen(filtered)}
+                    title={`Mark ${newCount(filtered)} new as read`}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                      padding: `0.2rem ${spacing.sm}`,
+                      borderRadius: radius.full,
+                      border: `1px solid ${colors.primary}`,
+                      backgroundColor: 'rgba(46,124,253,0.06)',
+                      color: colors.primary,
+                      fontFamily: "'Archivo', sans-serif",
+                      fontSize: '0.6875rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <Eye size={11} /> Mark all as read ({newCount(filtered)})
+                  </button>
+                )}
               </div>
 
               {/* Right: controls */}
@@ -613,6 +645,14 @@ export default function People() {
                 </button>
 
                 <button
+                  onClick={() => { markSeen([...selectedIds]); setSelectedIds(new Set()); }}
+                  disabled={bulkLoading}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(46,124,253,0.1)', color: colors.primary, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  <Eye size={11} /> Mark as read
+                </button>
+
+                <button
                   onClick={() => setSelectedIds(new Set())}
                   style={{ display: 'inline-flex', alignItems: 'center', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: '1px solid rgba(70,98,145,0.2)', backgroundColor: 'transparent', color: colors.blueGrayMd, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
                 >
@@ -641,6 +681,7 @@ export default function People() {
                     <th style={TH}>Business Group</th>
                     <th style={TH}>Supervisor</th>
                     <th style={TH}>Role</th>
+                    <th style={{ ...TH, width: '3.5rem', textAlign: 'center' }}></th>
                     <th style={{ ...TH, textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
@@ -648,7 +689,7 @@ export default function People() {
                   {pageItems.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={8}
+                        colSpan={9}
                         style={{
                           ...TD, textAlign: 'center',
                           color: colors.blueGrayMd,
@@ -663,17 +704,18 @@ export default function People() {
                       const role     = ROLE_BADGE[person.role] ?? ROLE_BADGE.STAFF;
                       const displayName = `${person.last_name}, ${person.first_name}`;
 
+                      const newRow = isNew(person);
                       return (
                         <tr
                           key={person.id}
-                          onClick={() => { markItemSeen(person.id); setDetailPerson(person); }}
+                          onClick={() => { markSeen([person.id]); setDetailPerson(person); }}
                           style={{
-                            backgroundColor: idx % 2 === 0 ? colors.bgSurface : colors.bgStripe,
+                            backgroundColor: restingBg(newRow, idx),
                             cursor: 'pointer',
                             transition: 'background-color 0.1s',
                           }}
-                          onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(46,124,253,0.04)')}
-                          onMouseLeave={e => (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? colors.bgSurface : colors.bgStripe)}
+                          onMouseEnter={e => (e.currentTarget.style.backgroundColor = newRow ? NEW_BG_HOVER : HOVER_BG)}
+                          onMouseLeave={e => (e.currentTarget.style.backgroundColor = restingBg(newRow, idx))}
                         >
                           {/* Checkbox */}
                           <td style={{ ...TD, textAlign: 'center', width: '2.5rem' }} onClick={e => e.stopPropagation()}>
@@ -688,7 +730,6 @@ export default function People() {
                           {/* Name */}
                           <td style={{ ...TD, fontWeight: 500 }}>
                             {displayName}
-                            <RecencyBadge visible={isNew(person.id, person.created_at)} />
                           </td>
 
                           {/* Email */}
@@ -726,6 +767,11 @@ export default function People() {
                             </span>
                           </td>
 
+                          {/* NEW */}
+                          <td style={{ ...TD, textAlign: 'center' }}>
+                            <RecencyBadge visible={newRow} />
+                          </td>
+
                           {/* Actions */}
                           <td style={{ ...TD, textAlign: 'right' }} onClick={e => e.stopPropagation()}>
                             <div style={{ display: 'inline-flex', alignItems: 'center', gap: spacing.xs }}>
@@ -744,7 +790,7 @@ export default function People() {
                                 <Pencil size={11} />
                               </button>
                               <button
-                                onClick={() => { markItemSeen(person.id); setDetailPerson(person); }}
+                                onClick={() => { markSeen([person.id]); setDetailPerson(person); }}
                                 title="View detail"
                                 style={iconBtnStyle(colors.primary)}
                               >

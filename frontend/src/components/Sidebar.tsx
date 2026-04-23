@@ -1,5 +1,6 @@
 import { useLocation, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useRecencyCounts } from '../context/RecencyContext';
 import {
   Home,
   ClipboardList,
@@ -11,20 +12,22 @@ import {
   ChevronRight,
   LogOut,
 } from 'lucide-react';
-import { colors, sizing, spacing, radius } from '../theme'; 
+import { colors, sizing, spacing, radius } from '../theme';
+
+type BadgeKind = 'inventory' | 'people' | 'activity';
 
 type NavItem = {
   icon: React.ElementType;
   label: string;
   path: string;
-  badge?: boolean;
+  badge?: BadgeKind;
 };
 
 const NAV_ITEMS: NavItem[] = [
   { icon: Home,          label: 'Home',      path: '/home' },
-  { icon: ClipboardList, label: 'Inventory', path: '/inventory' },
-  { icon: Activity,      label: 'Activity',  path: '/activity' },
-  { icon: Users,         label: 'People',    path: '/people' },
+  { icon: ClipboardList, label: 'Inventory', path: '/inventory', badge: 'inventory' },
+  { icon: Activity,      label: 'Activity',  path: '/activity',  badge: 'activity' },
+  { icon: Users,         label: 'People',    path: '/people',    badge: 'people' },
   { icon: Settings,      label: 'Settings',  path: '/settings' },
   { icon: Archive,       label: 'Archive',   path: '/archive' },
 ];
@@ -41,6 +44,14 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const { inventoryBadge, peopleBadge, activityBadge } = useRecencyCounts();
+
+  const badgeCount = (kind?: BadgeKind): number => {
+    if (kind === 'inventory') return inventoryBadge;
+    if (kind === 'people')    return peopleBadge;
+    if (kind === 'activity')  return activityBadge;
+    return 0;
+  };
 
   return (
     <aside
@@ -111,6 +122,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       >
         {NAV_ITEMS.map(({ icon: Icon, label, path, badge }) => {
           const isActive = location.pathname === path;
+          const count = badgeCount(badge);
 
           return (
             <NavLink key={path} to={path} style={{ textDecoration: 'none', display: 'block' }}>
@@ -143,18 +155,30 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     strokeWidth={isActive ? 2.5 : 2}
                     style={{ opacity: isActive ? 1 : 0.75 }}
                   />
-                  {badge && (
+                  {count > 0 && (
                     <div
                       style={{
                         position: 'absolute',
-                        top: '-0.125rem',
-                        right: '-0.1875rem',
-                        width: '0.4375rem',
-                        height: '0.4375rem',
+                        top: '-0.35rem',
+                        right: '-0.5rem',
+                        minWidth: '1rem',
+                        height: '1rem',
+                        padding: '0 0.3rem',
                         borderRadius: radius.full,
                         backgroundColor: colors.orangeAccent,
+                        color: colors.white,
+                        fontFamily: "'Archivo', sans-serif",
+                        fontSize: '0.625rem',
+                        fontWeight: 800,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        lineHeight: 1,
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
                       }}
-                    />
+                    >
+                      {count > 99 ? '99+' : count}
+                    </div>
                   )}
                 </div>
 

@@ -46,6 +46,15 @@ const SORT_OPTIONS = ['Tag (A–Z)', 'Tag (Z–A)', 'Date Added (Newest)', 'Date
 
 const ROWS_PER_PAGE = 10;
 
+const NEW_BG       = 'rgba(46,124,253,0.06)';
+const NEW_BG_HOVER = 'rgba(46,124,253,0.10)';
+const HOVER_BG     = 'rgba(46,124,253,0.04)';
+
+function restingBg(isNewRow: boolean, idx: number): string {
+  if (isNewRow) return NEW_BG;
+  return idx % 2 === 0 ? colors.bgSurface : colors.bgStripe;
+}
+
 const TH: React.CSSProperties = {
   padding: '0.625rem 0.875rem',
   fontFamily: "'Archivo', sans-serif",
@@ -75,7 +84,7 @@ export default function AssetsTabContent() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [users, setUsers] = useState<Person[]>([]);
   const toast = useToast();
-  const { isNew, markItemSeen } = useRecency('assets');
+  const { isNew, markSeen, markAllSeen, newCount } = useRecency<Asset>('assets');
 
   useEffect(() => {
     assetsApi.list().then(setAssets).catch(() => {});
@@ -201,6 +210,7 @@ export default function AssetsTabContent() {
 
   const handleSaveEdit = (updated: Asset) => {
     setAssets(prev => prev.map(a => a.id === updated.id ? updated : a));
+    markSeen([updated.id]);
     toast.success(`Updated asset ${updated.asset_tag}`);
   };
 
@@ -208,6 +218,7 @@ export default function AssetsTabContent() {
     const newId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
     const today = new Date().toISOString().split('T')[0];
     setAssets(prev => [...prev, { ...data, id: newId, created_at: today, updated_at: today }]);
+    markSeen([newId]);
     toast.success(`Copied asset as ${data.asset_tag}`);
   };
 
@@ -215,6 +226,7 @@ export default function AssetsTabContent() {
     assetsApi.checkOut(assetId, userId, notes)
       .then(updated => {
         setAssets(prev => prev.map(a => a.id === assetId ? updated : a));
+        markSeen([updated.id]);
         const holder = updated.assigned_to_detail
           ? `${updated.assigned_to_detail.first_name} ${updated.assigned_to_detail.last_name}`
           : 'user';
@@ -227,6 +239,7 @@ export default function AssetsTabContent() {
     assetsApi.checkIn(assetId, notes)
       .then(updated => {
         setAssets(prev => prev.map(a => a.id === assetId ? updated : a));
+        markSeen([updated.id]);
         toast.success(`Checked in ${updated.asset_tag}`);
       })
       .catch(() => toast.error('Could not check in asset. Please try again.'));
@@ -236,6 +249,7 @@ export default function AssetsTabContent() {
     assetsApi.changeStatus(assetId, status, notes)
       .then(updated => {
         setAssets(prev => prev.map(a => a.id === assetId ? updated : a));
+        markSeen([updated.id]);
         toast.success(`Status updated to ${ASSET_STATUS_LABELS[updated.status]}`);
       })
       .catch(() => toast.error('Could not update status. Please try again.'));
@@ -282,6 +296,7 @@ export default function AssetsTabContent() {
         const map = new Map(results.map(r => [r.id, r]));
         return prev.map(a => map.get(a.id) ?? a);
       });
+      markSeen(results.map(r => r.id));
       setSelectedIds(new Set());
       toast.success(`Checked in ${ids.length} asset${ids.length !== 1 ? 's' : ''}`);
     } catch {
@@ -301,6 +316,7 @@ export default function AssetsTabContent() {
         const map = new Map(results.map(r => [r.id, r]));
         return prev.map(a => map.get(a.id) ?? a);
       });
+      markSeen(results.map(r => r.id));
       setSelectedIds(new Set());
       toast.success(`Checked out ${ids.length} asset${ids.length !== 1 ? 's' : ''}`);
     } catch {
@@ -320,6 +336,7 @@ export default function AssetsTabContent() {
         const map = new Map(results.map(r => [r.id, r]));
         return prev.map(a => map.get(a.id) ?? a);
       });
+      markSeen(results.map(r => r.id));
       setSelectedIds(new Set());
       toast.success(`Updated status of ${ids.length} asset${ids.length !== 1 ? 's' : ''} to ${ASSET_STATUS_LABELS[status]}`);
     } catch {
@@ -352,6 +369,7 @@ export default function AssetsTabContent() {
         const map = new Map(results.map(r => [r.id, r]));
         return prev.map(a => map.get(a.id) ?? a);
       });
+      markSeen(results.map(r => r.id));
       setSelectedIds(new Set());
       toast.success(`Resolved ${matching.length} asset${matching.length !== 1 ? 's' : ''} from ${cfg.label}`);
     } catch {
@@ -435,6 +453,27 @@ export default function AssetsTabContent() {
             >
               Assets
             </span>
+            {newCount(filtered) > 0 && (
+              <button
+                onClick={() => markAllSeen(filtered)}
+                title={`Mark ${newCount(filtered)} new as read`}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                  padding: `0.2rem ${spacing.sm}`,
+                  borderRadius: radius.full,
+                  border: `1px solid ${colors.primary}`,
+                  backgroundColor: 'rgba(46,124,253,0.06)',
+                  color: colors.primary,
+                  fontFamily: "'Archivo', sans-serif",
+                  fontSize: '0.6875rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <Eye size={11} /> Mark all as read ({newCount(filtered)})
+              </button>
+            )}
             <div style={{ display: 'flex', gap: spacing.xs, flexWrap: 'wrap' }}>
               {FILTER_TABS.map(tab => (
                 <button
@@ -593,6 +632,14 @@ export default function AssetsTabContent() {
                 <RefreshCw size={11} /> Change Status
               </button>
 
+              <button
+                onClick={() => { markSeen([...selectedIds]); setSelectedIds(new Set()); }}
+                disabled={bulkLoading}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(46,124,253,0.1)', color: colors.primary, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+              >
+                <Eye size={11} /> Mark as read
+              </button>
+
               {auditCount > 0 && (
                 <button
                   onClick={() => setBulkResolveTarget('TO_AUDIT')}
@@ -662,6 +709,7 @@ export default function AssetsTabContent() {
                 <th style={TH}>Category</th>
                 <th style={TH}>Current Holder</th>
                 <th style={TH}>Status</th>
+                <th style={{ ...TH, width: '3.5rem', textAlign: 'center' }}></th>
                 <th style={{ ...TH, textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
@@ -669,7 +717,7 @@ export default function AssetsTabContent() {
               {pageItems.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={9}
                     style={{
                       ...TD,
                       textAlign: 'center',
@@ -686,17 +734,18 @@ export default function AssetsTabContent() {
                   const isAvailable = asset.status === 'AVAILABLE';
                   const isDeployed  = asset.status === 'DEPLOYED';
                   const pillVisible = isAvailable || isDeployed;
+                  const newRow = isNew(asset);
                   return (
                     <tr
                       key={asset.id}
-                      onClick={() => { markItemSeen(asset.id); setDetailTarget(asset); }}
+                      onClick={() => { markSeen([asset.id]); setDetailTarget(asset); }}
                       style={{
-                        backgroundColor: idx % 2 === 0 ? colors.bgSurface : colors.bgStripe,
+                        backgroundColor: restingBg(newRow, idx),
                         cursor: 'pointer',
                         transition: 'background-color 0.1s',
                       }}
-                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(46,124,253,0.04)')}
-                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? colors.bgSurface : colors.bgStripe)}
+                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = newRow ? NEW_BG_HOVER : HOVER_BG)}
+                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = restingBg(newRow, idx))}
                     >
                       <td style={{ ...TD, textAlign: 'center', width: '2.5rem' }} onClick={e => e.stopPropagation()}>
                         <input
@@ -709,7 +758,6 @@ export default function AssetsTabContent() {
 
                       <td style={{ ...TD, fontWeight: 500 }}>
                         {asset.asset_tag}
-                        <RecencyBadge visible={isNew(asset.id, asset.created_at)} />
                       </td>
 
                       <td style={{ ...TD, color: colors.textPrimary }}>
@@ -743,6 +791,10 @@ export default function AssetsTabContent() {
                             {statusCfg.label}
                           </span>
                         </span>
+                      </td>
+
+                      <td style={{ ...TD, textAlign: 'center' }}>
+                        <RecencyBadge visible={newRow} />
                       </td>
 
                       <td style={{ ...TD, textAlign: 'right' }} onClick={e => e.stopPropagation()}>
@@ -817,7 +869,7 @@ export default function AssetsTabContent() {
       <AddAssetModal
         isOpen={addModalOpen}
         onClose={() => setAddModalOpen(false)}
-        onSave={created => setAssets(prev => [created, ...prev])}
+        onSave={created => { setAssets(prev => [created, ...prev]); markSeen([created.id]); }}
       />
 
       <DeleteConfirmModal

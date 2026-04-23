@@ -50,6 +50,7 @@ export interface ActivityLogEntry {
   date: string;
   rawDate: string;
   created_at: string;
+  updated_at: string;
   user: string;
   /** 'Asset' | 'Inventory' | 'Other' */
   type: string;
@@ -106,6 +107,7 @@ export function toActivityLogEntry(log: TransactionLog): ActivityLogEntry {
     }),
     rawDate: log.transaction_date,
     created_at: log.created_at,
+    updated_at: log.created_at,
     user: who,
     type,
     event: TX_TYPE_LABEL[log.transaction_type] ?? log.transaction_type,

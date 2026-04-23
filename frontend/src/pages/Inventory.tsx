@@ -42,6 +42,15 @@ const INV_SORT_OPTIONS = [
 
 const ROWS_PER_PAGE = 10;
 
+const NEW_BG       = 'rgba(46,124,253,0.06)';
+const NEW_BG_HOVER = 'rgba(46,124,253,0.10)';
+const HOVER_BG     = 'rgba(46,124,253,0.04)';
+
+function restingBg(isNewRow: boolean, idx: number): string {
+  if (isNewRow) return NEW_BG;
+  return idx % 2 === 0 ? colors.bgSurface : colors.bgStripe;
+}
+
 // ── Table cell styles ─────────────────────────────────────────────────────────
 
 const TH: React.CSSProperties = {
@@ -74,7 +83,12 @@ export default function Inventory() {
   const [inventory, setInventory] = useState<Accessory[]>([]);
   const [users, setUsers] = useState<Person[]>([]);
   const toast = useToast();
-  const { isNew: isAccessoryNew, markItemSeen: markAccessoryItemSeen } = useRecency('accessories');
+  const {
+    isNew: isAccessoryNew,
+    markSeen: markAccessorySeen,
+    markAllSeen: markAccessoryAllSeen,
+    newCount: newAccessoryCount,
+  } = useRecency<Accessory>('accessories');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const tabFromUrl = searchParams.get('tab') as InventoryTab | null;
   const [activeInventoryTab, setActiveInventoryTab] = useState<InventoryTab>(
@@ -251,12 +265,14 @@ export default function Inventory() {
 
   const handleSaveEdit = (updated: Accessory) => {
     setInventory(prev => prev.map(i => i.id === updated.id ? updated : i));
+    markAccessorySeen([updated.id]);
   };
 
   const handleCheckIn = (itemId: string, quantity: number, userId: string, notes: string) => {
     accessoriesApi.checkIn(itemId, quantity, userId, notes)
       .then(updated => {
         setInventory(prev => prev.map(i => i.id === itemId ? updated : i));
+        markAccessorySeen([updated.id]);
         toast.success(`Checked in ${quantity} × ${updated.item_name}`);
       })
       .catch(() => toast.error('Could not check in item. Please try again.'));
@@ -266,6 +282,7 @@ export default function Inventory() {
     accessoriesApi.checkOut(itemId, quantity, userId || undefined, notes)
       .then(updated => {
         setInventory(prev => prev.map(i => i.id === itemId ? updated : i));
+        markAccessorySeen([updated.id]);
         toast.success(`Checked out ${quantity} × ${updated.item_name}`);
       })
       .catch(() => toast.error('Could not check out item. Please try again.'));
@@ -427,6 +444,27 @@ export default function Inventory() {
                 >
                   Accessories
                 </span>
+                {newAccessoryCount(filtered) > 0 && (
+                  <button
+                    onClick={() => markAccessoryAllSeen(filtered)}
+                    title={`Mark ${newAccessoryCount(filtered)} new as read`}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                      padding: `0.2rem ${spacing.sm}`,
+                      borderRadius: radius.full,
+                      border: `1px solid ${colors.primary}`,
+                      backgroundColor: 'rgba(46,124,253,0.06)',
+                      color: colors.primary,
+                      fontFamily: "'Archivo', sans-serif",
+                      fontSize: '0.6875rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <Eye size={11} /> Mark all as read ({newAccessoryCount(filtered)})
+                  </button>
+                )}
                 <div style={{ display: 'flex', gap: spacing.xs }}>
                   {FILTER_TABS.map(tab => (
                     <button
@@ -605,6 +643,14 @@ export default function Inventory() {
                 </button>
 
                 <button
+                  onClick={() => { markAccessorySeen([...selectedIds]); setSelectedIds(new Set()); }}
+                  disabled={bulkLoading}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: 'none', backgroundColor: 'rgba(46,124,253,0.1)', color: colors.primary, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: bulkLoading ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  <Eye size={11} /> Mark as read
+                </button>
+
+                <button
                   onClick={() => setSelectedIds(new Set())}
                   style={{ display: 'inline-flex', alignItems: 'center', padding: `0.25rem ${spacing.md}`, borderRadius: radius.full, border: '1px solid rgba(70,98,145,0.2)', backgroundColor: 'transparent', color: colors.blueGrayMd, fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
                 >
@@ -633,6 +679,7 @@ export default function Inventory() {
                     <th style={{ ...TH, textAlign: 'center' }}>Qty Available</th>
                     <th style={{ ...TH, textAlign: 'center' }}>Min Qty</th>
                     <th style={TH}>Location</th>
+                    <th style={{ ...TH, width: '3.5rem', textAlign: 'center' }}></th>
                     <th style={{ ...TH, textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
@@ -640,7 +687,7 @@ export default function Inventory() {
                   {pageItems.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={8}
+                        colSpan={9}
                         style={{
                           ...TD,
                           textAlign: 'center',
@@ -656,17 +703,18 @@ export default function Inventory() {
                       const isOutOfStock = item.quantity_available === 0;
                       const isLowStock   = !isOutOfStock && item.quantity_available < item.min_quantity;
 
+                      const newRow = isAccessoryNew(item);
                       return (
                         <tr
                           key={item.id}
-                          onClick={() => { markAccessoryItemSeen(item.id); setDetailTarget(item); }}
+                          onClick={() => { markAccessorySeen([item.id]); setDetailTarget(item); }}
                           style={{
-                            backgroundColor: idx % 2 === 0 ? colors.bgSurface : colors.bgStripe,
+                            backgroundColor: restingBg(newRow, idx),
                             cursor: 'pointer',
                             transition: 'background-color 0.1s',
                           }}
-                          onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(46,124,253,0.04)')}
-                          onMouseLeave={e => (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? colors.bgSurface : colors.bgStripe)}
+                          onMouseEnter={e => (e.currentTarget.style.backgroundColor = newRow ? NEW_BG_HOVER : HOVER_BG)}
+                          onMouseLeave={e => (e.currentTarget.style.backgroundColor = restingBg(newRow, idx))}
                         >
                           {/* Checkbox */}
                           <td style={{ ...TD, textAlign: 'center', width: '2.5rem' }} onClick={e => e.stopPropagation()}>
@@ -682,7 +730,6 @@ export default function Inventory() {
                           <td style={{ ...TD, fontWeight: 500 }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
                               {item.item_name}
-                              <RecencyBadge visible={isAccessoryNew(item.id, item.created_at)} />
                               {isLowStock && (
                                 <AlertTriangle size={11} color={colors.orangeAccent} aria-label="Low stock" />
                               )}
@@ -735,6 +782,11 @@ export default function Inventory() {
                           {/* Location */}
                           <td style={{ ...TD, color: colors.blueGrayMd, maxWidth: '12rem', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {item.location ?? '—'}
+                          </td>
+
+                          {/* NEW */}
+                          <td style={{ ...TD, textAlign: 'center' }}>
+                            <RecencyBadge visible={newRow} />
                           </td>
 
                           {/* Actions */}
@@ -829,7 +881,7 @@ export default function Inventory() {
       <AddInventoryModal
         isOpen={addModalOpen}
         onClose={() => setAddModalOpen(false)}
-        onSave={acc => setInventory(prev => [...prev, acc])}
+        onSave={acc => { setInventory(prev => [...prev, acc]); markAccessorySeen([acc.id]); }}
       />
 
       <DeleteConfirmModal
