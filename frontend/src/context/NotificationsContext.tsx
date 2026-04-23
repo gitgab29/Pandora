@@ -62,6 +62,7 @@ interface NotificationsContextValue {
   unreadCount: number;
   lastSeenAt: string;
   markAllRead: () => void;
+  refresh: () => void;
 }
 
 const NotificationsContext = createContext<NotificationsContextValue | null>(null);
@@ -104,7 +105,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     fetchNotifications();
     const handle = setInterval(() => {
       if (!document.hidden) fetchNotifications();
-    }, 60_000);
+    }, 15_000);
     return () => clearInterval(handle);
   }, [isAuthenticated, fetchNotifications]);
 
@@ -117,7 +118,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [storageKey]);
 
   return (
-    <NotificationsContext.Provider value={{ notifications, unreadCount, lastSeenAt, markAllRead }}>
+    <NotificationsContext.Provider value={{ notifications, unreadCount, lastSeenAt, markAllRead, refresh: fetchNotifications }}>
       {children}
     </NotificationsContext.Provider>
   );

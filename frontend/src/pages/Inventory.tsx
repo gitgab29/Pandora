@@ -25,6 +25,8 @@ import type { Person } from '../types/people';
 import { accessoriesApi, usersApi } from '../api';
 import { useToast } from '../context/ToastContext';
 import { useRecency } from '../hooks/useRecency';
+import { useRecencyCounts } from '../context/RecencyContext';
+import { useNotifications } from '../context/NotificationsContext';
 import RecencyBadge from '../components/RecencyBadge';
 
 type InventoryTab = 'Assets' | 'Accessories' | 'Licenses' | 'Consumables';
@@ -89,6 +91,8 @@ export default function Inventory() {
     markAllSeen: markAccessoryAllSeen,
     newCount: newAccessoryCount,
   } = useRecency<Accessory>('accessories');
+  const { refresh: refreshRecency } = useRecencyCounts();
+  const { refresh: refreshNotifications } = useNotifications();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const tabFromUrl = searchParams.get('tab') as InventoryTab | null;
   const [activeInventoryTab, setActiveInventoryTab] = useState<InventoryTab>(
@@ -265,15 +269,17 @@ export default function Inventory() {
 
   const handleSaveEdit = (updated: Accessory) => {
     setInventory(prev => prev.map(i => i.id === updated.id ? updated : i));
-    markAccessorySeen([updated.id]);
+    refreshRecency();
+    refreshNotifications();
   };
 
   const handleCheckIn = (itemId: string, quantity: number, userId: string, notes: string) => {
     accessoriesApi.checkIn(itemId, quantity, userId, notes)
       .then(updated => {
         setInventory(prev => prev.map(i => i.id === itemId ? updated : i));
-        markAccessorySeen([updated.id]);
         toast.success(`Checked in ${quantity} × ${updated.item_name}`);
+        refreshRecency();
+        refreshNotifications();
       })
       .catch(() => toast.error('Could not check in item. Please try again.'));
   };
@@ -282,8 +288,9 @@ export default function Inventory() {
     accessoriesApi.checkOut(itemId, quantity, userId || undefined, notes)
       .then(updated => {
         setInventory(prev => prev.map(i => i.id === itemId ? updated : i));
-        markAccessorySeen([updated.id]);
         toast.success(`Checked out ${quantity} × ${updated.item_name}`);
+        refreshRecency();
+        refreshNotifications();
       })
       .catch(() => toast.error('Could not check out item. Please try again.'));
   };
@@ -881,7 +888,11 @@ export default function Inventory() {
       <AddInventoryModal
         isOpen={addModalOpen}
         onClose={() => setAddModalOpen(false)}
-        onSave={acc => { setInventory(prev => [...prev, acc]); markAccessorySeen([acc.id]); }}
+        onSave={acc => {
+          setInventory(prev => [...prev, acc]);
+          refreshRecency();
+          refreshNotifications();
+        }}
       />
 
       <DeleteConfirmModal

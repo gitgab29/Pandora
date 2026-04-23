@@ -83,7 +83,7 @@ export function RecencyProvider({ children }: { children: ReactNode }) {
     fetchAll();
     const handle = setInterval(() => {
       if (!document.hidden) fetchAll();
-    }, 60_000);
+    }, 15_000);
     return () => clearInterval(handle);
   }, [isAuthenticated, fetchAll]);
 

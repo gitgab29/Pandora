@@ -25,6 +25,8 @@ import { assetsApi, usersApi } from '../api';
 import type { Person } from '../types/people';
 import { useToast } from '../context/ToastContext';
 import { useRecency } from '../hooks/useRecency';
+import { useRecencyCounts } from '../context/RecencyContext';
+import { useNotifications } from '../context/NotificationsContext';
 import RecencyBadge from './RecencyBadge';
 
 
@@ -85,6 +87,8 @@ export default function AssetsTabContent() {
   const [users, setUsers] = useState<Person[]>([]);
   const toast = useToast();
   const { isNew, markSeen, markAllSeen, newCount } = useRecency<Asset>('assets');
+  const { refresh: refreshRecency } = useRecencyCounts();
+  const { refresh: refreshNotifications } = useNotifications();
 
   useEffect(() => {
     assetsApi.list().then(setAssets).catch(() => {});
@@ -210,15 +214,15 @@ export default function AssetsTabContent() {
 
   const handleSaveEdit = (updated: Asset) => {
     setAssets(prev => prev.map(a => a.id === updated.id ? updated : a));
-    markSeen([updated.id]);
     toast.success(`Updated asset ${updated.asset_tag}`);
+    refreshRecency();
+    refreshNotifications();
   };
 
   const handleSaveCopy = (data: Omit<Asset, 'id' | 'created_at' | 'updated_at'>) => {
     const newId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
-    const today = new Date().toISOString().split('T')[0];
-    setAssets(prev => [...prev, { ...data, id: newId, created_at: today, updated_at: today }]);
-    markSeen([newId]);
+    const now = new Date().toISOString();
+    setAssets(prev => [...prev, { ...data, id: newId, created_at: now, updated_at: now }]);
     toast.success(`Copied asset as ${data.asset_tag}`);
   };
 
@@ -226,11 +230,12 @@ export default function AssetsTabContent() {
     assetsApi.checkOut(assetId, userId, notes)
       .then(updated => {
         setAssets(prev => prev.map(a => a.id === assetId ? updated : a));
-        markSeen([updated.id]);
         const holder = updated.assigned_to_detail
           ? `${updated.assigned_to_detail.first_name} ${updated.assigned_to_detail.last_name}`
           : 'user';
         toast.success(`Checked out ${updated.asset_tag} to ${holder}`);
+        refreshRecency();
+        refreshNotifications();
       })
       .catch(() => toast.error('Could not check out asset. Please try again.'));
   };
@@ -239,8 +244,9 @@ export default function AssetsTabContent() {
     assetsApi.checkIn(assetId, notes)
       .then(updated => {
         setAssets(prev => prev.map(a => a.id === assetId ? updated : a));
-        markSeen([updated.id]);
         toast.success(`Checked in ${updated.asset_tag}`);
+        refreshRecency();
+        refreshNotifications();
       })
       .catch(() => toast.error('Could not check in asset. Please try again.'));
   };
@@ -249,8 +255,9 @@ export default function AssetsTabContent() {
     assetsApi.changeStatus(assetId, status, notes)
       .then(updated => {
         setAssets(prev => prev.map(a => a.id === assetId ? updated : a));
-        markSeen([updated.id]);
         toast.success(`Status updated to ${ASSET_STATUS_LABELS[updated.status]}`);
+        refreshRecency();
+        refreshNotifications();
       })
       .catch(() => toast.error('Could not update status. Please try again.'));
   };
@@ -296,9 +303,10 @@ export default function AssetsTabContent() {
         const map = new Map(results.map(r => [r.id, r]));
         return prev.map(a => map.get(a.id) ?? a);
       });
-      markSeen(results.map(r => r.id));
       setSelectedIds(new Set());
       toast.success(`Checked in ${ids.length} asset${ids.length !== 1 ? 's' : ''}`);
+      refreshRecency();
+      refreshNotifications();
     } catch {
       toast.error('Some assets could not be checked in. Please try again.');
     } finally {
@@ -316,9 +324,10 @@ export default function AssetsTabContent() {
         const map = new Map(results.map(r => [r.id, r]));
         return prev.map(a => map.get(a.id) ?? a);
       });
-      markSeen(results.map(r => r.id));
       setSelectedIds(new Set());
       toast.success(`Checked out ${ids.length} asset${ids.length !== 1 ? 's' : ''}`);
+      refreshRecency();
+      refreshNotifications();
     } catch {
       toast.error('Some assets could not be checked out. Please try again.');
     } finally {
@@ -336,9 +345,10 @@ export default function AssetsTabContent() {
         const map = new Map(results.map(r => [r.id, r]));
         return prev.map(a => map.get(a.id) ?? a);
       });
-      markSeen(results.map(r => r.id));
       setSelectedIds(new Set());
       toast.success(`Updated status of ${ids.length} asset${ids.length !== 1 ? 's' : ''} to ${ASSET_STATUS_LABELS[status]}`);
+      refreshRecency();
+      refreshNotifications();
     } catch {
       toast.error('Some assets could not be updated. Please try again.');
     } finally {
@@ -369,9 +379,10 @@ export default function AssetsTabContent() {
         const map = new Map(results.map(r => [r.id, r]));
         return prev.map(a => map.get(a.id) ?? a);
       });
-      markSeen(results.map(r => r.id));
       setSelectedIds(new Set());
       toast.success(`Resolved ${matching.length} asset${matching.length !== 1 ? 's' : ''} from ${cfg.label}`);
+      refreshRecency();
+      refreshNotifications();
     } catch {
       toast.error('Some assets could not be resolved. Please try again.');
     } finally {
@@ -869,7 +880,11 @@ export default function AssetsTabContent() {
       <AddAssetModal
         isOpen={addModalOpen}
         onClose={() => setAddModalOpen(false)}
-        onSave={created => { setAssets(prev => [created, ...prev]); markSeen([created.id]); }}
+        onSave={created => {
+          setAssets(prev => [created, ...prev]);
+          refreshRecency();
+          refreshNotifications();
+        }}
       />
 
       <DeleteConfirmModal
@@ -951,6 +966,8 @@ export default function AssetsTabContent() {
             .then(updated => {
               setAssets(prev => prev.map(x => x.id === updated.id ? updated : x));
               toast.success(`Asset resolved to ${ASSET_STATUS_LABELS[updated.status]}`);
+              refreshRecency();
+              refreshNotifications();
             })
             .catch(() => toast.error('Could not update status. Please try again.'));
         }}
