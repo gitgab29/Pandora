@@ -1,4 +1,6 @@
 import os
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -63,6 +65,19 @@ class RegisterView(APIView):
 
         if User.objects.filter(email=data['email']).exists():
             return Response({'detail': 'Email already registered.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Run Django's configured password validators (length, common-password,
+        # numeric-only, similarity to user fields). Build an unsaved user so
+        # the similarity validator has names/email to compare against.
+        candidate = User(
+            email=data['email'],
+            first_name=data['first_name'],
+            last_name=data['last_name'],
+        )
+        try:
+            validate_password(data['password'], user=candidate)
+        except DjangoValidationError as exc:
+            return Response({'detail': list(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
 
         supervisor = None
         if data.get('supervisor_id'):

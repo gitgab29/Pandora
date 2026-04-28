@@ -28,6 +28,7 @@ import { useRecency } from '../hooks/useRecency';
 import { useRecencyCounts } from '../context/RecencyContext';
 import { useNotifications } from '../context/NotificationsContext';
 import RecencyBadge from './RecencyBadge';
+import { TH, TD, NEW_BG, NEW_BG_HOVER, HOVER_BG, restingBg } from './tableStyles';
 
 
 
@@ -47,38 +48,6 @@ const FILTER_TABS: Array<AssetStatus | 'All'> = [
 const SORT_OPTIONS = ['Tag (A–Z)', 'Tag (Z–A)', 'Date Added (Newest)', 'Date Added (Oldest)', 'Status'];
 
 const ROWS_PER_PAGE = 10;
-
-const NEW_BG       = 'rgba(46,124,253,0.06)';
-const NEW_BG_HOVER = 'rgba(46,124,253,0.10)';
-const HOVER_BG     = 'rgba(46,124,253,0.04)';
-
-function restingBg(isNewRow: boolean, idx: number): string {
-  if (isNewRow) return NEW_BG;
-  return idx % 2 === 0 ? colors.bgSurface : colors.bgStripe;
-}
-
-const TH: React.CSSProperties = {
-  padding: '0.625rem 0.875rem',
-  fontFamily: "'Archivo', sans-serif",
-  fontSize: '0.719rem',
-  fontWeight: 600,
-  color: colors.blueGrayMd,
-  textAlign: 'left',
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase',
-  whiteSpace: 'nowrap',
-  borderBottom: '1px solid rgba(70, 98, 145, 0.12)',
-  backgroundColor: colors.bgStripe,
-};
-
-const TD: React.CSSProperties = {
-  padding: '0.6875rem 0.875rem',
-  fontFamily: "'Archivo', sans-serif",
-  fontSize: '0.8125rem',
-  color: colors.textPrimary,
-  borderBottom: '1px solid rgba(70, 98, 145, 0.07)',
-  whiteSpace: 'nowrap',
-};
 
 export default function AssetsTabContent() {
   const [searchParams] = useSearchParams();

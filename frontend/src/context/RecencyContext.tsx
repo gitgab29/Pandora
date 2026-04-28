@@ -61,15 +61,22 @@ export function RecencyProvider({ children }: { children: ReactNode }) {
   const [activity, setActivity] = useState<TransactionLog[]>([]);
   const [tick, setTick] = useState(0);
 
-  const fetchAll = useCallback(() => {
+  const fetchAll = useCallback(async () => {
     if (!isAuthenticated) return;
-    assetsApi.list().then(setAssets).catch(() => {});
-    accessoriesApi.list().then(setAccessories).catch(() => {});
-    usersApi.list({ is_active: true }).then(setPeople).catch(() => {});
-    transactionsApi
-      .list({ ordering: '-transaction_date' })
-      .then(data => setActivity(data.slice(0, 50)))
-      .catch(() => {});
+    try {
+      const [a, ac, p, t] = await Promise.all([
+        assetsApi.list(),
+        accessoriesApi.list(),
+        usersApi.list({ is_active: true }),
+        transactionsApi.list({ ordering: '-transaction_date' }),
+      ]);
+      setAssets(a);
+      setAccessories(ac);
+      setPeople(p);
+      setActivity(t.slice(0, 50));
+    } catch (err) {
+      console.error('RecencyContext: failed to refresh counts', err);
+    }
   }, [isAuthenticated]);
 
   useEffect(() => {
@@ -83,7 +90,7 @@ export function RecencyProvider({ children }: { children: ReactNode }) {
     fetchAll();
     const handle = setInterval(() => {
       if (!document.hidden) fetchAll();
-    }, 15_000);
+    }, 60_000);
     return () => clearInterval(handle);
   }, [isAuthenticated, fetchAll]);
 

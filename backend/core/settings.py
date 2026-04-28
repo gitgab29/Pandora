@@ -13,16 +13,31 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 
+from django.core.exceptions import ImproperlyConfigured
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'your-dev-secret')
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+# Default True so `python manage.py runserver` works locally without env setup.
+# Production must set DEBUG=False explicitly via env.
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('1', 'true', 'yes')
+
+# SECURITY WARNING: keep the secret key used in production secret!
+# A weak fallback is allowed only in local dev (DEBUG=True). In production,
+# require an explicit SECRET_KEY env var so deployments fail loudly instead of
+# silently running with a guessable key.
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-dev-only-not-for-production'
+    else:
+        raise ImproperlyConfigured(
+            'SECRET_KEY environment variable is required when DEBUG=False.'
+        )
 
 ALLOWED_HOSTS_STR = os.environ.get('ALLOWED_HOSTS', '')
 ALLOWED_HOSTS = ALLOWED_HOSTS_STR.split(',') if ALLOWED_HOSTS_STR else ['localhost', '127.0.0.1']
@@ -149,6 +164,16 @@ REST_FRAMEWORK = {
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ],
+    'DEFAULT_PAGINATION_CLASS': 'core.pagination.DefaultPagination',
+    'PAGE_SIZE': 500,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '20/min',
+        'user': '240/min',
+    },
 }
 
 # ── JWT ───────────────────────────────────────────────────────────────────────

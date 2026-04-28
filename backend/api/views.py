@@ -5,6 +5,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db import transaction
+from django.db.models import Sum
 from django.utils import timezone
 
 from .models import User, Asset, Accessory, TransactionLog
@@ -12,6 +14,14 @@ from .serializers import (
     UserSerializer, AssetSerializer,
     AccessorySerializer, TransactionLogSerializer,
 )
+
+# Statuses that represent a temporary, "abnormal" state. Transitioning *into*
+# one of these saves the prior status into `previous_status` so it can be
+# restored later. Transitioning *out* (back to AVAILABLE/DEPLOYED) must NOT
+# overwrite `previous_status` — that would lose the original state.
+_ABNORMAL_STATUSES = frozenset({
+    'IN_REPAIR', 'IN_MAINTENANCE', 'TO_AUDIT', 'LOST',
+})
 
 # Maps Asset.Status → the specific TransactionType for status-change events
 _STATUS_TX_TYPE = {
@@ -84,6 +94,7 @@ class UserViewSet(viewsets.ModelViewSet):
             qs = qs.filter(archive_reason=archive_reason)
         return qs
 
+    @transaction.atomic
     def destroy(self, request, *args, **kwargs):
         user  = self.get_object()
         notes = request.data.get('notes', '')
@@ -112,6 +123,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def retire(self, request, pk=None):
         user  = self.get_object()
         notes = request.data.get('archive_notes', '')
@@ -139,6 +151,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(UserSerializer(user).data)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def restore(self, request, pk=None):
         user = self.get_object()
         user.is_active = True
@@ -202,6 +215,7 @@ class AssetViewSet(viewsets.ModelViewSet):
             event_description=f'Asset {asset.asset_tag} auto-checked in before {reason_suffix}',
         )
 
+    @transaction.atomic
     def destroy(self, request, *args, **kwargs):
         asset = self.get_object()
         notes = request.data.get('notes', '')
@@ -217,6 +231,7 @@ class AssetViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def retire(self, request, pk=None):
         asset = self.get_object()
         notes = request.data.get('archive_notes', '')
@@ -232,6 +247,7 @@ class AssetViewSet(viewsets.ModelViewSet):
         return Response(AssetSerializer(asset).data)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def restore(self, request, pk=None):
         asset = self.get_object()
         _do_restore(asset)
@@ -250,6 +266,7 @@ class AssetViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['post'], url_path='auto_archive_eol')
+    @transaction.atomic
     def auto_archive_eol(self, request):
         today = timezone.now().date()
         assets = Asset.objects.filter(is_archived=False, end_of_life__lte=today)
@@ -268,8 +285,8 @@ class AssetViewSet(viewsets.ModelViewSet):
         return Response({'archived_count': count})
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def check_out(self, request, pk=None):
-        asset = self.get_object()
         user_id = request.data.get('user_id')
         notes   = request.data.get('notes', '')
         if not user_id:
@@ -279,9 +296,12 @@ class AssetViewSet(viewsets.ModelViewSet):
         except User.DoesNotExist:
             return Response({'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
 
+        # Lock the row to prevent two users from checking out the same asset simultaneously.
+        asset = self.get_queryset().select_for_update().get(pk=pk)
         from_user = asset.assigned_to
         asset.assigned_to = to_user
-        asset.previous_status = asset.status
+        if asset.status not in _ABNORMAL_STATUSES:
+            asset.previous_status = asset.status
         asset.status = Asset.Status.DEPLOYED
         asset.save()
 
@@ -297,12 +317,14 @@ class AssetViewSet(viewsets.ModelViewSet):
         return Response(AssetSerializer(asset).data)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def check_in(self, request, pk=None):
-        asset     = self.get_object()
-        notes     = request.data.get('notes', '')
+        notes = request.data.get('notes', '')
+        asset = self.get_queryset().select_for_update().get(pk=pk)
         from_user = asset.assigned_to
         asset.assigned_to = None
-        asset.previous_status = asset.status
+        if asset.status not in _ABNORMAL_STATUSES:
+            asset.previous_status = asset.status
         asset.status = Asset.Status.AVAILABLE
         asset.save()
 
@@ -318,13 +340,18 @@ class AssetViewSet(viewsets.ModelViewSet):
         return Response(AssetSerializer(asset).data)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def change_status(self, request, pk=None):
-        asset      = self.get_object()
         new_status = request.data.get('status')
         notes      = request.data.get('notes', '')
         if new_status not in Asset.Status.values:
             return Response({'detail': 'Invalid status.'}, status=status.HTTP_400_BAD_REQUEST)
-        asset.previous_status = asset.status
+        asset = self.get_queryset().select_for_update().get(pk=pk)
+        # Only save previous_status when entering an abnormal state from a normal one;
+        # going abnormal→abnormal would otherwise lose the original normal status,
+        # and normal→normal transitions don't need a restore point.
+        if new_status in _ABNORMAL_STATUSES and asset.status not in _ABNORMAL_STATUSES:
+            asset.previous_status = asset.status
         asset.status = new_status
         asset.save()
         tx_type = _STATUS_TX_TYPE.get(new_status, TransactionLog.TransactionType.ADJUSTMENT)
@@ -339,6 +366,7 @@ class AssetViewSet(viewsets.ModelViewSet):
         return Response(AssetSerializer(asset).data)
 
 
+    @transaction.atomic
     def perform_update(self, serializer):
         serializer.save()
         asset = serializer.instance
@@ -379,6 +407,7 @@ class AccessoryViewSet(viewsets.ModelViewSet):
             qs = qs.filter(archive_reason=archive_reason)
         return qs
 
+    @transaction.atomic
     def destroy(self, request, *args, **kwargs):
         accessory = self.get_object()
         notes     = request.data.get('notes', '')
@@ -393,6 +422,7 @@ class AccessoryViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def retire(self, request, pk=None):
         accessory = self.get_object()
         notes     = request.data.get('archive_notes', '')
@@ -407,6 +437,7 @@ class AccessoryViewSet(viewsets.ModelViewSet):
         return Response(AccessorySerializer(accessory).data)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def restore(self, request, pk=None):
         accessory = self.get_object()
         _do_restore(accessory)
@@ -418,6 +449,7 @@ class AccessoryViewSet(viewsets.ModelViewSet):
         )
         return Response(AccessorySerializer(accessory).data)
 
+    @transaction.atomic
     def perform_update(self, serializer):
         serializer.save()
         accessory = serializer.instance
@@ -437,36 +469,44 @@ class AccessoryViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def holders(self, request, pk=None):
         accessory = self.get_object()
-        logs = TransactionLog.objects.filter(accessory=accessory).select_related('to_user', 'from_user')
-        qty_by_user = {}
-        for log in logs:
-            if log.transaction_type == TransactionLog.TransactionType.CHECK_OUT and log.to_user_id:
-                qty_by_user[log.to_user_id] = qty_by_user.get(log.to_user_id, 0) + (log.quantity or 0)
-            elif log.transaction_type == TransactionLog.TransactionType.CHECK_IN and log.from_user_id:
-                qty_by_user[log.from_user_id] = qty_by_user.get(log.from_user_id, 0) - (log.quantity or 0)
-        result = []
-        for uid, qty in qty_by_user.items():
-            if qty > 0:
-                try:
-                    user = User.objects.get(pk=uid)
-                    result.append({
-                        'id': str(user.id),
-                        'first_name': user.first_name,
-                        'last_name': user.last_name,
-                        'quantity': qty,
-                    })
-                except User.DoesNotExist:
-                    pass
+        # Net quantity per user = sum(check_out qty as recipient) − sum(check_in qty as returner).
+        # Compute via SQL aggregation rather than a Python loop.
+        TX = TransactionLog.TransactionType
+        out_rows = (
+            TransactionLog.objects
+            .filter(accessory=accessory, transaction_type=TX.CHECK_OUT, to_user__isnull=False)
+            .values('to_user').annotate(qty=Sum('quantity'))
+        )
+        in_rows = (
+            TransactionLog.objects
+            .filter(accessory=accessory, transaction_type=TX.CHECK_IN, from_user__isnull=False)
+            .values('from_user').annotate(qty=Sum('quantity'))
+        )
+        net = {}
+        for row in out_rows:
+            net[row['to_user']] = net.get(row['to_user'], 0) + (row['qty'] or 0)
+        for row in in_rows:
+            net[row['from_user']] = net.get(row['from_user'], 0) - (row['qty'] or 0)
+
+        active_uids = [uid for uid, qty in net.items() if qty > 0]
+        users = {u.id: u for u in User.objects.filter(pk__in=active_uids)}
+        result = [
+            {
+                'id': str(users[uid].id),
+                'first_name': users[uid].first_name,
+                'last_name': users[uid].last_name,
+                'quantity': net[uid],
+            }
+            for uid in active_uids if uid in users
+        ]
         return Response(result)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def check_out(self, request, pk=None):
-        accessory = self.get_object()
         qty     = int(request.data.get('quantity', 1))
         user_id = request.data.get('user_id')
         notes   = request.data.get('notes', '')
-        if accessory.quantity_available < qty:
-            return Response({'detail': 'Insufficient quantity.'}, status=status.HTTP_400_BAD_REQUEST)
         to_user = None
         if user_id:
             try:
@@ -474,6 +514,10 @@ class AccessoryViewSet(viewsets.ModelViewSet):
             except User.DoesNotExist:
                 return Response({'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
 
+        # Lock the accessory row to serialize concurrent quantity decrements.
+        accessory = self.get_queryset().select_for_update().get(pk=pk)
+        if accessory.quantity_available < qty:
+            return Response({'detail': 'Insufficient quantity.'}, status=status.HTTP_400_BAD_REQUEST)
         accessory.quantity_available -= qty
         accessory.save()
         recipient = f' to {to_user.first_name} {to_user.last_name}' if to_user else ''
@@ -489,8 +533,8 @@ class AccessoryViewSet(viewsets.ModelViewSet):
         return Response(AccessorySerializer(accessory).data)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def check_in(self, request, pk=None):
-        accessory = self.get_object()
         qty     = int(request.data.get('quantity', 1))
         notes   = request.data.get('notes', '')
         user_id = request.data.get('user_id')
@@ -500,6 +544,7 @@ class AccessoryViewSet(viewsets.ModelViewSet):
                 from_user = User.objects.get(pk=user_id)
             except User.DoesNotExist:
                 return Response({'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+        accessory = self.get_queryset().select_for_update().get(pk=pk)
         accessory.quantity_available += qty
         accessory.save()
         returner = f' returned by {from_user.first_name} {from_user.last_name}' if from_user else ' checked in to inventory'

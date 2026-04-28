@@ -44,4 +44,5 @@ class TransactionLogAdmin(admin.ModelAdmin):
     list_display = ('transaction_type', 'performed_by', 'asset', 'accessory', 'transaction_date')
     list_filter = ('transaction_type',)
     search_fields = ('event_description', 'notes')
-    readonly_fields = ('created_at',)
+    # Logs are an immutable audit trail — never editable in admin.
+    readonly_fields = ('id', 'transaction_date', 'created_at')

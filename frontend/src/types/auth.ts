@@ -32,13 +32,13 @@ export interface GoogleUser {
 }
 
 export interface SignUpFormData {
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
   title: string;
   location: string;
   business_group: string;
-  badgeNumber: string;
-  manager: string;
+  badge_number: string;
+  supervisor_id: string;
   email: string;
   password: string;
 }

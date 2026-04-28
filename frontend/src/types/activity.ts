@@ -62,7 +62,8 @@ export interface ActivityLogEntry {
   department?: string;
 }
 
-const TX_TYPE_LABEL: Record<string, string> = {
+/** Display labels for `TransactionLog.transaction_type` enum values. */
+export const TX_TYPE_LABELS: Record<string, string> = {
   CHECK_OUT:             'Check Out',
   CHECK_IN:              'Check In',
   TRANSFER:              'Transfer',
@@ -110,7 +111,7 @@ export function toActivityLogEntry(log: TransactionLog): ActivityLogEntry {
     updated_at: log.created_at,
     user: who,
     type,
-    event: TX_TYPE_LABEL[log.transaction_type] ?? log.transaction_type,
+    event: TX_TYPE_LABELS[log.transaction_type] ?? log.transaction_type,
     eventDescription: log.event_description || '—',
     item,
     toFrom,

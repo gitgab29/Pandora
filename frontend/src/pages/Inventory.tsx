@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
-  Trash2, Pencil, Plus, Download, AlertTriangle, Filter,
+  Trash2, Pencil, Plus, Download, AlertTriangle,
   Eye, EyeOff, Archive,
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
@@ -19,6 +19,7 @@ import InventoryCheckOutModal from '../components/InventoryCheckOutModal';
 import AccessoryDetailModal from '../components/AccessoryDetailModal';
 import AssetsTabContent from '../components/AssetsTabContent';
 import ComingSoonPanel from '../components/ComingSoonPanel';
+import InventoryFilterDropdown from '../components/InventoryFilterDropdown';
 import { colors, spacing, radius } from '../theme';
 import type { Accessory } from '../types/inventory';
 import type { Person } from '../types/people';
@@ -28,6 +29,7 @@ import { useRecency } from '../hooks/useRecency';
 import { useRecencyCounts } from '../context/RecencyContext';
 import { useNotifications } from '../context/NotificationsContext';
 import RecencyBadge from '../components/RecencyBadge';
+import { TH, TD, NEW_BG, NEW_BG_HOVER, HOVER_BG, restingBg } from '../components/tableStyles';
 
 type InventoryTab = 'Assets' | 'Accessories' | 'Licenses' | 'Consumables';
 const INVENTORY_TABS: InventoryTab[] = ['Assets', 'Accessories', 'Licenses', 'Consumables'];
@@ -43,40 +45,6 @@ const INV_SORT_OPTIONS = [
 ];
 
 const ROWS_PER_PAGE = 10;
-
-const NEW_BG       = 'rgba(46,124,253,0.06)';
-const NEW_BG_HOVER = 'rgba(46,124,253,0.10)';
-const HOVER_BG     = 'rgba(46,124,253,0.04)';
-
-function restingBg(isNewRow: boolean, idx: number): string {
-  if (isNewRow) return NEW_BG;
-  return idx % 2 === 0 ? colors.bgSurface : colors.bgStripe;
-}
-
-// ── Table cell styles ─────────────────────────────────────────────────────────
-
-const TH: React.CSSProperties = {
-  padding: '0.625rem 0.875rem',
-  fontFamily: "'Archivo', sans-serif",
-  fontSize: '0.719rem',
-  fontWeight: 600,
-  color: colors.blueGrayMd,
-  textAlign: 'left',
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase',
-  whiteSpace: 'nowrap',
-  borderBottom: '1px solid rgba(70, 98, 145, 0.12)',
-  backgroundColor: colors.bgStripe,
-};
-
-const TD: React.CSSProperties = {
-  padding: '0.6875rem 0.875rem',
-  fontFamily: "'Archivo', sans-serif",
-  fontSize: '0.8125rem',
-  color: colors.textPrimary,
-  borderBottom: '1px solid rgba(70, 98, 145, 0.07)',
-  whiteSpace: 'nowrap',
-};
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -980,115 +948,3 @@ function iconBtnStyle(bg: string): React.CSSProperties {
   };
 }
 
-// ── InventoryFilterDropdown ───────────────────────────────────────────────────
-
-function InventoryFilterDropdown({
-  open,
-  onToggle,
-  locations,
-  active,
-  onToggleLoc,
-}: {
-  open: boolean;
-  onToggle: () => void;
-  locations: string[];
-  active: { locations: string[] };
-  onToggleLoc: (l: string) => void;
-}) {
-  const hasActive = active.locations.length > 0;
-  return (
-    <div style={{ position: 'relative', zIndex: 100 }}>
-      <button
-        onClick={onToggle}
-        title="Filter by location"
-        style={{
-          width: '2.125rem',
-          height: '2.125rem',
-          borderRadius: radius.md,
-          border: `1px solid ${open || hasActive ? colors.primary : 'rgba(70, 98, 145, 0.2)'}`,
-          backgroundColor: open || hasActive ? 'rgba(46,124,253,0.06)' : colors.bgSurface,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          color: open || hasActive ? colors.primary : colors.blueGrayMd,
-          position: 'relative',
-          flexShrink: 0,
-          transition: 'background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease',
-        }}
-      >
-        <Filter size={15} />
-        {hasActive && (
-          <span
-            style={{
-              position: 'absolute',
-              top: '0.2rem',
-              right: '0.2rem',
-              width: '0.4rem',
-              height: '0.4rem',
-              borderRadius: '50%',
-              backgroundColor: colors.primary,
-            }}
-          />
-        )}
-      </button>
-
-      {open && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '2.5rem',
-            right: 0,
-            width: '16rem',
-            backgroundColor: colors.bgSurface,
-            borderRadius: radius.lg,
-            border: '1px solid rgba(70,98,145,0.14)',
-            boxShadow: '0 0.5rem 2rem rgba(3,12,35,0.12)',
-            padding: spacing.md,
-            zIndex: 100,
-          }}
-        >
-          <p
-            style={{
-              margin: `0 0 ${spacing.sm}`,
-              fontFamily: "'Roboto', sans-serif",
-              fontSize: '0.719rem',
-              fontWeight: 700,
-              color: colors.blueGrayMd,
-              letterSpacing: '0.05em',
-              textTransform: 'uppercase' as const,
-            }}
-          >
-            Location
-          </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.xs }}>
-            {locations.map(l => {
-              const isActive = active.locations.includes(l);
-              return (
-                <button
-                  key={l}
-                  onClick={() => onToggleLoc(l)}
-                  style={{
-                    padding: `0.2rem ${spacing.sm}`,
-                    borderRadius: radius.full,
-                    border: `1px solid ${isActive ? colors.primary : 'rgba(70,98,145,0.25)'}`,
-                    backgroundColor: isActive ? colors.primary : 'transparent',
-                    color: isActive ? colors.white : colors.blueGrayMd,
-                    fontFamily: "'Archivo', sans-serif",
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    transition: 'background-color 0.15s, color 0.15s',
-                  }}
-                >
-                  {l}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}

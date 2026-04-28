@@ -15,20 +15,12 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useRecency } from '../hooks/useRecency';
 import RecencyBadge from '../components/RecencyBadge';
+import { TH, TD, NEW_BG, NEW_BG_HOVER, HOVER_BG, restingBg } from '../components/tableStyles';
 
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const ROWS_PER_PAGE = 10;
-
-const NEW_BG       = 'rgba(46,124,253,0.06)';
-const NEW_BG_HOVER = 'rgba(46,124,253,0.10)';
-const HOVER_BG     = 'rgba(46,124,253,0.04)';
-
-function restingBg(isNewRow: boolean, idx: number): string {
-  if (isNewRow) return NEW_BG;
-  return idx % 2 === 0 ? colors.bgSurface : colors.bgStripe;
-}
 
 type SortField = 'name' | 'department' | 'created_at';
 type SortDir   = 'asc'  | 'desc';
@@ -38,28 +30,6 @@ type SortDir   = 'asc'  | 'desc';
 const ROLE_BADGE = {
   ADMIN: { bg: 'rgba(46,124,253,0.12)', text: colors.primary,    label: 'Admin' },
   STAFF: { bg: 'rgba(70,98,145,0.10)',  text: colors.blueGrayMd, label: 'Staff' },
-};
-
-const TH: React.CSSProperties = {
-  padding: '0.625rem 0.875rem',
-  fontFamily: "'Archivo', sans-serif",
-  fontSize: '0.719rem', fontWeight: 600,
-  color: colors.blueGrayMd,
-  textAlign: 'left',
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase',
-  whiteSpace: 'nowrap',
-  borderBottom: '1px solid rgba(70,98,145,0.12)',
-  backgroundColor: colors.bgStripe,
-};
-
-const TD: React.CSSProperties = {
-  padding: '0.6875rem 0.875rem',
-  fontFamily: "'Archivo', sans-serif",
-  fontSize: '0.8125rem',
-  color: colors.textPrimary,
-  borderBottom: '1px solid rgba(70,98,145,0.07)',
-  whiteSpace: 'nowrap',
 };
 
 const metaItem: React.CSSProperties = {

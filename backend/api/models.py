@@ -2,6 +2,7 @@ import uuid
 from datetime import timedelta
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
+from django.db.models import CheckConstraint, Q
 from django.utils import timezone
 
 
@@ -68,7 +69,7 @@ class User(AbstractUser, TimeStampedModel, ArchivableMixin):
     )
     notes = models.TextField(blank=True)
     badge_number = models.CharField(max_length=50, blank=True)
-    role = models.CharField(max_length=20, choices=Role.choices, default=Role.STAFF)
+    role = models.CharField(max_length=20, choices=Role.choices, default=Role.STAFF, db_index=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
@@ -107,8 +108,8 @@ class Asset(TimeStampedModel, ArchivableMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     asset_tag = models.CharField(max_length=100, unique=True)
     model = models.CharField(max_length=100, blank=True)
-    category = models.CharField(max_length=50, choices=Category.choices, default=Category.OTHER)
-    status = models.CharField(max_length=50, choices=Status.choices, default=Status.AVAILABLE)
+    category = models.CharField(max_length=50, choices=Category.choices, default=Category.OTHER, db_index=True)
+    status = models.CharField(max_length=50, choices=Status.choices, default=Status.AVAILABLE, db_index=True)
     previous_status = models.CharField(max_length=50, choices=Status.choices, null=True, blank=True)
     serial_number = models.CharField(max_length=255, blank=True)
     warranty_expiry = models.DateField(null=True, blank=True)
@@ -125,7 +126,7 @@ class Asset(TimeStampedModel, ArchivableMixin):
         related_name='assets'
     )
     notes = models.TextField(blank=True)
-    group = models.CharField(max_length=20, choices=Group.choices, blank=True)
+    group = models.CharField(max_length=20, choices=Group.choices, blank=True, db_index=True)
     imei_number = models.CharField(max_length=20, blank=True)
     cpu = models.CharField(max_length=100, blank=True)
     gpu = models.CharField(max_length=100, blank=True)
@@ -181,12 +182,12 @@ class TransactionLog(models.Model):
         STATUS_DEPLOYED       = 'STATUS_DEPLOYED',       'Set to Deployed'
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    transaction_date = models.DateTimeField(default=timezone.now)
+    transaction_date = models.DateTimeField(default=timezone.now, db_index=True)
     performed_by = models.ForeignKey(
         User, on_delete=models.PROTECT,
         related_name='performed_transactions'
     )
-    transaction_type = models.CharField(max_length=30, choices=TransactionType.choices)
+    transaction_type = models.CharField(max_length=30, choices=TransactionType.choices, db_index=True)
     event_description = models.TextField(blank=True)
     asset = models.ForeignKey(
         Asset, null=True, blank=True,
@@ -214,6 +215,19 @@ class TransactionLog(models.Model):
 
     class Meta:
         ordering = ['-transaction_date']
+        constraints = [
+            # Every log must reference at least one of asset/accessory/to_user/from_user.
+            # User-only events (archive/restore/retire) reference to_user with no asset/accessory.
+            CheckConstraint(
+                check=(
+                    Q(asset__isnull=False) |
+                    Q(accessory__isnull=False) |
+                    Q(to_user__isnull=False) |
+                    Q(from_user__isnull=False)
+                ),
+                name='txlog_has_target',
+            ),
+        ]
 
     def __str__(self):
         return f'{self.transaction_type} — {self.transaction_date:%Y-%m-%d %H:%M}'

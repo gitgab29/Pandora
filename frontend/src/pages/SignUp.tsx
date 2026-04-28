@@ -15,8 +15,9 @@ export default function SignUp() {
   const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
   const [managers, setManagers] = useState<Person[]>([]);
   const [form, setForm] = useState<SignUpFormData>({
-    firstName: '', lastName: '', title: '', location: '',
-    department: '', badgeNumber: '', manager: '',
+    first_name: '', last_name: '', title: '', location: '',
+    business_group: '', badge_number: '', supervisor_id: '',
+    email: '', password: '',
   });
   const [errors, setErrors] = useState<Partial<SignUpFormData>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,7 +35,7 @@ export default function SignUp() {
       avatarUrl: '',
     };
     setGoogleUser(mock);
-    setForm(prev => ({ ...prev, firstName: mock.firstName, lastName: mock.lastName }));
+    setForm(prev => ({ ...prev, first_name: mock.firstName, last_name: mock.lastName }));
     setStep('profile');
   };
 
@@ -45,13 +46,13 @@ export default function SignUp() {
 
   const validate = (): boolean => {
     const next: Partial<SignUpFormData> = {};
-    if (!form.firstName.trim())   next.firstName   = 'Required';
-    if (!form.lastName.trim())    next.lastName    = 'Required';
-    if (!form.title.trim())       next.title       = 'Required';
-    if (!form.location.trim())    next.location    = 'Required';
-    if (!form.department.trim())  next.department  = 'Required';
-    if (!form.badgeNumber.trim()) next.badgeNumber = 'Required';
-    if (!form.manager.trim())     next.manager     = 'Required';
+    if (!form.first_name.trim())     next.first_name     = 'Required';
+    if (!form.last_name.trim())      next.last_name      = 'Required';
+    if (!form.title.trim())          next.title          = 'Required';
+    if (!form.location.trim())       next.location       = 'Required';
+    if (!form.business_group.trim()) next.business_group = 'Required';
+    if (!form.badge_number.trim())   next.badge_number   = 'Required';
+    if (!form.supervisor_id.trim())  next.supervisor_id  = 'Required';
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -437,20 +438,20 @@ function ProfileStep({ form, errors, isSubmitting, managers, setField, onSubmit 
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.xl }}>
-        <Input label="First Name"    value={form.firstName}   error={errors.firstName}   onChange={v => setField('firstName',   v)} />
-        <Input label="Last Name"     value={form.lastName}    error={errors.lastName}    onChange={v => setField('lastName',    v)} />
-        <Input label="Position"      placeholder="e.g. IT Engineer"    value={form.title}       error={errors.title}       onChange={v => setField('title',       v)} />
-        <Input label="Badge Number"  placeholder="e.g. ESI-1042"       value={form.badgeNumber} error={errors.badgeNumber} onChange={v => setField('badgeNumber', v)} />
-        <Input label="Department"    placeholder="e.g. Engineering"    value={form.department}  error={errors.department}  onChange={v => setField('department',  v)} />
-        <Input label="Office"        placeholder="e.g. San Jose"       value={form.location}    error={errors.location}    onChange={v => setField('location',    v)} />
+        <Input label="First Name"    value={form.first_name}     error={errors.first_name}     onChange={v => setField('first_name',     v)} />
+        <Input label="Last Name"     value={form.last_name}      error={errors.last_name}      onChange={v => setField('last_name',      v)} />
+        <Input label="Position"      placeholder="e.g. IT Engineer"    value={form.title}          error={errors.title}          onChange={v => setField('title',          v)} />
+        <Input label="Badge Number"  placeholder="e.g. ESI-1042"       value={form.badge_number}   error={errors.badge_number}   onChange={v => setField('badge_number',   v)} />
+        <Input label="Department"    placeholder="e.g. Engineering"    value={form.business_group} error={errors.business_group} onChange={v => setField('business_group', v)} />
+        <Input label="Office"        placeholder="e.g. San Jose"       value={form.location}       error={errors.location}       onChange={v => setField('location',       v)} />
       </div>
 
       <div style={{ marginTop: spacing.xl }}>
         <ManagerCombobox
-          value={form.manager}
-          error={errors.manager}
+          value={form.supervisor_id}
+          error={errors.supervisor_id}
           managers={managers}
-          onChange={v => setField('manager', v)}
+          onChange={v => setField('supervisor_id', v)}
         />
       </div>
 

@@ -29,6 +29,7 @@ api.interceptors.response.use(
         const refresh = localStorage.getItem('refresh_token');
         const { data } = await axios.post(`${BASE_URL}/api/auth/refresh/`, { refresh });
         localStorage.setItem('access_token', data.access);
+        if (data.refresh) localStorage.setItem('refresh_token', data.refresh);
         original.headers.Authorization = `Bearer ${data.access}`;
         return api(original);
       } catch {
@@ -40,6 +41,12 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// DRF returns `{count, next, previous, results}` when pagination is on,
+// or a raw array when it's off. Callers always want the rows.
+type Paginated<T> = { count: number; next: string | null; previous: string | null; results: T[] };
+const unwrapList = <T>(data: T[] | Paginated<T>): T[] =>
+  Array.isArray(data) ? data : data.results;
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -78,7 +85,7 @@ export const authApi = {
 
 export const usersApi = {
   list: (params?: Record<string, string | number | boolean>) =>
-    api.get<Person[]>('/users/', { params }).then(r => r.data),
+    api.get<Person[] | Paginated<Person>>('/users/', { params }).then(r => unwrapList(r.data)),
 
   get: (id: string) =>
     api.get<Person>(`/users/${id}/`).then(r => r.data),
@@ -106,7 +113,7 @@ export const usersApi = {
 
 export const assetsApi = {
   list: (params?: Record<string, string | number | boolean>) =>
-    api.get<Asset[]>('/assets/', { params }).then(r => r.data),
+    api.get<Asset[] | Paginated<Asset>>('/assets/', { params }).then(r => unwrapList(r.data)),
 
   get: (id: string) =>
     api.get<Asset>(`/assets/${id}/`).then(r => r.data),
@@ -146,7 +153,7 @@ export const assetsApi = {
 
 export const accessoriesApi = {
   list: (params?: Record<string, string | number | boolean>) =>
-    api.get<Accessory[]>('/accessories/', { params }).then(r => r.data),
+    api.get<Accessory[] | Paginated<Accessory>>('/accessories/', { params }).then(r => unwrapList(r.data)),
 
   get: (id: string) =>
     api.get<Accessory>(`/accessories/${id}/`).then(r => r.data),
@@ -183,7 +190,7 @@ export const accessoriesApi = {
 
 export const transactionsApi = {
   list: (params?: Record<string, string | number | boolean>) =>
-    api.get<TransactionLog[]>('/transactions/', { params }).then(r => r.data),
+    api.get<TransactionLog[] | Paginated<TransactionLog>>('/transactions/', { params }).then(r => unwrapList(r.data)),
 
   get: (id: string) =>
     api.get<TransactionLog>(`/transactions/${id}/`).then(r => r.data),

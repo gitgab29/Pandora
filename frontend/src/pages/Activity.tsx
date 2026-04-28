@@ -7,12 +7,13 @@ import Pagination from '../components/Pagination';
 import SortDropdown from '../components/SortDropdown';
 import FeatureNotAvailableModal from '../components/FeatureNotAvailableModal';
 import ActivityDetailModal from '../components/ActivityDetailModal';
-import { colors, spacing, radius } from '../theme';
-import type { ActivityLogEntry as TransactionLog } from '../types/activity';
+import { colors, spacing, radius, badgeColors } from '../theme';
+import type { ActivityLogEntry } from '../types/activity';
 import { toActivityLogEntry } from '../types/activity';
 import { transactionsApi } from '../api';
 import { useRecency } from '../hooks/useRecency';
 import RecencyBadge from '../components/RecencyBadge';
+import { TH, TD, NEW_BG, NEW_BG_HOVER, HOVER_BG, restingBg } from '../components/tableStyles';
 
 const DEPARTMENTS = ['Engineering', 'Operations', 'IT', 'Finance', 'HR', 'Human Resources', 'Product'];
 
@@ -34,68 +35,36 @@ const SORT_OPTIONS = [
 
 const ROWS_PER_PAGE = 15;
 
-const NEW_BG       = 'rgba(46,124,253,0.06)';
-const NEW_BG_HOVER = 'rgba(46,124,253,0.10)';
-const HOVER_BG     = 'rgba(46,124,253,0.03)';
-
-function restingBg(isNewRow: boolean, idx: number): string {
-  if (isNewRow) return NEW_BG;
-  return idx % 2 === 0 ? colors.bgSurface : colors.bgStripe;
-}
-
-// ── Style tokens ──────────────────────────────────────────────────────────────
-
-const TH: React.CSSProperties = {
-  padding: '0.625rem 0.875rem',
-  fontFamily: "'Archivo', sans-serif",
-  fontSize: '0.719rem',
-  fontWeight: 600,
-  color: colors.blueGrayMd,
-  textAlign: 'left',
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase',
-  whiteSpace: 'nowrap',
-  borderBottom: '1px solid rgba(70,98,145,0.12)',
-  backgroundColor: colors.bgStripe,
-};
-
-const TD: React.CSSProperties = {
-  padding: '0.6875rem 0.875rem',
-  fontFamily: "'Archivo', sans-serif",
-  fontSize: '0.8125rem',
-  color: colors.textPrimary,
-  borderBottom: '1px solid rgba(70,98,145,0.07)',
-  whiteSpace: 'nowrap',
-};
-
+// Re-mapped from theme.badgeColors so the {bg, color} keys this page already
+// uses below remain stable. (badgeColors uses {bg, text}.)
 const TYPE_COLORS: Record<string, { bg: string; color: string }> = {
-  Asset:     { bg: 'rgba(46,124,253,0.1)',  color: colors.primary },
-  Inventory: { bg: 'rgba(45,252,249,0.12)', color: '#0891b2' },
-  License:   { bg: 'rgba(252,156,45,0.12)', color: '#b45309' },
+  Asset:     { bg: badgeColors.asset.bg,     color: badgeColors.asset.text },
+  Inventory: { bg: badgeColors.inventory.bg, color: badgeColors.inventory.text },
+  License:   { bg: badgeColors.license.bg,   color: badgeColors.license.text },
 };
 
 const EVENT_COLORS: Record<string, { bg: string; color: string }> = {
-  'Check In':  { bg: 'rgba(34,197,94,0.12)',  color: '#15803d' },
-  'Check Out': { bg: 'rgba(252,156,45,0.12)', color: '#b45309' },
-  'Update':    { bg: 'rgba(46,124,253,0.1)',  color: colors.primary },
-  'Audit':     { bg: 'rgba(139,92,246,0.1)',  color: '#7c3aed' },
-  'Request':   { bg: 'rgba(45,252,249,0.12)', color: '#0891b2' },
+  'Check In':  { bg: badgeColors.checkIn.bg,  color: badgeColors.checkIn.text },
+  'Check Out': { bg: badgeColors.checkOut.bg, color: badgeColors.checkOut.text },
+  'Update':    { bg: badgeColors.update.bg,   color: badgeColors.update.text },
+  'Audit':     { bg: badgeColors.audit.bg,    color: badgeColors.audit.text },
+  'Request':   { bg: badgeColors.request.bg, color: badgeColors.request.text },
 };
 
 const EVENT_TAB_ACCENT: Record<string, string> = {
-  'Check In':  '#15803d',
-  'Check Out': '#b45309',
-  'Update':    colors.primary,
-  'Audit':     '#7c3aed',
-  'Request':   '#0891b2',
+  'Check In':  badgeColors.checkIn.text,
+  'Check Out': badgeColors.checkOut.text,
+  'Update':    badgeColors.update.text,
+  'Audit':     badgeColors.audit.text,
+  'Request':   badgeColors.request.text,
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function Activity() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [logs, setLogs] = useState<TransactionLog[]>([]);
-  const { isNew, markSeen, markAllSeen, newCount } = useRecency<TransactionLog>('activity');
+  const [logs, setLogs] = useState<ActivityLogEntry[]>([]);
+  const { isNew, markSeen, markAllSeen, newCount } = useRecency<ActivityLogEntry>('activity');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -113,7 +82,7 @@ export default function Activity() {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Modals
-  const [detailLog,       setDetailLog]       = useState<TransactionLog | null>(null);
+  const [detailLog,       setDetailLog]       = useState<ActivityLogEntry | null>(null);
   const [exportModalOpen, setExportModalOpen] = useState(false);
 
   const closeDropdowns = () => { setFilterOpen(false); setSortOpen(false); };

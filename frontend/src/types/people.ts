@@ -21,6 +21,7 @@ export interface Person {
   archive_reason?: 'DELETED' | 'RETIRED' | '';
   archived_at?: string | null;
   archived_by?: string | null;
+  archived_by_detail?: { id: string; first_name: string; last_name: string; email: string } | null;
   archive_notes?: string;
   created_at: string;
   updated_at: string;

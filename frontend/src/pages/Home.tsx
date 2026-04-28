@@ -3,50 +3,32 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import StatisticCard from '../components/StatisticCard';
-import { colors, spacing, radius, fontSize, shadows } from '../theme';
+import { colors, spacing, radius, fontSize, shadows, surfaces, chartColors } from '../theme';
 import { assetsApi, accessoriesApi, usersApi, transactionsApi } from '../api';
 import type { Asset } from '../types/asset';
 import type { Accessory } from '../types/inventory';
 import type { Person } from '../types/people';
 import type { TransactionLog } from '../types/activity';
+import { TX_TYPE_LABELS } from '../types/activity';
+import { ASSET_STATUS_LABELS } from '../types/asset';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-// ── Chart color map ──────────────────────────────────────────────────────────
-
-const STATUS_CHART_COLORS: Record<string, string> = {
-  AVAILABLE: colors.success,
-  DEPLOYED: colors.primary,
-  IN_REPAIR: colors.orangeAccent,
-  IN_MAINTENANCE: '#94a3b8',
-  TO_AUDIT: '#eab308',
-  LOST: colors.error,
+const TOOLTIP_STYLE: React.CSSProperties = {
+  fontFamily: "'Archivo', sans-serif",
+  fontSize: '0.75rem',
+  borderRadius: radius.md,
+  border: `1px solid ${surfaces.cardBorderSm}`,
+  boxShadow: shadows.card,
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  AVAILABLE: 'Available',
-  DEPLOYED: 'Deployed',
-  IN_REPAIR: 'In Repair',
-  IN_MAINTENANCE: 'In Maint.',
-  TO_AUDIT: 'To Audit',
-  LOST: 'Lost',
-};
-
-const TX_TYPE_LABELS: Record<string, string> = {
-  CHECK_OUT: 'Check Out',
-  CHECK_IN: 'Check In',
-  TRANSFER: 'Transfer',
-  ADJUSTMENT: 'Adjustment',
-};
-
-const TX_TYPE_COLORS: Record<string, string> = {
-  CHECK_OUT: colors.orangeAccent,
-  CHECK_IN: colors.success,
-  TRANSFER: colors.primary,
-  ADJUSTMENT: '#8b5cf6',
-};
+const TICK_STYLE = {
+  fontFamily: "'Archivo', sans-serif",
+  fontSize: 11,
+  fill: colors.blueGrayMd,
+} as const;
 
 export default function Home() {
   const navigate = useNavigate();
@@ -57,10 +39,22 @@ export default function Home() {
   const [transactions, setTransactions] = useState<TransactionLog[]>([]);
 
   useEffect(() => {
-    assetsApi.list().then(setAssets);
-    accessoriesApi.list().then(setAccessories);
-    usersApi.list().then(setPeople);
-    transactionsApi.list({ ordering: '-created_at' }).then(setTransactions);
+    let cancelled = false;
+    Promise.all([
+      assetsApi.list(),
+      accessoriesApi.list(),
+      usersApi.list(),
+      transactionsApi.list({ ordering: '-created_at' }),
+    ])
+      .then(([a, ac, p, t]) => {
+        if (cancelled) return;
+        setAssets(a);
+        setAccessories(ac);
+        setPeople(p);
+        setTransactions(t);
+      })
+      .catch(err => console.error('Home: failed to load dashboard data', err));
+    return () => { cancelled = true; };
   }, []);
 
   // ── Stat card data ──────────────────────────────────────────────────────
@@ -93,9 +87,12 @@ export default function Home() {
       return acc;
     }, {})
   ).map(([status, count]) => ({
-    name: STATUS_LABELS[status] ?? status,
+    // "In Maintenance" is abbreviated in the donut legend so it fits.
+    name: status === 'IN_MAINTENANCE'
+      ? 'In Maint.'
+      : (ASSET_STATUS_LABELS[status as keyof typeof ASSET_STATUS_LABELS] ?? status),
     value: count,
-    color: STATUS_CHART_COLORS[status] ?? colors.blueGrayMd,
+    color: chartColors.status[status as keyof typeof chartColors.status] ?? colors.blueGrayMd,
   }));
 
   const txTypeCounts = Object.entries(
@@ -106,7 +103,7 @@ export default function Home() {
   ).map(([type, count]) => ({
     name: TX_TYPE_LABELS[type] ?? type,
     value: count,
-    fill: TX_TYPE_COLORS[type] ?? colors.blueGrayMd,
+    fill: chartColors.txType[type as keyof typeof chartColors.txType] ?? colors.blueGrayMd,
   }));
 
   // Assets by category
@@ -208,9 +205,7 @@ export default function Home() {
                           <Cell key={i} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip
-                        contentStyle={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', borderRadius: radius.md, border: `1px solid rgba(70,98,145,0.15)`, boxShadow: shadows.card }}
-                      />
+                      <Tooltip contentStyle={TOOLTIP_STYLE} />
                     </PieChart>
                   </ResponsiveContainer>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
@@ -233,11 +228,9 @@ export default function Home() {
               {txTypeCounts.length > 0 ? (
                 <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={txTypeCounts} barSize={28}>
-                    <XAxis dataKey="name" tick={{ fontFamily: "'Archivo', sans-serif", fontSize: 11, fill: colors.blueGrayMd }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontFamily: "'Archivo', sans-serif", fontSize: 11, fill: colors.blueGrayMd }} axisLine={false} tickLine={false} width={30} />
-                    <Tooltip
-                      contentStyle={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', borderRadius: radius.md, border: `1px solid rgba(70,98,145,0.15)`, boxShadow: shadows.card }}
-                    />
+                    <XAxis dataKey="name" tick={TICK_STYLE} axisLine={false} tickLine={false} />
+                    <YAxis tick={TICK_STYLE} axisLine={false} tickLine={false} width={30} />
+                    <Tooltip contentStyle={TOOLTIP_STYLE} />
                     <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                       {txTypeCounts.map((entry, i) => (
                         <Cell key={i} fill={entry.fill} />
@@ -255,11 +248,9 @@ export default function Home() {
               {categoryCounts.length > 0 ? (
                 <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={categoryCounts} layout="vertical" barSize={18}>
-                    <XAxis type="number" tick={{ fontFamily: "'Archivo', sans-serif", fontSize: 11, fill: colors.blueGrayMd }} axisLine={false} tickLine={false} />
-                    <YAxis type="category" dataKey="name" tick={{ fontFamily: "'Archivo', sans-serif", fontSize: 11, fill: colors.blueGrayMd }} axisLine={false} tickLine={false} width={70} />
-                    <Tooltip
-                      contentStyle={{ fontFamily: "'Archivo', sans-serif", fontSize: '0.75rem', borderRadius: radius.md, border: `1px solid rgba(70,98,145,0.15)`, boxShadow: shadows.card }}
-                    />
+                    <XAxis type="number" tick={TICK_STYLE} axisLine={false} tickLine={false} />
+                    <YAxis type="category" dataKey="name" tick={TICK_STYLE} axisLine={false} tickLine={false} width={70} />
+                    <Tooltip contentStyle={TOOLTIP_STYLE} />
                     <Bar dataKey="value" radius={[0, 4, 4, 0]} fill={colors.primary} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -300,7 +291,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
       style={{
         backgroundColor: colors.bgSurface,
         borderRadius: radius.lg,
-        border: '1px solid rgba(70,98,145,0.1)',
+        border: `1px solid ${surfaces.cardBorder}`,
         boxShadow: shadows.card,
         padding: spacing.xl,
       }}

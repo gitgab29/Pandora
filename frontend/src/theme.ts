@@ -175,3 +175,48 @@ export const sizing = {
   sidebarCollapsed: '4rem',      // 64px
   headerHeight:     '3.75rem',   // 60px
 } as const;
+
+/**
+ * Translucent surfaces — overlays on top of light/dark backgrounds.
+ * Centralised so list rows, glass panels, and dividers stay consistent.
+ */
+export const surfaces = {
+  newRowBg:      'rgba(46,124,253,0.06)',  // unread/new list row tint
+  newRowBgHover: 'rgba(46,124,253,0.10)',  // unread row hover
+  rowHoverBg:    'rgba(46,124,253,0.04)',  // generic row hover
+  rowBorder:     'rgba(70,98,145,0.12)',   // table head bottom border
+  rowDivider:    'rgba(70,98,145,0.07)',   // table cell bottom border
+  cardBorder:    'rgba(70,98,145,0.10)',   // chart/section card border
+  cardBorderSm:  'rgba(70,98,145,0.15)',   // tooltip border
+  glassWhite:    'rgba(255,255,255,0.12)', // sidebar/header glass overlay
+} as const;
+
+/**
+ * Reusable CSS transition strings — keep timings consistent.
+ */
+export const transitions = {
+  rowHover:    'background-color 0.15s ease, border-color 0.15s ease',
+  buttonHover: 'background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease',
+  border:      'border-color 0.15s ease',
+} as const;
+
+/**
+ * Recharts color palettes — keyed by enum value so chart components
+ * don't redeclare them per-page.
+ */
+export const chartColors = {
+  status: {
+    AVAILABLE:      colors.success,
+    DEPLOYED:       colors.primary,
+    IN_REPAIR:      colors.orangeAccent,
+    IN_MAINTENANCE: '#94a3b8',
+    TO_AUDIT:       '#eab308',
+    LOST:           colors.error,
+  },
+  txType: {
+    CHECK_OUT:  colors.orangeAccent,
+    CHECK_IN:   colors.success,
+    TRANSFER:   colors.primary,
+    ADJUSTMENT: '#8b5cf6',
+  },
+} as const;

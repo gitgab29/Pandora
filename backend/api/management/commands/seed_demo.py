@@ -9,6 +9,7 @@ Usage:
 import random
 from datetime import date, timedelta
 from django.core.management.base import BaseCommand
+from django.db import transaction
 from django.utils import timezone
 from api.models import User, Asset, Accessory, TransactionLog
 
@@ -477,6 +478,7 @@ class Command(BaseCommand):
             help='Wipe Assets, Accessories, TransactionLogs, and non-superuser Users before seeding.',
         )
 
+    @transaction.atomic
     def handle(self, *args, **options):
         if not options['reset']:
             if Asset.objects.filter(asset_tag=SENTINEL_TAG).exists():
