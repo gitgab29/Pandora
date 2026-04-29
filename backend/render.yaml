@@ -1,9 +1,16 @@
+databases:
+  - name: pandora-db
+    plan: free
+    databaseName: pandora
+    user: pandora
+
 services:
   - type: web
     name: pandora-backend
     runtime: python
     rootDir: backend
-    buildCommand: pip install -r requirements.txt && python manage.py migrate
+    plan: free
+    buildCommand: pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py ensure_superuser
     startCommand: gunicorn core.wsgi:application
     envVars:
       - key: SECRET_KEY
@@ -13,4 +20,12 @@ services:
       - key: ALLOWED_HOSTS
         value: ".onrender.com"
       - key: CORS_ALLOWED_ORIGINS
-        value: "https://your-vercel-app.vercel.app"
+        value: "https://pandora-testing.vercel.app/"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pandora-db
+          property: connectionString
+      - key: DJANGO_SUPERUSER_EMAIL
+        value: admin@esilicontech.com
+      - key: DJANGO_SUPERUSER_PASSWORD
+        value: admin123
