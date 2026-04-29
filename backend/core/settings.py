@@ -40,7 +40,10 @@ if not SECRET_KEY:
         )
 
 ALLOWED_HOSTS_STR = os.environ.get('ALLOWED_HOSTS', '')
-ALLOWED_HOSTS = ALLOWED_HOSTS_STR.split(',') if ALLOWED_HOSTS_STR else ['localhost', '127.0.0.1']
+if ALLOWED_HOSTS_STR:
+    ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS_STR.split(',') if h.strip()]
+else:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
