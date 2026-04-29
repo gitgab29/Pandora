@@ -28,27 +28,32 @@ mermaid.initialize({
 const diagram = `erDiagram
   USER {
     UUID id PK
+    VARCHAR(255) email "Unique — login identifier"
     VARCHAR(255) first_name
     VARCHAR(255) last_name
-    VARCHAR(255) email
     VARCHAR(100) title "Position"
     VARCHAR(255) location
     VARCHAR(100) business_group
     UUID supervisor_id FK "Self-ref — Supervisor"
-    TEXT notes
     VARCHAR(50) badge_number
     VARCHAR(20) role "ADMIN | STAFF"
-    BOOLEAN is_active "false = archived"
+    TEXT notes
+    BOOLEAN is_archived
+    VARCHAR(20) archive_reason "DELETED | RETIRED"
+    TIMESTAMP archived_at
+    UUID archived_by FK
+    TEXT archive_notes
     TIMESTAMP created_at
     TIMESTAMP updated_at
   }
 
   ASSET {
     UUID id PK
-    VARCHAR(255) image_url
     VARCHAR(100) asset_tag "Unique visible ID"
+    VARCHAR(100) model
     VARCHAR(50) category "Laptop | Phone | Tablet | PC | Monitor | Accessory | Other"
     VARCHAR(50) status "AVAILABLE | DEPLOYED | IN_REPAIR | IN_MAINTENANCE | LOST | TO_AUDIT"
+    VARCHAR(50) previous_status
     VARCHAR(255) serial_number
     DATE warranty_expiry
     DATE end_of_life
@@ -58,13 +63,10 @@ const diagram = `erDiagram
     DECIMAL depreciation_value
     VARCHAR(100) manufacturer
     VARCHAR(100) supplier
-    VARCHAR(100) business_group
     UUID assigned_to FK
     TEXT notes
     VARCHAR(20) group "PRODUCT | PARTS"
     VARCHAR(20) imei_number
-    VARCHAR(20) ssd_encryption_status "ENABLED | DISABLED | N/A"
-    VARCHAR(100) connectivity
     VARCHAR(100) cpu
     VARCHAR(100) gpu
     VARCHAR(100) operating_system
@@ -72,6 +74,11 @@ const diagram = `erDiagram
     VARCHAR(10) screen_size
     VARCHAR(50) storage_size
     JSONB metadata
+    BOOLEAN is_archived
+    VARCHAR(20) archive_reason
+    TIMESTAMP archived_at
+    UUID archived_by FK
+    TEXT archive_notes
     TIMESTAMP created_at
     TIMESTAMP updated_at
   }
@@ -79,20 +86,22 @@ const diagram = `erDiagram
   ACCESSORY {
     UUID id PK
     VARCHAR(255) item_name
-    VARCHAR(255) image_url
     INTEGER quantity_available
     VARCHAR(100) model_number
     DATE purchase_date
     DECIMAL unit_cost
-    DECIMAL total_cost "unit_cost * quantity_available"
     VARCHAR(100) order_number
     INTEGER min_quantity "Low stock threshold"
     VARCHAR(50) category
     VARCHAR(100) manufacturer
     VARCHAR(100) supplier
     VARCHAR(255) location
-    VARCHAR(100) business_group
     TEXT notes
+    BOOLEAN is_archived
+    VARCHAR(20) archive_reason
+    TIMESTAMP archived_at
+    UUID archived_by FK
+    TEXT archive_notes
     TIMESTAMP created_at
     TIMESTAMP updated_at
   }
@@ -101,7 +110,7 @@ const diagram = `erDiagram
     UUID id PK
     TIMESTAMP transaction_date
     UUID performed_by FK "User who acted"
-    VARCHAR(30) transaction_type "CHECK_OUT | CHECK_IN | TRANSFER | ADJUSTMENT"
+    VARCHAR(30) transaction_type "CHECK_OUT | CHECK_IN | TRANSFER | ADJUSTMENT | ARCHIVE | RESTORE | STATUS_*"
     TEXT event_description
     UUID asset_id FK "Nullable if accessory"
     UUID accessory_id FK "Nullable if asset"
@@ -112,13 +121,21 @@ const diagram = `erDiagram
     TIMESTAMP created_at
   }
 
+  LICENSE {
+    TBD schema "Planned — schema not yet defined"
+  }
+
+  CONSUMABLE {
+    TBD schema "Planned — schema not yet defined"
+  }
+
   USER ||--o{ USER : "supervises"
   USER ||--o{ ASSET : "assigned to"
   USER ||--o{ TRANSACTION_LOG : "performed by"
   USER ||--o{ TRANSACTION_LOG : "to user"
   USER ||--o{ TRANSACTION_LOG : "from user"
-  ASSET ||--o{ TRANSACTION_LOG : "logged in"
-  ACCESSORY ||--o{ TRANSACTION_LOG : "logged in"
+  ASSET ||--o{ TRANSACTION_LOG : "logged for"
+  ACCESSORY ||--o{ TRANSACTION_LOG : "logged for"
 `;
 
 const { svg } = await mermaid.render('erd-svg', diagram);
