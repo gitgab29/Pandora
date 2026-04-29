@@ -1,6 +1,6 @@
 # 02 · Getting started
 
-Goal: clone the repo, run the backend on `:8000` and the frontend on `:5173`, and log in as the seeded admin user.
+Goal: clone the repo, run the backend on `:8000` and the frontend on `:5173`, and log in as a superuser you create.
 
 ## Prerequisites
 
@@ -32,12 +32,11 @@ source .venv/Scripts/activate
 
 pip install -r requirements.txt
 python manage.py migrate
-python manage.py seed_demo --reset    # populates ~26 demo assets and a few users
-python manage.py createsuperuser      # or use the seeded admin below
+python manage.py createsuperuser      # creates the first admin account
 python manage.py runserver            # http://localhost:8000
 ```
 
-Seeded admin (from `seed_demo`): `admin@embeddedsilicon.com`. To set its password, run `python manage.py changepassword admin@embeddedsilicon.com`.
+The DB ships empty — there is no demo seed. Add real assets/accessories/people through the app or the Django admin once you're signed in.
 
 ### Frontend
 
@@ -77,8 +76,8 @@ Read by [`backend/core/settings.py`](../backend/core/settings.py).
 ## Default flow once it's running
 
 1. Open `http://localhost:5173` → redirected to `/sign-in`
-2. Sign in with the seeded admin (or run `createsuperuser` and use that).
-3. You land on `/home` with stat cards and charts.
+2. Sign in with the superuser you created via `createsuperuser`.
+3. You land on `/home` with stat cards and charts (empty until you add data).
 4. Click any stat card to drill into the matching Inventory filter.
 
 ## Common Windows / venv gotchas
@@ -91,7 +90,7 @@ Read by [`backend/core/settings.py`](../backend/core/settings.py).
 | `CORS error: blocked by CORS policy` | Origin missing from `CORS_ALLOWED_ORIGINS` | Add it to the env var or run frontend on `:5173` (the default allow-list). |
 | `401 Unauthorized` after a few minutes of idle | JWT access token expired (1 h lifetime, [settings.py:181-185](../backend/core/settings.py#L181-L185)) | The axios interceptor in [`api.ts:22-43`](../frontend/src/api.ts#L22-L43) auto-refreshes once. If refresh also fails, you'll be bounced to `/sign-in` — that's by design. |
 | `Throttled. Expected available in N seconds.` | DRF throttle: 240 req/min/user, 20/min anon ([settings.py:173-176](../backend/core/settings.py#L173-L176)) | Wait, or comment out throttling for local profiling. |
-| Migrations marked applied but tables are empty | You ran `migrate` against a fresh SQLite without seeding | `python manage.py seed_demo --reset` |
+| Tables empty after `migrate` | Expected — there is no demo seed | Run `python manage.py createsuperuser`, then add data via the app or `/admin/` |
 | Path errors when running `manage.py` | You're not in `backend/` | `cd backend` first; `manage.py` resolves paths relative to its own location. |
 
 ## What's running where

@@ -1,13 +1,12 @@
 """
-Data migration: seed_demo
-Runs the demo seeder on a fresh database (no-op if data already exists).
+Historical no-op.
+
+Originally ran the `seed_demo` management command to populate a fresh DB
+with dummy data. That command has been removed; this migration is kept
+(and kept named `0002_seed_demo`) because later migrations declare it as
+a dependency and existing databases already have it recorded as applied.
 """
 from django.db import migrations
-from django.core.management import call_command
-
-
-def seed_forward(apps, schema_editor):
-    call_command('seed_demo')
 
 
 class Migration(migrations.Migration):
@@ -17,5 +16,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(seed_forward, migrations.RunPython.noop),
+        migrations.RunPython(migrations.RunPython.noop, migrations.RunPython.noop),
     ]

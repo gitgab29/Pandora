@@ -63,8 +63,7 @@ Goal: add `device_color` to `Asset`, surfaced in the Add form, the table, and th
 6. **Edit form** — same change in [`EditAssetModal.tsx`](../frontend/src/components/EditAssetModal.tsx).
 7. **Table column** — in [`AssetsTabContent.tsx`](../frontend/src/components/AssetsTabContent.tsx), add a `<th>` and a `<td>` rendering `asset.device_color || '—'`. Reuse `TH` / `TD` from `tableStyles.ts`.
 8. **Detail modal** — in [`AssetDetailModal.tsx`](../frontend/src/components/AssetDetailModal.tsx), add `<InfoField label="Device Color" value={asset.device_color} />` to the General or Specifications section.
-9. **Seed** (optional) — if `seed_demo.py` should populate it, add a value to the seeded asset definitions.
-10. Verify: add a new asset with a colour value, confirm it round-trips through the table and detail modal.
+9. Verify: add a new asset with a colour value, confirm it round-trips through the table and detail modal.
 
 ## Recipe 4 — Add a new entity from scratch (Licenses worked example)
 

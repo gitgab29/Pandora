@@ -101,6 +101,6 @@ If the typecheck or build fails, fix it before pushing. Don't `// @ts-ignore` yo
 This is preference, not policy:
 
 - Backend: `pytest-django` for viewset tests; one test per `@action` covering happy path + at least one 4xx
-- Backend: factory-boy for fixtures, not `seed_demo.py` (that's for human dev, not tests)
+- Backend: factory-boy for fixtures — keep test data isolated per-test, don't share a global seed
 - Frontend: Vitest + React Testing Library for components; one test per modal covering open/close + the primary action
 - E2E: Playwright; one per user-facing workflow (sign-in, asset check-out, accessory check-out, archive)

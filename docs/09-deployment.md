@@ -85,4 +85,4 @@ These are decisions the first deploy makes; document them in this file when made
 - [ ] CORS list matches the frontend origin exactly
 - [ ] Throttling rates ([`settings.py:173-176`](../backend/core/settings.py#L173-L176)) reviewed against expected traffic
 - [ ] Access token lifetime ([`settings.py:181-185`](../backend/core/settings.py#L181-L185)) is acceptable for the user experience (currently 1 h access, 7 day refresh, rotating)
-- [ ] No dev-only data in the prod DB (don't run `seed_demo --reset` against prod)
+- [ ] No dev-only data in the prod DB

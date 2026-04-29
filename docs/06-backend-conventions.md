@@ -191,7 +191,7 @@ The shared `_token_response()` helper at [`auth.py:16-29`](../backend/api/auth.p
 - Review the generated file. **Don't edit it.** If something looks wrong, fix the model and re-run.
 - Commit migrations with the model change in the same PR. Never separately.
 - Don't squash migrations.
-- The seed migration is [`0002_seed_demo.py`](../backend/api/migrations/0002_seed_demo.py); the rebuild command is `python manage.py seed_demo --reset`.
+- `0002_seed_demo.py` is a historical no-op (the seeder it ran has been deleted). Don't reuse the name; don't drop the file — later migrations depend on its node.
 
 ## Things to avoid
 
