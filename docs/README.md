@@ -1,4 +1,4 @@
-# Pandora — intern guide
+# Pandora
 
 This folder is the conceptual onboarding doc for the Pandora codebase. The operational doc — current state, rules, where to add things — lives at [`../CLAUDE.md`](../CLAUDE.md). This guide explains *how to think about the system*. CLAUDE.md tells you *what is true today*. When in doubt, CLAUDE.md wins; this guide should never duplicate it.
 
