@@ -136,7 +136,7 @@ Filter params: `?category=`, `?status=`, `?business_group=`, `?transaction_type=
   - `urls.py`: DRF router + auth sub-routes all wired
   - `admin.py`: All models registered in Django admin
   - Migration: `0001_initial.py` created and applied
-  - Superuser: `admin@embeddedsilicon.com` (run `python manage.py changepassword` to reset)
+  - Superuser: `admin@esilicontech.com` (run `python manage.py changepassword` to reset)
 - ❌ Google OAuth: backend endpoint scaffolded but requires `GOOGLE_OAUTH_CLIENT_ID` env var to function
 
 **Asset schema note:** `Asset` has no `asset_name` or `location` field — the displayed identifier is `asset_tag`. Bind new asset UI to `asset_tag`. Fields removed from Asset: `image_url`, `business_group`, `ssd_encryption_status`, `connectivity`. `model` field added (CharField, optional).
@@ -194,7 +194,7 @@ Color restraint: Orange (`#fc9c2d`) reserved for genuine urgency (warnings, arch
 - ✅ **Item Name column** added to Assets table — displays `manufacturer + model` (e.g. "Dell Latitude 5540") right after Asset Tag; search also matches manufacturer/model
 - ✅ **Model shown in AssetDetailModal header** — rendered as a subtitle line between asset tag and category/serial; also present in General section
 - ✅ `ALLOWED_HOSTS` in `settings.py` now reads from `ALLOWED_HOSTS` env var (comma-separated); falls back to `localhost, 127.0.0.1` in dev
-- ✅ **Dummy/seed data removed** — wiped all `Asset`, `Accessory`, `TransactionLog`, and non-superuser `User` rows from `db.sqlite3`; deleted `backend/api/management/commands/seed_demo.py`. Only the `admin@embeddedsilicon.com` superuser remains. Database is now empty and ready for real data entry.
+- ✅ **Dummy/seed data removed** — wiped all `Asset`, `Accessory`, `TransactionLog`, and non-superuser `User` rows from `db.sqlite3`; deleted `backend/api/management/commands/seed_demo.py`. Only the `admin@esilicontech.com` superuser remains. Database is now empty and ready for real data entry.
 
 ## Next up
 
