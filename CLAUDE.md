@@ -193,8 +193,8 @@ Color restraint: Orange (`#fc9c2d`) reserved for genuine urgency (warnings, arch
 - ✅ `recharts` added as dependency for Home dashboard charts
 - ✅ **Item Name column** added to Assets table — displays `manufacturer + model` (e.g. "Dell Latitude 5540") right after Asset Tag; search also matches manufacturer/model
 - ✅ **Model shown in AssetDetailModal header** — rendered as a subtitle line between asset tag and category/serial; also present in General section
-- ✅ **seed_demo.py fixed** — removed stale `ssd_encryption_status`, `connectivity`, `business_group` fields from `Asset.objects.create()`; all 26 seed assets now have realistic `model` values; re-run with `python manage.py seed_demo --reset`
 - ✅ `ALLOWED_HOSTS` in `settings.py` now reads from `ALLOWED_HOSTS` env var (comma-separated); falls back to `localhost, 127.0.0.1` in dev
+- ✅ **Dummy/seed data removed** — wiped all `Asset`, `Accessory`, `TransactionLog`, and non-superuser `User` rows from `db.sqlite3`; deleted `backend/api/management/commands/seed_demo.py`. Only the `admin@embeddedsilicon.com` superuser remains. Database is now empty and ready for real data entry.
 
 ## Next up
 
